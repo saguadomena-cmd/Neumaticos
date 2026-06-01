@@ -188,6 +188,52 @@ tr.stock-out td{background:#fff0f0}
 .footer-legal strong{color:#fff}
 .footer-legal .footer-warn{color:#fbbf24;font-size:.65rem;margin-top:4px}
 
+
+/* ── ASESORES PANEL ── */
+.asesor-search-big{background:#fff;border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--shadow);padding:24px;margin-bottom:18px}
+.asesor-search-big h2{font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.asesor-input-wrap{display:flex;gap:10px;align-items:center;margin-bottom:12px}
+.asesor-input{flex:1;padding:14px 16px;border-radius:var(--r);border:2px solid var(--border2);font-family:var(--mono);font-size:1.1rem;font-weight:600;outline:none;letter-spacing:.04em;text-transform:uppercase;transition:border-color .15s}
+.asesor-input:focus{border-color:#059669;box-shadow:0 0 0 4px rgba(5,150,105,.1)}
+.asesor-hint{font-size:.72rem;color:var(--muted);margin-top:4px}
+
+.presupuesto-card{background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:2px solid #86efac;border-radius:var(--r);padding:24px;margin-bottom:18px}
+.presupuesto-card h3{font-size:.82rem;text-transform:uppercase;letter-spacing:.08em;color:#059669;margin-bottom:18px;font-weight:700;display:flex;align-items:center;gap:7px}
+.presupuesto-result{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
+.pres-item{background:#fff;border-radius:var(--rs);padding:14px;border:1px solid #86efac}
+.pres-item-lbl{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:#059669;font-weight:600;margin-bottom:4px}
+.pres-item-val{font-size:1.3rem;font-weight:700;color:var(--text)}
+.pres-item-sub{font-size:.7rem;color:var(--muted);margin-top:2px}
+.descuento-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid #86efac}
+.descuento-row label{font-size:.75rem;font-weight:600;color:#059669;flex:1}
+.descuento-input{width:70px;padding:6px 10px;border-radius:var(--rs);border:1.5px solid #86efac;font-family:var(--font);font-size:.88rem;font-weight:700;text-align:center;outline:none}
+.descuento-input:focus{border-color:#059669}
+.total-final{background:linear-gradient(135deg,#059669,#047857);color:#fff;border-radius:var(--r);padding:16px 20px;display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+.total-final-lbl{font-size:.78rem;font-weight:600;opacity:.85}
+.total-final-val{font-size:1.6rem;font-weight:700}
+
+.stock-result-mini{background:#fff;border-radius:var(--rs);border:1px solid var(--border);padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .15s}
+.stock-result-mini:hover{border-color:#059669;background:#f0fdf4}
+.stock-result-mini.selected{border-color:#059669;background:#f0fdf4}
+.srm-medida{font-family:var(--mono);font-size:.9rem;font-weight:700;color:var(--primary)}
+.srm-marca{font-size:.75rem;color:var(--muted);margin-top:2px}
+.srm-stock{font-size:.8rem;font-weight:700;color:var(--green)}
+.srm-pvp{font-size:.9rem;font-weight:700;color:#059669;margin-left:auto}
+
+.pvp-editable{cursor:pointer;border-bottom:1px dashed var(--border2);padding:2px 4px;border-radius:2px;transition:background .15s}
+.pvp-editable:hover{background:#fff8ec}
+.pvp-edit-input{width:80px;padding:4px 8px;border-radius:var(--rs);border:1.5px solid var(--orange);font-family:var(--font);font-size:.82rem;text-align:center;outline:none}
+
+/* ── APARTADOS ── */
+.apartado-card{background:#fff;border:2px solid #c4b5fd;border-radius:var(--r);padding:16px;margin-bottom:10px;display:flex;align-items:flex-start;gap:12px}
+.apartado-card .apt-icon{font-size:1.4rem;flex-shrink:0}
+.apartado-card .apt-info{flex:1}
+.apartado-card .apt-medida{font-family:var(--mono);font-size:.88rem;font-weight:700;color:var(--primary)}
+.apartado-card .apt-archivo{font-size:.72rem;color:#7c3aed;font-weight:600;margin-top:2px}
+.apartado-card .apt-sub{font-size:.7rem;color:var(--muted);margin-top:2px}
+.apartado-card .apt-actions{display:flex;gap:6px;flex-shrink:0}
+.apt-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:.65rem;font-weight:700;background:#f5f3ff;color:#7c3aed;border:1px solid #c4b5fd}
+
 @media(max-width:768px){.header-stats{display:none}.tabs{overflow-x:auto}.main{padding:12px 8px}}
 </style>
 </head>
@@ -224,6 +270,8 @@ tr.stock-out td{background:#fff0f0}
   <div class="tab"        id="tab-movimiento" onclick="setTab('movimiento')">➕ Registrar Movimiento</div>
   <div class="tab orange" id="tab-analytics"  onclick="setTab('analytics')">📊 Análisis de Ventas</div>
   <div class="tab"        id="tab-historial"  onclick="setTab('historial')">📋 Historial</div>
+  <div class="tab" style="color:#059669;border-bottom-color:#059669" id="tab-asesores" onclick="setTab('asesores')">🚗 Presupuesto Asesores</div>
+  <div class="tab" style="color:#7c3aed" id="tab-apartados" onclick="setTab('apartados')">📌 Apartados</div>
 </div>
 
 <div class="main">
@@ -393,6 +441,131 @@ tr.stock-out td{background:#fff0f0}
   </div>
 </div>
 
+
+<!-- ═══ PANEL ASESORES ═══ -->
+<div id="panelAsesores" style="display:none">
+  <div class="asesor-search-big">
+    <h2>🚗 Buscador de Neumáticos — Presupuesto Rápido</h2>
+    <div class="asesor-input-wrap">
+      <input type="text" class="asesor-input" id="asesorSearch"
+        placeholder="2255517 · 215/55R17 · Continental · ZTS215..."
+        oninput="buscarAsesor()" autocomplete="off">
+      <button class="btn btn-primary" onclick="buscarAsesor()">🔍 Buscar</button>
+    </div>
+    <div class="asesor-hint">Escribe la medida de cualquier forma: "2055516", "205/55R16", "ZTS205..." o el nombre de la marca</div>
+    <div id="asesorResultados" style="margin-top:14px"></div>
+  </div>
+
+  <!-- Presupuesto -->
+  <div class="presupuesto-card" id="presupuestoPanel" style="display:none">
+    <h3>💶 Presupuesto de montaje</h3>
+    <div style="margin-bottom:14px;font-size:.82rem;color:#059669">
+      <strong id="pres_medida">—</strong> · <span id="pres_marca">—</span> · Stock: <strong id="pres_stock">—</strong> uds
+    </div>
+
+    <!-- Cantidad -->
+    <div style="display:flex;gap:10px;margin-bottom:16px">
+      <button class="btn" style="background:#e0f2fe;color:#0369a1;font-weight:700;flex:1" onclick="setPrescantidad(2)">🔧 2 Neumáticos</button>
+      <button class="btn" style="background:#e0f2fe;color:#0369a1;font-weight:700;flex:1" onclick="setPrescantidad(4)">🔧🔧 4 Neumáticos</button>
+    </div>
+
+    <div class="presupuesto-result">
+      <div class="pres-item">
+        <div class="pres-item-lbl">PVP Neumático</div>
+        <div class="pres-item-val" id="pres_pvp_unit">—</div>
+        <div class="pres-item-sub">por unidad</div>
+      </div>
+      <div class="pres-item">
+        <div class="pres-item-lbl">Cantidad</div>
+        <div class="pres-item-val" id="pres_cant">4</div>
+        <div class="pres-item-sub">neumáticos</div>
+      </div>
+      <div class="pres-item">
+        <div class="pres-item-lbl">Subtotal neumáticos</div>
+        <div class="pres-item-val" id="pres_subtotal_neum">—</div>
+        <div class="pres-item-sub" id="pres_dto_neum_lbl">sin descuento</div>
+      </div>
+      <div class="pres-item">
+        <div class="pres-item-lbl">Mano de obra montaje</div>
+        <div class="pres-item-val" id="pres_mo">—</div>
+        <div class="pres-item-sub" id="pres_dto_mo_lbl">sin descuento</div>
+      </div>
+    </div>
+
+    <!-- Descuentos -->
+    <div style="background:#f0fdf4;border-radius:var(--rs);padding:12px 16px;margin-bottom:12px">
+      <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:#059669;font-weight:700;margin-bottom:10px">Descuentos</div>
+      <div class="descuento-row">
+        <label>% Descuento neumáticos</label>
+        <input type="number" class="descuento-input" id="dto_neum" value="0" min="0" max="100" oninput="calcPresupuesto()">
+        <span style="font-size:.78rem;color:#059669;font-weight:600">%</span>
+      </div>
+      <div class="descuento-row">
+        <label>% Descuento mano de obra</label>
+        <input type="number" class="descuento-input" id="dto_mo" value="0" min="0" max="100" oninput="calcPresupuesto()">
+        <span style="font-size:.78rem;color:#059669;font-weight:600">%</span>
+      </div>
+    </div>
+
+    <div class="total-final">
+      <div>
+        <div class="total-final-lbl">TOTAL PRESUPUESTO</div>
+        <div style="font-size:.68rem;opacity:.7" id="pres_iva_note">IVA no incluido</div>
+      </div>
+      <div class="total-final-val" id="pres_total">—</div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-ghost" style="flex:1" onclick="resetPresupuesto()">🔄 Nuevo presupuesto</button>
+      <button class="btn" style="background:#059669;color:#fff;flex:1" onclick="apartarDesdePresupuesto()">📌 Apartar estos neumáticos</button>
+    </div>
+  </div>
+
+  <!-- Config mano de obra -->
+  <div class="card">
+    <div class="card-hdr" style="background:linear-gradient(135deg,#059669,#047857)"><h2>⚙️ Tarifas de mano de obra</h2></div>
+    <div class="card-body">
+      <div class="form-grid">
+        <div class="field"><label>🔧 M.O. 2 neumáticos (€)</label><input type="number" id="cfg_mo2" value="40" step="0.01" oninput="saveCfg()"></div>
+        <div class="field"><label>🔧🔧 M.O. 4 neumáticos (€)</label><input type="number" id="cfg_mo4" value="70" step="0.01" oninput="saveCfg()"></div>
+        <div class="field"><label>% Dto. neum. habitual</label><input type="number" id="cfg_dto_neum" value="0" min="0" max="100" oninput="saveCfg()"></div>
+        <div class="field"><label>% Dto. M.O. habitual</label><input type="number" id="cfg_dto_mo" value="0" min="0" max="100" oninput="saveCfg()"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PANEL APARTADOS ═══ -->
+<div id="panelApartados" style="display:none">
+  <div class="card">
+    <div class="card-hdr" style="background:linear-gradient(135deg,#5b21b6,#7c3aed)"><h2>📌 Neumáticos apartados</h2></div>
+    <div class="card-body">
+      <div class="form-grid" style="margin-bottom:16px">
+        <div class="field field-wide"><label>📏 Medida / Referencia</label>
+          <input type="text" id="apt_medida" class="mono" placeholder="215/55R17 · ZTS215557VCZ00" autocomplete="off" oninput="this.value=this.value.toUpperCase()">
+        </div>
+        <div class="field"><label>🗂️ Nº Archivo cliente</label>
+          <input type="text" id="apt_archivo" class="mono" placeholder="#119XXX" autocomplete="off" oninput="this.value=this.value.toUpperCase()">
+        </div>
+        <div class="field"><label>👤 Nombre cliente</label>
+          <input type="text" id="apt_cliente" placeholder="Nombre del cliente" autocomplete="off">
+        </div>
+        <div class="field"><label>🔢 Cantidad apartada</label>
+          <input type="number" id="apt_cantidad" value="4" min="1">
+        </div>
+        <div class="field"><label>📅 Fecha límite recogida</label>
+          <input type="date" id="apt_fechaLimite">
+        </div>
+        <div class="field field-wide"><label>📝 Nota</label>
+          <input type="text" id="apt_nota" placeholder="Observaciones…" autocomplete="off">
+        </div>
+      </div>
+      <button class="btn btn-primary" style="background:#7c3aed" onclick="guardarApartado()">📌 Guardar apartado</button>
+    </div>
+  </div>
+  <div id="apartadosList"></div>
+</div>
+
 </div><!-- /main -->
 
 <!-- MODAL EDITAR REFERENCIA -->
@@ -520,10 +693,14 @@ function deleteFromFirebase(path, id) {
 // ══════════════════════════════════════════════════════════════════
 function setTab(tab) {
   activeTab = tab;
-  ['stock','movimiento','analytics','historial'].forEach(t => {
-    document.getElementById('panel'+t.charAt(0).toUpperCase()+t.slice(1)).style.display = t===tab?'block':'none';
-    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+  ['stock','movimiento','analytics','historial','asesores','apartados'].forEach(t => {
+    const p = document.getElementById('panel'+t.charAt(0).toUpperCase()+t.slice(1));
+    if(p) p.style.display = t===tab?'block':'none';
+    const tb = document.getElementById('tab-'+t);
+    if(tb) tb.classList.toggle('active', t===tab);
   });
+  if(tab==='asesores') loadCfg();
+  if(tab==='apartados') renderApartados();
   if (tab==='analytics') renderAnalytics();
 }
 
@@ -694,7 +871,7 @@ function renderStock() {
     <td>${stockBar(s)}</td>
     <td style="color:var(--muted);font-size:.78rem">${s.stockMin||0}</td>
     <td>${stockBadge(s)}</td>
-    <td style="font-weight:600;color:var(--green)">${fmtMoney(s.pvp)}</td>
+    <td><span class="pvp-editable" title="Clic para editar PVP" onclick="editarPVP('${s.id}',this)">${s.pvp?parseFloat(s.pvp).toFixed(2)+'€':'Añadir PVP'}</span></td>
     <td style="font-size:.75rem;color:var(--muted)">${fmtMoney(s.coste)}</td>
     <td style="font-size:.73rem;color:var(--muted);white-space:nowrap">${fmtDate(s.fechaRecepcion)}</td>
     <td style="text-align:center;font-weight:700;color:var(--primary)">${s.totalVendidas||0}</td>
@@ -951,6 +1128,260 @@ function updateSuggestions() {
   document.getElementById('ubicSuggestions').innerHTML   = ubics.map(u=>`<option value="${esc(u)}">`).join('');
 }
 
+// ══════════════════════════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════════════════════════
+const CFG_KEY = 'motorsan_neum_cfg';
+let cfg = { mo2: 40, mo4: 70, dto_neum: 0, dto_mo: 0 };
+let presRef = null;
+let presCantidad = 4;
+let apartados = [];
+
+function loadCfg() {
+  try { const c = JSON.parse(localStorage.getItem(CFG_KEY)); if(c) cfg = {...cfg,...c}; } catch {}
+  document.getElementById('cfg_mo2').value       = cfg.mo2;
+  document.getElementById('cfg_mo4').value       = cfg.mo4;
+  document.getElementById('cfg_dto_neum').value  = cfg.dto_neum;
+  document.getElementById('cfg_dto_mo').value    = cfg.dto_mo;
+  document.getElementById('dto_neum').value      = cfg.dto_neum;
+  document.getElementById('dto_mo').value        = cfg.dto_mo;
+}
+function saveCfg() {
+  cfg.mo2      = parseFloat(document.getElementById('cfg_mo2').value) || 40;
+  cfg.mo4      = parseFloat(document.getElementById('cfg_mo4').value) || 70;
+  cfg.dto_neum = parseFloat(document.getElementById('cfg_dto_neum').value) || 0;
+  cfg.dto_mo   = parseFloat(document.getElementById('cfg_dto_mo').value) || 0;
+  localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
+}
+
+// ══════════════════════════════════════════════════════════════════
+// BÚSQUEDA INTUITIVA
+// ══════════════════════════════════════════════════════════════════
+function normalizarMedida(input) {
+  // Quitar espacios y guiones
+  let s = input.replace(/[\s\-\.]/g,'').toUpperCase();
+  // Si empieza por ZTS devolver tal cual
+  if (s.startsWith('ZTS')) return [s];
+  // Convertir "2255517" → "225/55R17"
+  // Detectar patron: 3dig + 2dig + 2dig (ancho+perfil+radio)
+  const m = s.match(/^(\d{3})(\d{2})(\d{2})$/);
+  if (m) return [`${m[1]}/${m[2]}R${m[3]}`, `${m[1]}/${m[2]}r${m[3]}`];
+  // "205/55/17" → "205/55R17"
+  const m2 = s.match(/^(\d{3})[\/\-](\d{2})[\/\-](\d{2})$/);
+  if (m2) return [`${m2[1]}/${m2[2]}R${m2[3]}`];
+  return [s];
+}
+
+function buscarAsesor() {
+  const raw = document.getElementById('asesorSearch').value.trim();
+  if (!raw) { document.getElementById('asesorResultados').innerHTML = ''; return; }
+
+  const terminos = normalizarMedida(raw);
+  const q = raw.toLowerCase();
+
+  const results = stockData.filter(s => {
+    const medidaNorm = s.medida.replace(/[\s\/]/g,'').toUpperCase();
+    if (terminos.some(t => medidaNorm.includes(t.replace(/[\s\/R]/g,'')))) return true;
+    const hay = [s.medida, s.referencia, s.marca, s.tipo, s.indice].join(' ').toLowerCase();
+    return hay.includes(q);
+  });
+
+  const cont = document.getElementById('asesorResultados');
+  if (!results.length) {
+    cont.innerHTML = '<div style="color:var(--muted2);padding:16px;text-align:center">🔍 Sin resultados. Prueba con otro formato: "215/55R17", "2155517" o la marca.</div>';
+    return;
+  }
+
+  cont.innerHTML = results.map(s => {
+    const st = getStockStatus(s);
+    const stColor = st==='ok'?'var(--green)':st==='low'?'var(--orange)':'var(--red)';
+    const apt = apartados.filter(a => a.medidaRef === s.id).reduce((t,a)=>t+a.cantidad,0);
+    const stockDisp = s.stock - apt;
+    return `<div class="stock-result-mini" onclick="seleccionarNeumAsesor('${s.id}')">
+      <div style="flex:1">
+        <div class="srm-medida">${esc(s.medida)} <span style="font-size:.7rem;font-weight:400;color:var(--muted)">${esc(s.indice)}</span></div>
+        <div class="srm-marca">${esc(s.marca)} · ${esc(s.tipo)} · Ref: ${esc(s.referencia)}</div>
+        ${apt>0?`<div style="font-size:.68rem;color:#7c3aed;margin-top:2px">📌 ${apt} ud${apt>1?'s':''} apartadas</div>`:''}
+      </div>
+      <div style="text-align:right">
+        <div class="srm-pvp">${s.pvp?s.pvp.toFixed(2)+'€':'Sin PVP'}</div>
+        <div style="font-size:.72rem;font-weight:600;color:${stColor};margin-top:2px">${stockDisp} uds libres</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function seleccionarNeumAsesor(id) {
+  presRef = stockData.find(s => s.id === id);
+  if (!presRef) return;
+  // Mark selected
+  document.querySelectorAll('.stock-result-mini').forEach(el => el.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+  setPrescantidad(4);
+  document.getElementById('presupuestoPanel').style.display = 'block';
+  document.getElementById('presupuestoPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function setPrescantidad(n) {
+  presCantidad = n;
+  calcPresupuesto();
+}
+
+function calcPresupuesto() {
+  if (!presRef) return;
+  const cant      = presCantidad;
+  const pvpUnit   = parseFloat(presRef.pvp) || 0;
+  const dtoNeum   = parseFloat(document.getElementById('dto_neum').value) || 0;
+  const dtoMO     = parseFloat(document.getElementById('dto_mo').value) || 0;
+  const mo        = cant === 2 ? (parseFloat(document.getElementById('cfg_mo2').value)||40)
+                                : (parseFloat(document.getElementById('cfg_mo4').value)||70);
+
+  const subtotalNeum = pvpUnit * cant;
+  const descNeum     = subtotalNeum * dtoNeum / 100;
+  const subtotalMO   = mo;
+  const descMO       = subtotalMO * dtoMO / 100;
+  const total        = (subtotalNeum - descNeum) + (subtotalMO - descMO);
+
+  const apt = apartados.filter(a => a.medidaRef === presRef.id).reduce((t,a)=>t+a.cantidad,0);
+  const stockDisp = presRef.stock - apt;
+
+  document.getElementById('pres_medida').textContent     = presRef.medida;
+  document.getElementById('pres_marca').textContent      = presRef.marca;
+  document.getElementById('pres_stock').textContent      = stockDisp + ' libres';
+  document.getElementById('pres_pvp_unit').textContent   = pvpUnit.toFixed(2) + '€';
+  document.getElementById('pres_cant').textContent       = cant + ' ud' + (cant>1?'s':'');
+  document.getElementById('pres_subtotal_neum').textContent = (subtotalNeum-descNeum).toFixed(2)+'€';
+  document.getElementById('pres_dto_neum_lbl').textContent  = dtoNeum>0?`-${dtoNeum}% dto aplicado`:'sin descuento';
+  document.getElementById('pres_mo').textContent            = (subtotalMO-descMO).toFixed(2)+'€';
+  document.getElementById('pres_dto_mo_lbl').textContent    = dtoMO>0?`-${dtoMO}% dto aplicado`:'sin descuento';
+  document.getElementById('pres_total').textContent         = total.toFixed(2)+'€';
+}
+
+function resetPresupuesto() {
+  presRef = null;
+  presCantidad = 4;
+  document.getElementById('presupuestoPanel').style.display = 'none';
+  document.getElementById('asesorSearch').value = '';
+  document.getElementById('asesorResultados').innerHTML = '';
+  document.getElementById('dto_neum').value = cfg.dto_neum;
+  document.getElementById('dto_mo').value   = cfg.dto_mo;
+}
+
+function apartarDesdePresupuesto() {
+  if (!presRef) return;
+  setTab('apartados');
+  document.getElementById('apt_medida').value   = presRef.medida + ' · ' + presRef.referencia;
+  document.getElementById('apt_cantidad').value = presCantidad;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// PVP EDITABLE EN TABLA
+// ══════════════════════════════════════════════════════════════════
+function editarPVP(id, el) {
+  const s = stockData.find(x => x.id === id);
+  if (!s) return;
+  const input = document.createElement('input');
+  input.type = 'number'; input.step = '0.01'; input.min = '0';
+  input.value = s.pvp || 0;
+  input.className = 'pvp-edit-input';
+  el.replaceWith(input);
+  input.focus(); input.select();
+  function guardar() {
+    const newVal = parseFloat(input.value) || 0;
+    s.pvp = newVal;
+    saveToFirebase(DB_STOCK, id, s);
+    const span = document.createElement('span');
+    span.className = 'pvp-editable';
+    span.title = 'Clic para editar PVP';
+    span.textContent = newVal.toFixed(2) + '€';
+    span.onclick = () => editarPVP(id, span);
+    input.replaceWith(span);
+    toast('✅ PVP actualizado: ' + newVal.toFixed(2) + '€', 'success');
+  }
+  input.addEventListener('blur', guardar);
+  input.addEventListener('keydown', e => { if(e.key==='Enter') guardar(); if(e.key==='Escape') { renderStock(); } });
+}
+
+// ══════════════════════════════════════════════════════════════════
+// APARTADOS
+// ══════════════════════════════════════════════════════════════════
+const APT_KEY = 'motorsan_neum_apt_v1';
+function loadApartados() {
+  try { apartados = JSON.parse(localStorage.getItem(APT_KEY)||'[]'); } catch { apartados=[]; }
+  renderApartados();
+}
+function saveApartados() { localStorage.setItem(APT_KEY, JSON.stringify(apartados)); }
+
+function guardarApartado() {
+  const medida   = document.getElementById('apt_medida').value.trim();
+  const archivo  = document.getElementById('apt_archivo').value.trim();
+  const cliente  = document.getElementById('apt_cliente').value.trim();
+  const cantidad = parseInt(document.getElementById('apt_cantidad').value)||4;
+  const fechaLim = document.getElementById('apt_fechaLimite').value;
+  const nota     = document.getElementById('apt_nota').value.trim();
+  if (!medida)  { toast('Indica la medida o referencia', 'error'); return; }
+  if (!archivo) { toast('Indica el nº de archivo del cliente', 'error'); return; }
+
+  // Find matching stock
+  const found = stockData.find(s => s.medida===medida||s.referencia===medida||
+    (medida.includes(s.medida)||medida.includes(s.referencia)));
+
+  const apt = {
+    id: uid(), medida, medidaRef: found?.id||'',
+    archivo, cliente, cantidad, fechaLimite: fechaLim,
+    nota, fecha: new Date().toISOString(), activo: true
+  };
+  apartados.unshift(apt);
+  saveApartados();
+  renderApartados();
+  toast(`📌 ${cantidad} ud${cantidad>1?'s':''} apartadas para ${archivo}`, 'success');
+  // Clear form
+  ['apt_medida','apt_archivo','apt_cliente','apt_nota'].forEach(id=>{ const el=document.getElementById(id); if(el)el.value=''; });
+  document.getElementById('apt_cantidad').value='4';
+  document.getElementById('apt_fechaLimite').value='';
+}
+
+function liberarApartado(id) {
+  if (!confirm('¿Liberar este apartado?')) return;
+  apartados = apartados.filter(a => a.id !== id);
+  saveApartados();
+  renderApartados();
+  toast('Apartado liberado', 'info');
+}
+
+function renderApartados() {
+  const cont = document.getElementById('apartadosList');
+  if (!cont) return;
+  if (!apartados.length) {
+    cont.innerHTML = '<div style="text-align:center;color:var(--muted2);padding:40px">📌 Sin neumáticos apartados</div>';
+    return;
+  }
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  cont.innerHTML = apartados.map(a => {
+    let alertColor = '#7c3aed';
+    let alertTxt = '';
+    if (a.fechaLimite) {
+      const lim = new Date(a.fechaLimite+'T00:00');
+      const diff = Math.round((lim-hoy)/86400000);
+      if (diff<0)  { alertColor='var(--red)'; alertTxt=`⚠️ Vencido hace ${Math.abs(diff)}d`; }
+      else if(diff<=3) { alertColor='var(--orange)'; alertTxt=`⏰ Vence en ${diff}d`; }
+      else alertTxt = `✓ Recogida hasta ${fmtDate(a.fechaLimite)}`;
+    }
+    return `<div class="apartado-card" style="border-color:${alertColor}20">
+      <div class="apt-icon">📌</div>
+      <div class="apt-info">
+        <div class="apt-medida">${esc(a.medida)}</div>
+        <div class="apt-archivo">🗂️ Archivo: ${esc(a.archivo)} ${a.cliente?'· 👤 '+esc(a.cliente):''}</div>
+        <div class="apt-sub">${a.cantidad} ud${a.cantidad>1?'s':''} · Apartado: ${fmtDate(a.fecha.slice(0,10))} ${alertTxt?'· <strong style="color:'+alertColor+'">'+alertTxt+'</strong>':''}</div>
+        ${a.nota?`<div class="apt-sub" style="margin-top:3px;font-style:italic">${esc(a.nota)}</div>`:''}
+      </div>
+      <div class="apt-actions">
+        <button class="act-btn red" onclick="liberarApartado('${a.id}')" title="Liberar apartado">✓ Liberar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 // ── DUAL SCROLL ──
 (function() {
   function init() {
@@ -968,6 +1399,10 @@ function updateSuggestions() {
 document.getElementById('editModal').addEventListener('click', e => {
   if(e.target===document.getElementById('editModal')) cerrarEdit();
 });
+
+// ── LOAD CONFIG & APARTADOS ──
+loadCfg();
+loadApartados();
 
 // ── SET TODAY DATE ──
 document.getElementById('mov_fecha').value = new Date().toISOString().slice(0,10);
