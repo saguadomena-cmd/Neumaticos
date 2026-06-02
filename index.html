@@ -446,8 +446,8 @@ tr.stock-out td{background:#fff0f0}
           <label>🗂️ Nº Archivo (apartar)</label>
           <input type="text" id="mov_archivo" class="mono" placeholder="#119XXX" autocomplete="off" oninput="this.value=this.value.toUpperCase()">
         </div>
-        <div class="field">
-          <label>👤 Asesor que solicita</label>
+        <div class="field" id="mov_asesor_field">
+          <label>👤 Asesor <span id="asesor_required_lbl" style="color:var(--red);font-size:.65rem">(obligatorio en ventas)</span></label>
           <select id="mov_asesor">
             <option value="">— Ninguno —</option>
             <option value="TONI">Toni Moya</option>
@@ -859,6 +859,13 @@ function setMovTipo(tipo) {
   document.getElementById('mov-venta').className  = 'modal-type-btn' + (tipo==='venta'?' active-venta':'');
   document.getElementById('btnGuardarMov').textContent = tipo==='compra' ? '📥 Guardar entrada' : '📤 Guardar venta';
   document.getElementById('btnGuardarMov').className = tipo==='compra' ? 'btn btn-green' : 'btn btn-red';
+  // Highlight asesor field for ventas
+  const asesorField = document.getElementById('mov_asesor_field');
+  if (asesorField) {
+    asesorField.style.border = tipo==='venta' ? '2px solid var(--red)' : '';
+    asesorField.style.borderRadius = tipo==='venta' ? 'var(--rs)' : '';
+    asesorField.style.padding = tipo==='venta' ? '8px' : '';
+  }
 }
 
 function buscarRefPorMedida() {
@@ -891,75 +898,104 @@ function guardarMovimiento() {
   const nota      = document.getElementById('mov_nota').value.trim();
   const archivo   = document.getElementById('mov_archivo').value.trim();
   const fechaCita = document.getElementById('mov_cita').value;
-  const asesor    = document.getElementById('mov_asesor')?.value||'';
+  const asesor    = document.getElementById('mov_asesor')?.value || '';
 
-  if (!medida) { toast('Introduce la medida del neumático', 'error'); return; }
+  // Validations
+  if (!medida)   { toast('Introduce la medida del neumático', 'error'); return; }
   if (!cantidad || cantidad < 1) { toast('La cantidad debe ser mayor a 0', 'error'); return; }
+  if (movTipo === 'venta' && !asesor) { toast('Selecciona el asesor que realiza la venta', 'error'); return; }
 
-  // Crear/actualizar referencia en stock
-  // find existing stock
-  let existing = stockData.find(s => (referencia && s.referencia===referencia) || (!referencia && s.medida===medida) || (s.medida===medida && s.referencia===referencia));
+  // Find existing stock record
+  let existing = stockData.find(s =>
+    (referencia && s.referencia === referencia) ||
+    (s.medida === medida && !referencia) ||
+    (s.medida === medida && s.referencia === referencia)
+  );
+
+  let stockKey = '';
 
   if (existing) {
+    stockKey = existing.id;
     if (movTipo === 'compra') {
       existing.stock += cantidad;
       existing.fechaRecepcion = fecha;
-      existing.ubicacion = ubicacion || existing.ubicacion;
-      existing.pvp   = pvp   || existing.pvp;
-      existing.coste = coste || existing.coste;
+      if (ubicacion)  existing.ubicacion = ubicacion;
+      if (pvp > 0)    existing.pvp   = pvp;
+      if (coste > 0)  existing.coste = coste;
+      if (marca)      existing.marca = marca;
+      existing.stockMin = stockMin;
+      saveToFirebase(DB_STOCK, existing.id, existing);
+      toast('✅ Entrada registrada — stock total: ' + existing.stock + ' uds', 'success');
     } else {
-      if (existing.stock < cantidad) { toast('Stock insuficiente ('+existing.stock+' uds disponibles)', 'error'); return; }
+      // VENTA
+      const apt = apartados.filter(a => a.medidaRef === existing.id).reduce((t,a)=>t+a.cantidad,0);
+      const disponible = existing.stock - apt;
+      if (disponible < cantidad) {
+        toast('Stock insuficiente — ' + disponible + ' uds libres (' + apt + ' apartadas)', 'error');
+        return;
+      }
       existing.stock -= cantidad;
       existing.totalVendidas = (existing.totalVendidas||0) + cantidad;
+
+      // Recalculate dynamic stockMin based on sales velocity
+      const allVentasRef = [...movData.filter(m => m.tipo==='venta' && m.stockKey===existing.id)];
+      if (allVentasRef.length >= 1) {
+        const fechas = allVentasRef.map(m => m.fecha||'').filter(Boolean).sort();
+        let mesesActivos = 1;
+        if (fechas.length >= 2) {
+          const d1 = new Date(fechas[0]+'T00:00');
+          const d2 = new Date(fechas[fechas.length-1]+'T00:00');
+          mesesActivos = Math.max(1, Math.round((d2-d1)/2592000000)+1);
+        }
+        const udsTotal = allVentasRef.reduce((t,m)=>t+(parseInt(m.cantidad)||1),0) + cantidad;
+        const nuevoMin = Math.ceil((udsTotal / mesesActivos) * 1.5);
+        existing.stockMin = nuevoMin;
+      }
+
+      saveToFirebase(DB_STOCK, existing.id, existing);
+      toast('✅ Venta registrada por ' + asesor + ' — quedan ' + existing.stock + ' uds', 'success', 4000);
     }
-    existing.stockMin = (stockMin !== undefined && stockMin !== null) ? stockMin : (existing.stockMin||0);
-    saveToFirebase(DB_STOCK, existing.id, existing);
-    toast(movTipo==='compra'?'✅ Stock actualizado — '+existing.stock+' uds':'✅ Venta registrada — quedan '+existing.stock+' uds','success');
   } else {
-    if (movTipo === 'venta') { toast('No existe esta referencia en stock. Registra primero una entrada.', 'error'); return; }
+    if (movTipo === 'venta') {
+      toast('No existe esta referencia en stock. Registra primero una entrada.', 'error');
+      return;
+    }
+    const newId = referencia || (medida.replace(/[/\s]/g,'_') + '_' + Date.now().toString(36));
+    stockKey = newId;
     const newRef = {
-      id: referencia || (medida.replace(/[/\s]/g,'_')+'_'+Date.now().toString(36)), medida, referencia, marca, tipo: tipoNeum, indice, ubicacion,
+      id: newId, medida, referencia, marca, tipo: tipoNeum, indice, ubicacion,
       stock: cantidad, stockMin, pvp, coste,
       fechaRecepcion: fecha, totalVendidas: 0,
       fechaCreacion: new Date().toISOString()
     };
     stockData.push(newRef);
     saveToFirebase(DB_STOCK, newRef.id, newRef);
-    toast('✅ '+medida+' añadida al stock — '+cantidad+' uds','success');
+    toast('✅ ' + medida + ' añadida al stock — ' + cantidad + ' uds', 'success');
   }
 
-  // Guardar movimiento
+  // Save movement
   const mov = {
     id: uid(), tipo: movTipo, medida, referencia, marca,
-    cantidad, pvp, coste, fecha, nota, archivo, fechaCita, asesor,
-    stockKey, fechaCreacion: new Date().toISOString()
+    cantidad, pvp, coste, fecha, nota, archivo, fechaCita,
+    asesor: asesor || '',
+    stockKey,
+    fechaCreacion: new Date().toISOString()
   };
   movData.unshift(mov);
   saveToFirebase(DB_MOV, mov.id, mov);
 
-  toast(movTipo==='compra' ? `✅ Entrada de ${cantidad} ud${cantidad>1?'s':''} registrada ✓` : `✅ Venta de ${cantidad} ud${cantidad>1?'s':''} registrada ✓`, 'success');
-  // Auto-apartado si hay archivo indicado
+  renderStock(); updateStats(); renderHistorial(); renderAnalytics();
+
+  // Auto-apartado si hay archivo indicado en compra
   if (movTipo === 'compra' && archivo) {
-    const refId = existing ? existing.id : stockData[stockData.length-1]?.id || '';
-    const asesorMov = document.getElementById('mov_asesor')?.value||'';
-    if (refId) crearAutoApartado(refId, medida, archivo, cantidad, fechaCita, asesorMov);
-  } else if (movTipo === 'compra' && nota && nota.match(/^#\d+/)) {
-    const recId = existing ? existing.id : stockData[stockData.length-1]?.id || '';
-    if (recId) {
-      const autoApt = {
-        id: uid(), medida: medida, medidaRef: recId,
-        archivo: nota.trim(), cliente: '', cantidad: cantidad,
-        fechaLimite: '', nota: 'Apartado automático al registrar compra',
-        fecha: new Date().toISOString(), activo: true
-      };
-      apartados.unshift(autoApt);
-      saveApartados();
-      renderApartados();
-      toast('📌 Apartado automático creado para ' + nota, 'info', 4000);
-    }
+    const asesorMov = asesor || '';
+    if (stockKey) crearAutoApartado(stockKey, medida, archivo, cantidad, fechaCita, asesorMov);
   }
+
   limpiarMov();
 }
+
+
 
 function limpiarMov() {
   ['mov_medida','mov_referencia','mov_marca','mov_indice','mov_ubicacion','mov_nota'].forEach(id => {
