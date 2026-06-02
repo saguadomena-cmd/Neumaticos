@@ -101,15 +101,21 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
 .tbl-wrap{overflow-x:auto}
 .tbl-scroll-top{overflow-x:auto;overflow-y:hidden;height:10px;margin-bottom:2px}
 .tbl-scroll-inner{height:1px}
-table{width:100%;border-collapse:collapse;font-size:.82rem}
-th{padding:10px 11px;text-align:left;font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;color:rgba(255,255,255,.8);font-weight:600;white-space:nowrap;background:linear-gradient(135deg,#0d1b3e,#1a3a6e);border-right:1px solid rgba(255,255,255,.08);cursor:pointer;user-select:none}
-th:hover{background:rgba(255,255,255,.08)}
+table{width:100%;border-collapse:collapse;font-size:.84rem}
+th{padding:10px 12px;text-align:left;font-size:.62rem;text-transform:uppercase;letter-spacing:.07em;color:rgba(255,255,255,.85);font-weight:700;white-space:nowrap;background:linear-gradient(135deg,#0d1b3e,#1a3a6e);border-right:1px solid rgba(255,255,255,.06);cursor:pointer;user-select:none;transition:background .15s}
+th:hover{background:linear-gradient(135deg,#1a2d5a,#2a4a8e)}
 th:last-child{border-right:none}
-td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text2)}
-tr:hover td{background:#f0f4ff}
-tr.stock-low td{background:#fff8f0}
-tr.stock-out td{background:#fff0f0}
-.empty-row{text-align:center;padding:48px;color:var(--muted2);font-size:.85rem}
+td{padding:10px 12px;border-bottom:1px solid #eef0f4;vertical-align:middle;color:var(--text2)}
+tr:hover td{background:#f4f7ff}
+tr.stock-low td{background:#fffbf0}
+tr.stock-low:hover td{background:#fff5e0}
+tr.stock-out td{background:#fff5f5}
+tr.stock-out:hover td{background:#ffecec}
+.empty-row{text-align:center;padding:60px;color:var(--muted2);font-size:.88rem}
+/* STOCK NUMERO GRANDE */
+.stock-num-big{font-size:1.4rem;font-weight:800;line-height:1;display:block}
+.stock-sub{font-size:.6rem;color:var(--muted2);font-weight:400;margin-top:1px}
+.stock-cell{text-align:center;min-width:50px}
 
 /* BADGES */
 .badge{display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:700;white-space:nowrap}
@@ -307,10 +313,2489 @@ tr.stock-out td{background:#fff0f0}
 <!-- HEADER -->
 <div class="header">
   <div class="header-brand">
-    <div style="font-size:1.8rem">🏎️</div>
+    <svg width="44" height="44" viewBox="0 0 44 44" style="flex-shrink:0">
+      <circle cx="22" cy="22" r="21" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="1"/>
+      <circle cx="12" cy="22" r="8" fill="none" stroke="#fff" stroke-width="2.2"/>
+      <circle cx="19" cy="22" r="8" fill="none" stroke="#fff" stroke-width="2.2"/>
+      <circle cx="26" cy="22" r="8" fill="none" stroke="#fff" stroke-width="2.2"/>
+      <circle cx="33" cy="22" r="8" fill="none" stroke="#fff" stroke-width="2.2"/>
+    </svg>
     <div>
       <div class="header-title"><span class="conn-dot" id="connDot"></span>Stock Neumáticos · MOTORSAN</div>
-      <div class="header-sub" id="headerSub">GESTIÓN DE STOCK, VENTAS Y ANÁLISIS DE REFERENCIAS · v1.0</div>
+      <div class="header-sub">GESTIÓN DE STOCK · VENTAS · ANÁLISIS · v1.0</div>
+    </div>
+  </div>
+  <div class="header-stats">
+    <div class="hstat blue" onclick="setTab('stock')" title="Total referencias">
+      <div class="hstat-val" id="statRefs">0</div><div class="hstat-lbl">Referencias</div>
+    </div>
+    <div class="hstat green" onclick="setTab('stock')" title="Unidades en stock">
+      <div class="hstat-val" id="statUnidades">0</div><div class="hstat-lbl">Uds. Stock</div>
+    </div>
+    <div class="hstat orange" onclick="setTab('stock')" title="Stock bajo">
+      <div class="hstat-val" id="statBajo">0</div><div class="hstat-lbl">Stock Bajo</div>
+    </div>
+    <div class="hstat red" onclick="setTab('stock')" title="Sin stock">
+      <div class="hstat-val" id="statAgotado">0</div><div class="hstat-lbl">Agotado</div>
+    </div>
+    <div class="hstat" style="border-color:rgba(251,191,36,.3)" onclick="setTab('apartados')" title="Citas próximas (7 días)">
+      <div class="hstat-val" id="statCitas" style="color:#fbbf24">0</div><div class="hstat-lbl">Citas 7d</div>
+    </div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" id="tab-stock"      onclick="setTab('stock')">📦 Stock</div>
+  <div class="tab"        id="tab-movimiento" onclick="setTab('movimiento')">➕ Registrar Movimiento</div>
+  <div class="tab orange" id="tab-analytics"  onclick="setTab('analytics')">📊 Análisis de Ventas</div>
+  <div class="tab"        id="tab-historial"  onclick="setTab('historial')">📋 Historial</div>
+  <div class="tab" style="color:#059669;border-bottom-color:#059669" id="tab-asesores" onclick="setTab('asesores')">🚗 Presupuesto Asesores</div>
+  <div class="tab" style="color:#7c3aed" id="tab-apartados" onclick="setTab('apartados')">📌 Apartados</div>
+  <div class="tab" style="color:#1d4ed8" id="tab-asesoresventas" onclick="setTab('asesoresventas')">👥 Ventas por Asesor</div>
+</div>
+
+<div class="main">
+
+<!-- ═══ PANEL STOCK ═══ -->
+<div id="panelStock">
+  <div class="toolbar">
+    <div class="search-wrap">
+      <span class="search-ico">🔍</span>
+      <input type="text" id="stockSearch" placeholder="2055516 · 205/55R16 · Continental · ZTS..." oninput="renderStock()">
+    </div>
+    <button class="filter-btn active" id="sf-all"    onclick="setStockFilter('all')">Todos</button>
+    <button class="filter-btn ok"     id="sf-ok"     onclick="setStockFilter('ok')">✓ OK</button>
+    <button class="filter-btn warn"   id="sf-low"    onclick="setStockFilter('low')">⚠️ Bajo</button>
+    <button class="filter-btn danger" id="sf-out"    onclick="setStockFilter('out')">🚨 Agotado</button>
+    <button class="export-btn" onclick="exportarStock()">📊 Exportar Excel</button>
+    <label class="export-btn" style="background:#92400e;cursor:pointer" title="Importar Excel de campaña">
+      🏷️ Importar Campaña
+      <input type="file" id="campanaFileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="importarCampana(this.files[0])">
+    </label>
+  </div>
+
+  <div class="tbl-scroll-top" id="scrollTopStock"><div class="tbl-scroll-inner" id="scrollInnerStock"></div></div>
+  <div class="card">
+    <div class="tbl-wrap" id="tblWrapStock">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortStock('medida')">MEDIDA</th>
+            <th onclick="sortStock('referencia')">REFERENCIA</th>
+            <th onclick="sortStock('marca')">MARCA</th>
+            <th onclick="sortStock('tipo')">TIPO</th>
+            <th onclick="sortStock('indice')">ÍNDICE</th>
+            <th onclick="sortStock('ubicacion')">UBICACIÓN</th>
+            <th onclick="sortStock('stock')">STOCK</th>
+            <th onclick="sortStock('stockMin')">MÍN.</th>
+            <th>ESTADO</th>
+            <th onclick="sortStock('pvp')">PVP</th>
+            <th onclick="sortStock('coste')">COSTE</th>
+            <th onclick="sortStock('fechaRecepcion')">ÚLT. RECEPCIÓN</th>
+            <th onclick="sortStock('totalVendidas')">VENDIDAS</th>
+            <th onclick="sortStock('fechaCita')">CITA</th>
+            <th>ASESOR</th>
+            <th style="width:110px">ACCIONES</th>
+          </tr>
+        </thead>
+        <tbody id="stockBody">
+          <tr><td colspan="14" class="empty-row">📦 Sin referencias en stock. Añade la primera con el botón "Registrar Movimiento".</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PANEL MOVIMIENTO ═══ -->
+<div id="panelMovimiento" style="display:none">
+  <div class="card">
+    <div class="card-hdr"><h2>➕ Registrar compra o venta</h2></div>
+    <div class="card-body">
+      <!-- Tipo movimiento -->
+      <div class="modal-type">
+        <button class="modal-type-btn active-compra" id="mov-compra" onclick="setMovTipo('compra')">📥 Entrada / Compra</button>
+        <button class="modal-type-btn" id="mov-venta" onclick="setMovTipo('venta')">📤 Salida / Venta</button>
+      </div>
+      <div class="form-grid">
+        <div class="field field-wide">
+          <label>📏 Medida del neumático</label>
+          <input type="text" id="mov_medida" class="mono" placeholder="205/55R16 91V" autocomplete="off" oninput="this.value=this.value.toUpperCase();buscarRefPorMedida()" list="medidaSuggestions">
+          <datalist id="medidaSuggestions"></datalist>
+        </div>
+        <div class="field">
+          <label>🔖 Referencia / EAN</label>
+          <input type="text" id="mov_referencia" class="mono" placeholder="REF-XXXX" autocomplete="off">
+        </div>
+        <div class="field">
+          <label>🏷️ Marca</label>
+          <input type="text" id="mov_marca" placeholder="Michelin, Bridgestone…" autocomplete="off" list="marcaSuggestions">
+          <datalist id="marcaSuggestions"></datalist>
+        </div>
+        <div class="field">
+          <label>🔠 Tipo</label>
+          <select id="mov_tipo_neum">
+            <option value="Verano">Verano</option>
+            <option value="Invierno">Invierno</option>
+            <option value="All Season">All Season</option>
+            <option value="Offroad">Offroad</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>📊 Índice Carga/Vel.</label>
+          <input type="text" id="mov_indice" class="mono" placeholder="91V" autocomplete="off" oninput="this.value=this.value.toUpperCase()">
+        </div>
+        <div class="field">
+          <label>📍 Ubicación</label>
+          <input type="text" id="mov_ubicacion" placeholder="Estante A-3, Almacén…" autocomplete="off" list="ubicSuggestions">
+          <datalist id="ubicSuggestions"></datalist>
+        </div>
+        <div class="field">
+          <label>🔢 Cantidad</label>
+          <input type="number" id="mov_cantidad" value="4" min="1" max="999">
+        </div>
+        <div class="field">
+          <label>💶 Precio Coste (€)</label>
+          <input type="number" id="mov_coste" placeholder="0.00" step="0.01" min="0">
+        </div>
+        <div class="field">
+          <label>💰 PVP (€)</label>
+          <input type="number" id="mov_pvp" placeholder="0.00" step="0.01" min="0">
+        </div>
+        <div class="field">
+          <label>📅 Fecha</label>
+          <input type="date" id="mov_fecha">
+        </div>
+        <div class="field">
+          <label>⚡ Stock mínimo</label>
+          <input type="number" id="mov_stockMin" value="0" min="0">
+        </div>
+        <div class="field">
+          <label>🗂️ Nº Archivo (apartar)</label>
+          <input type="text" id="mov_archivo" class="mono" placeholder="#119XXX" autocomplete="off" oninput="this.value=this.value.toUpperCase()">
+        </div>
+        <div class="field" id="mov_asesor_field">
+          <label>👤 Asesor <span id="asesor_required_lbl" style="color:var(--red);font-size:.65rem">(obligatorio en ventas)</span></label>
+          <select id="mov_asesor">
+            <option value="">— Ninguno —</option>
+            <option value="TONI">Toni Moya</option>
+            <option value="PEREA">Perea</option>
+            <option value="ROBERTO">Roberto Carlos</option>
+            <option value="OTRO">Otro</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>📅 Fecha cita cliente</label>
+          <input type="date" id="mov_cita">
+        </div>
+        <div class="field field-wide">
+          <label>📝 Nota</label>
+          <input type="text" id="mov_nota" placeholder="Proveedor, albarán, observaciones…" autocomplete="off">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="limpiarMov()">Limpiar</button>
+        <button class="btn btn-green" id="btnGuardarMov" onclick="guardarMovimiento()">📥 Guardar entrada</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PANEL ANALYTICS ═══ -->
+<div id="panelAnalytics" style="display:none">
+  <div class="analytics-grid">
+    <div class="analytics-card">
+      <h3>🏆 Top referencias más vendidas</h3>
+      <div id="topRefs"><div style="color:var(--muted2);font-size:.8rem">Sin datos de ventas todavía</div></div>
+    </div>
+    <div class="analytics-card">
+      <h3>📏 Top medidas más vendidas</h3>
+      <div id="topMedidas"><div style="color:var(--muted2);font-size:.8rem">Sin datos de ventas todavía</div></div>
+    </div>
+    <div class="analytics-card">
+      <h3>🏷️ Ventas por marca</h3>
+      <div id="topMarcas"><div style="color:var(--muted2);font-size:.8rem">Sin datos de ventas todavía</div></div>
+    </div>
+    <div class="analytics-card">
+      <h3>💶 Resumen económico</h3>
+      <div id="resumenEcon"><div style="color:var(--muted2);font-size:.8rem">Sin datos todavía</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-hdr"><h2>📅 Ventas por mes</h2></div>
+    <div class="card-body" id="ventasMes" style="min-height:120px"></div>
+  </div>
+</div>
+
+<!-- ═══ PANEL HISTORIAL ═══ -->
+<div id="panelHistorial" style="display:none">
+  <div class="toolbar">
+    <div class="search-wrap">
+      <span class="search-ico">🔍</span>
+      <input type="text" id="histSearch" placeholder="Buscar en historial…" oninput="renderHistorial()">
+    </div>
+    <button class="filter-btn active" id="hf-all"    onclick="setHistFilter('all')">Todos</button>
+    <button class="filter-btn"        id="hf-compra" onclick="setHistFilter('compra')" style="border-color:#b2dfc9;color:var(--green)">📥 Compras</button>
+    <button class="filter-btn"        id="hf-venta"  onclick="setHistFilter('venta')"  style="border-color:#f0c0c5;color:var(--red)">📤 Ventas</button>
+    <button class="export-btn" onclick="exportarHistorial()">📊 Exportar</button>
+  </div>
+  <div class="card">
+    <div class="card-body" id="historialBody" style="min-height:200px">
+      <div style="color:var(--muted2);text-align:center;padding:40px">Sin movimientos registrados todavía</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══ PANEL ASESORES ═══ -->
+<div id="panelAsesores" style="display:none">
+  <div class="asesor-search-big">
+    <h2>🚗 Buscador de Neumáticos — Presupuesto Rápido</h2>
+    <div class="asesor-input-wrap">
+      <input type="text" class="asesor-input" id="asesorSearch"
+        placeholder="2255517 · 215/55R17 · Continental · ZTS215..."
+        oninput="buscarAsesor()" autocomplete="off">
+      <button class="btn btn-primary" onclick="buscarAsesor()">🔍 Buscar</button>
+    </div>
+    <div class="asesor-hint">Escribe la medida de cualquier forma: "2055516", "205/55R16", "ZTS205..." o el nombre de la marca</div>
+    <div id="asesorResultados" style="margin-top:14px"></div>
+  </div>
+
+  <!-- Presupuesto -->
+  <div class="presupuesto-card" id="presupuestoPanel" style="display:none">
+    <h3>💶 Presupuesto de montaje</h3>
+    <div style="margin-bottom:14px;font-size:.82rem;color:#059669">
+      <strong id="pres_medida">—</strong> · <span id="pres_marca">—</span> · Stock: <strong id="pres_stock">—</strong> uds
+    </div>
+
+    <!-- Cantidad -->
+    <div style="display:flex;gap:10px;margin-bottom:16px">
+      <button class="btn" style="background:#e0f2fe;color:#0369a1;font-weight:700;flex:1" onclick="setPrescantidad(2)">🔧 2 Neumáticos</button>
+      <button class="btn" style="background:#e0f2fe;color:#0369a1;font-weight:700;flex:1" onclick="setPrescantidad(4)">🔧🔧 4 Neumáticos</button>
+    </div>
+
+    <div class="presupuesto-result">
+      <div class="pres-item">
+        <div class="pres-item-lbl">PVP Neumático</div>
+        <div class="pres-item-val" id="pres_pvp_unit">—</div>
+        <div class="pres-item-sub">por unidad</div>
+      </div>
+      <div class="pres-item">
+        <div class="pres-item-lbl">Cantidad</div>
+        <div class="pres-item-val" id="pres_cant">4</div>
+        <div class="pres-item-sub">neumáticos</div>
+      </div>
+      <div class="pres-item">
+        <div class="pres-item-lbl">Subtotal neumáticos</div>
+        <div class="pres-item-val" id="pres_subtotal_neum">—</div>
+        <div class="pres-item-sub" id="pres_dto_neum_lbl">sin descuento</div>
+      </div>
+      <div class="pres-item">
+        <div class="pres-item-lbl">Mano de obra montaje</div>
+        <div class="pres-item-val" id="pres_mo">—</div>
+        <div class="pres-item-sub" id="pres_dto_mo_lbl">sin descuento</div>
+      </div>
+    </div>
+
+    <!-- Descuentos -->
+    <div style="background:#f0fdf4;border-radius:var(--rs);padding:12px 16px;margin-bottom:12px">
+      <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:#059669;font-weight:700;margin-bottom:10px">Descuentos</div>
+      <div class="descuento-row">
+        <label>% Descuento neumáticos</label>
+        <input type="number" class="descuento-input" id="dto_neum" value="0" min="0" max="100" oninput="calcPresupuesto()">
+        <span style="font-size:.78rem;color:#059669;font-weight:600">%</span>
+      </div>
+      <div class="descuento-row">
+        <label>% Descuento mano de obra</label>
+        <input type="number" class="descuento-input" id="dto_mo" value="0" min="0" max="100" oninput="calcPresupuesto()">
+        <span style="font-size:.78rem;color:#059669;font-weight:600">%</span>
+      </div>
+    </div>
+
+    <div class="total-final">
+      <div>
+        <div class="total-final-lbl">TOTAL PRESUPUESTO</div>
+        <div style="font-size:.68rem;opacity:.7" id="pres_iva_note">IVA no incluido</div>
+      </div>
+      <div class="total-final-val" id="pres_total">—</div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-ghost" style="flex:1" onclick="resetPresupuesto()">🔄 Nuevo presupuesto</button>
+      <button class="btn" style="background:#059669;color:#fff;flex:1" onclick="apartarDesdePresupuesto()">📌 Apartar estos neumáticos</button>
+    </div>
+  </div>
+
+  <!-- Config mano de obra -->
+  <div class="card">
+    <div class="card-hdr" style="background:linear-gradient(135deg,#059669,#047857)"><h2>⚙️ Tarifas de mano de obra</h2></div>
+    <div class="card-body">
+      <div class="form-grid">
+        <div class="field"><label>🔧 M.O. 2 neumáticos (€)</label><input type="number" id="cfg_mo2" value="40" step="0.01" oninput="saveCfg()"></div>
+        <div class="field"><label>🔧🔧 M.O. 4 neumáticos (€)</label><input type="number" id="cfg_mo4" value="70" step="0.01" oninput="saveCfg()"></div>
+        <div class="field"><label>% Dto. neum. habitual</label><input type="number" id="cfg_dto_neum" value="0" min="0" max="100" oninput="saveCfg()"></div>
+        <div class="field"><label>% Dto. M.O. habitual</label><input type="number" id="cfg_dto_mo" value="0" min="0" max="100" oninput="saveCfg()"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PANEL APARTADOS ═══ -->
+<div id="panelApartados" style="display:none">
+  <div class="card">
+    <div class="card-hdr" style="background:linear-gradient(135deg,#5b21b6,#7c3aed)"><h2>📌 Neumáticos apartados</h2></div>
+    <div class="card-body">
+      <div class="form-grid" style="margin-bottom:16px">
+        <div class="field field-wide"><label>📏 Medida / Referencia</label>
+          <input type="text" id="apt_medida" class="mono" placeholder="215/55R17 · ZTS215557VCZ00" autocomplete="off" oninput="this.value=this.value.toUpperCase()">
+        </div>
+        <div class="field"><label>🗂️ Nº Archivo cliente</label>
+          <input type="text" id="apt_archivo" class="mono" placeholder="#119XXX" autocomplete="off" oninput="this.value=this.value.toUpperCase()">
+        </div>
+        <div class="field"><label>👤 Nombre cliente</label>
+          <input type="text" id="apt_cliente" placeholder="Nombre del cliente" autocomplete="off">
+        </div>
+        <div class="field"><label>🔢 Cantidad apartada</label>
+          <input type="number" id="apt_cantidad" value="4" min="1">
+        </div>
+        <div class="field"><label>📅 Fecha límite recogida</label>
+          <input type="date" id="apt_fechaLimite">
+        </div>
+        <div class="field field-wide"><label>📝 Nota</label>
+          <input type="text" id="apt_nota" placeholder="Observaciones…" autocomplete="off">
+        </div>
+      </div>
+      <button class="btn btn-primary" style="background:#7c3aed" onclick="guardarApartado()">📌 Guardar apartado</button>
+    </div>
+  </div>
+  <div id="apartadosList"></div>
+</div>
+
+
+<!-- ═══ PANEL VENTAS POR ASESOR ═══ -->
+<div id="panelAsesoresventas" style="display:none">
+  <div class="asesor-tab-sel">
+    <button class="asesor-tab-btn active" id="atab-TODOS" onclick="setAsesorTab('TODOS')">📊 Todos</button>
+    <button class="asesor-tab-btn" id="atab-TONI"    onclick="setAsesorTab('TONI')"   >👨 Toni Moya</button>
+    <button class="asesor-tab-btn" id="atab-PEREA"   onclick="setAsesorTab('PEREA')"  >👨 Perea</button>
+    <button class="asesor-tab-btn" id="atab-ROBERTO" onclick="setAsesorTab('ROBERTO')">👨 Roberto Carlos</button>
+    <button class="asesor-tab-btn" id="atab-OTRO"    onclick="setAsesorTab('OTRO')"   >👤 Otro</button>
+  </div>
+  <div id="asesorVentasContent"></div>
+</div>
+
+</div><!-- /main -->
+
+<!-- MODAL VENTA DESDE STOCK -->
+<div class="modal-overlay" id="ventaModal">
+  <div class="venta-modal">
+    <h2 style="color:var(--red)">📤 Registrar venta</h2>
+    <div id="ventaModalInfo" style="background:var(--surface2);border-radius:var(--rs);padding:12px 16px;margin-bottom:16px;font-size:.85rem;color:var(--text2)"></div>
+
+    <div class="field" style="margin-bottom:12px">
+      <label>👤 Asesor que vende</label>
+      <div class="asesor-selector">
+        <button class="asesor-btn" id="vbtn-TONI"    onclick="selAsesorVenta('TONI')">👨 Toni Moya</button>
+        <button class="asesor-btn" id="vbtn-PEREA"   onclick="selAsesorVenta('PEREA')">👨 Perea</button>
+        <button class="asesor-btn" id="vbtn-ROBERTO" onclick="selAsesorVenta('ROBERTO')">👨 Roberto Carlos</button>
+        <button class="asesor-btn" id="vbtn-OTRO"    onclick="selAsesorVenta('OTRO')">👤 Otro</button>
+      </div>
+    </div>
+
+    <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr">
+      <div class="field">
+        <label>🔢 Cantidad</label>
+        <input type="number" id="venta_cantidad" value="4" min="1">
+      </div>
+      <div class="field">
+        <label>💰 PVP aplicado (€)</label>
+        <input type="number" id="venta_pvp" step="0.01" min="0">
+      </div>
+      <div class="field">
+        <label>🗂️ Nº Archivo</label>
+        <input type="text" id="venta_archivo" class="mono" placeholder="#119XXX" oninput="this.value=this.value.toUpperCase()">
+      </div>
+    </div>
+    <div class="field" style="margin-top:8px">
+      <label>📝 Nota</label>
+      <input type="text" id="venta_nota" placeholder="Observaciones de la venta…">
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)">
+      <button class="btn btn-ghost" onclick="cerrarVentaModal()">Cancelar</button>
+      <button class="btn btn-red" onclick="confirmarVenta()">📤 Confirmar venta</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR REFERENCIA -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <h2>✏️ Editar referencia de stock</h2>
+    <div class="form-grid">
+      <div class="field field-wide">
+        <label>📏 Medida</label>
+        <input type="text" id="e_medida" class="mono" oninput="this.value=this.value.toUpperCase()">
+      </div>
+      <div class="field"><label>🔖 Referencia</label><input type="text" id="e_referencia" class="mono"></div>
+      <div class="field"><label>🏷️ Marca</label><input type="text" id="e_marca"></div>
+      <div class="field"><label>🔠 Tipo</label><select id="e_tipo_neum"><option>Verano</option><option>Invierno</option><option>All Season</option><option>Offroad</option></select></div>
+      <div class="field"><label>📊 Índice</label><input type="text" id="e_indice" class="mono" oninput="this.value=this.value.toUpperCase()"></div>
+      <div class="field"><label>📍 Ubicación</label><input type="text" id="e_ubicacion"></div>
+      <div class="field"><label>🔢 Stock actual</label><input type="number" id="e_stock" min="0"></div>
+      <div class="field"><label>⚡ Stock mínimo</label><input type="number" id="e_stockMin" min="0"></div>
+      <div class="field"><label>💶 Coste (€)</label><input type="number" id="e_coste" step="0.01"></div>
+      <div class="field"><label>💰 PVP (€)</label><input type="number" id="e_pvp" step="0.01"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="cerrarEdit()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarEdit()">💾 Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- RECORDATORIO TARIFA -->
+<div class="tarifa-banner" id="tarifaBanner" style="display:none">
+  <div class="tarifa-banner-icon">💰</div>
+  <div class="tarifa-banner-body">
+    <div class="tarifa-banner-title">Recordatorio semanal — Actualización de tarifas</div>
+    <div class="tarifa-banner-sub" id="tarifaBannerSub">Han pasado 7 días desde la última revisión de PVP. Revisa las tarifas de los neumáticos en stock.</div>
+  </div>
+  <div class="tarifa-banner-actions">
+    <button class="tbtn tbtn-ok" onclick="irActualizarTarifas()">📊 Revisar tarifas</button>
+    <button class="tbtn tbtn-later" onclick="posponerRecordatorio()">Recordar en 7 días</button>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer-legal">
+  <div><strong>© 2026 Sergio Aguado Mena · MOTORSAN</strong> · Todos los derechos reservados.</div>
+  <div>Esta aplicación ha sido diseñada y desarrollada por <strong>Sergio Aguado Mena</strong>. Uso interno exclusivo.</div>
+  <div class="footer-warn">⚠️ Queda <strong>TOTALMENTE PROHIBIDA</strong> la copia, reproducción o uso indebido sin autorización expresa del autor.</div>
+</footer>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// FIREBASE
+// ══════════════════════════════════════════════════════════════════
+const FIREBASE_URL    = 'https://accesorios-alcala-default-rtdb.europe-west1.firebasedatabase.app';
+const FIREBASE_APIKEY = 'AIzaSyDApTnRdr3LLFowFDzbu_WfDF4teKT75Wo';
+const DB_STOCK    = 'neumaticos_stock';
+const DB_MOV      = 'neumaticos_movimientos';
+const DB_CAMPANAS = 'neumaticos_campanas';
+const LOCAL_CAMP  = 'motorsan_neum_camp_v1';
+const LOCAL_STOCK = 'motorsan_stock_neum_v1';
+const LOCAL_MOV   = 'motorsan_mov_neum_v1';
+
+let fbDb = null, useFirebase = false;
+let stockData  = [];
+let movData    = [];
+let campanaData = [];  // {referencia, medida, marca, dibujo, pvp, netoNormal, netoCampana, fechaFin}
+let editingId = null;
+let stockFilter = 'all', histFilter = 'all';
+let stockSortField = 'medida', stockSortDir = 1;
+let movTipo = 'compra';
+let activeTab = 'stock';
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtDate(d) { if(!d) return '—'; return new Date(d+'T00:00').toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'}); }
+function fmtMoney(v) { return v!=null&&v!=='' ? parseFloat(v).toFixed(2)+'€' : '—'; }
+
+// ── TOAST ──
+function toast(msg, type='info', dur=3500) {
+  const c = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className = `toast-msg ${type}`;
+  el.textContent = msg;
+  c.appendChild(el);
+  setTimeout(() => el.remove(), dur);
+}
+
+// ── FIREBASE INIT ──
+function initFirebase() {
+  try {
+    if (firebase.apps && firebase.apps.length) firebase.apps.forEach(a => a.delete());
+    firebase.initializeApp({ apiKey: FIREBASE_APIKEY, databaseURL: FIREBASE_URL, projectId: 'accesorios-alcala' });
+    fbDb = firebase.database();
+    fbDb.ref('.info/connected').on('value', snap => {
+      useFirebase = !!snap.val();
+      const dot = document.getElementById('connDot');
+      if (dot) dot.classList.toggle('on', useFirebase);
+    });
+    fbDb.ref(DB_STOCK).on('value', snap => {
+      const data = snap.val();
+      stockData = data ? Object.values(data) : [];
+      localStorage.setItem(LOCAL_STOCK, JSON.stringify(stockData));
+      renderStock(); updateStats(); updateSuggestions();
+    });
+    fbDb.ref(DB_MOV).on('value', snap => {
+      const data = snap.val();
+      movData = data ? Object.values(data).sort((a,b) => b.fecha.localeCompare(a.fecha)) : [];
+      localStorage.setItem(LOCAL_MOV, JSON.stringify(movData));
+      renderHistorial(); renderAnalytics();
+    });
+  } catch(e) {
+    loadLocal();
+    toast('Modo local — sin conexión Firebase', 'info');
+  }
+}
+
+function loadLocal() {
+  try { stockData = JSON.parse(localStorage.getItem(LOCAL_STOCK)||'[]'); } catch { stockData=[]; }
+  try { movData   = JSON.parse(localStorage.getItem(LOCAL_MOV)||'[]'); }   catch { movData=[]; }
+  renderStock(); updateStats(); renderHistorial(); renderAnalytics(); updateSuggestions();
+}
+
+function saveToFirebase(path, id, obj) {
+  if (useFirebase && fbDb) fbDb.ref(path+'/'+id).set(obj).catch(e => toast('Error: '+e.message,'error'));
+  else {
+    if (path === DB_STOCK) { localStorage.setItem(LOCAL_STOCK, JSON.stringify(stockData)); renderStock(); updateStats(); }
+    if (path === DB_MOV)   { localStorage.setItem(LOCAL_MOV,   JSON.stringify(movData));   renderHistorial(); renderAnalytics(); }
+  }
+}
+function deleteFromFirebase(path, id) {
+  if (useFirebase && fbDb) fbDb.ref(path+'/'+id).remove().catch(e => toast('Error: '+e.message,'error'));
+  else {
+    if (path === DB_STOCK) { localStorage.setItem(LOCAL_STOCK, JSON.stringify(stockData)); renderStock(); updateStats(); }
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════════════════════════
+function setTab(tab) {
+  activeTab = tab;
+  ['stock','movimiento','analytics','historial','asesores','apartados','asesoresventas'].forEach(t => {
+    const p = document.getElementById('panel'+t.charAt(0).toUpperCase()+t.slice(1));
+    if(p) p.style.display = t===tab?'block':'none';
+    const tb = document.getElementById('tab-'+t);
+    if(tb) tb.classList.toggle('active', t===tab);
+  });
+  if(tab==='asesores') loadCfg();
+  if(tab==='apartados') renderApartados();
+  if(tab==='asesoresventas') renderAsesorVentas();
+  if (tab==='analytics') renderAnalytics();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// MOVIMIENTO
+// ══════════════════════════════════════════════════════════════════
+function setMovTipo(tipo) {
+  movTipo = tipo;
+  document.getElementById('mov-compra').className = 'modal-type-btn' + (tipo==='compra'?' active-compra':'');
+  document.getElementById('mov-venta').className  = 'modal-type-btn' + (tipo==='venta'?' active-venta':'');
+  document.getElementById('btnGuardarMov').textContent = tipo==='compra' ? '📥 Guardar entrada' : '📤 Guardar venta';
+  document.getElementById('btnGuardarMov').className = tipo==='compra' ? 'btn btn-green' : 'btn btn-red';
+  // Highlight asesor field for ventas
+  const asesorField = document.getElementById('mov_asesor_field');
+  if (asesorField) {
+    asesorField.style.border = tipo==='venta' ? '2px solid var(--red)' : '';
+    asesorField.style.borderRadius = tipo==='venta' ? 'var(--rs)' : '';
+    asesorField.style.padding = tipo==='venta' ? '8px' : '';
+  }
+}
+
+function buscarRefPorMedida() {
+  const medida = document.getElementById('mov_medida').value.trim().toUpperCase();
+  const found = stockData.find(s => s.medida === medida);
+  if (found) {
+    if (found.referencia) document.getElementById('mov_referencia').value = found.referencia;
+    if (found.marca)      document.getElementById('mov_marca').value = found.marca;
+    if (found.indice)     document.getElementById('mov_indice').value = found.indice;
+    if (found.ubicacion)  document.getElementById('mov_ubicacion').value = found.ubicacion;
+    if (found.pvp)        document.getElementById('mov_pvp').value = found.pvp;
+    if (found.coste)      document.getElementById('mov_coste').value = found.coste;
+    document.getElementById('mov_stockMin').value = found.stockMin||0;
+    document.getElementById('mov_tipo_neum').value = found.tipo || 'Verano';
+  }
+}
+
+function guardarMovimiento() {
+  const medida    = document.getElementById('mov_medida').value.trim().toUpperCase();
+  const referencia = document.getElementById('mov_referencia').value.trim().toUpperCase();
+  const marca     = document.getElementById('mov_marca').value.trim();
+  const tipoNeum  = document.getElementById('mov_tipo_neum').value;
+  const indice    = document.getElementById('mov_indice').value.trim().toUpperCase();
+  const ubicacion = document.getElementById('mov_ubicacion').value.trim();
+  const cantidad  = parseInt(document.getElementById('mov_cantidad').value) || 1;
+  const coste     = parseFloat(document.getElementById('mov_coste').value) || 0;
+  const pvp       = parseFloat(document.getElementById('mov_pvp').value) || 0;
+  const fecha     = document.getElementById('mov_fecha').value || new Date().toISOString().slice(0,10);
+  const stockMin  = parseInt(document.getElementById('mov_stockMin').value) || 0;
+  const nota      = document.getElementById('mov_nota').value.trim();
+  const archivo   = document.getElementById('mov_archivo').value.trim();
+  const fechaCita = document.getElementById('mov_cita').value;
+  const asesor    = document.getElementById('mov_asesor')?.value || '';
+
+  // Validations
+  if (!medida)   { toast('Introduce la medida del neumático', 'error'); return; }
+  if (!cantidad || cantidad < 1) { toast('La cantidad debe ser mayor a 0', 'error'); return; }
+  if (movTipo === 'venta' && !asesor) { toast('Selecciona el asesor que realiza la venta', 'error'); return; }
+
+  // Find existing stock record
+  let existing = stockData.find(s =>
+    (referencia && s.referencia === referencia) ||
+    (s.medida === medida && !referencia) ||
+    (s.medida === medida && s.referencia === referencia)
+  );
+
+  let stockKey = '';
+
+  if (existing) {
+    stockKey = existing.id;
+    if (movTipo === 'compra') {
+      existing.stock += cantidad;
+      existing.fechaRecepcion = fecha;
+      if (ubicacion)  existing.ubicacion = ubicacion;
+      if (pvp > 0)    existing.pvp   = pvp;
+      if (coste > 0)  existing.coste = coste;
+      if (marca)      existing.marca = marca;
+      existing.stockMin = stockMin;
+      saveToFirebase(DB_STOCK, existing.id, existing);
+      toast('✅ Entrada registrada — stock total: ' + existing.stock + ' uds', 'success');
+    } else {
+      // VENTA
+      const apt = apartados.filter(a => a.medidaRef === existing.id).reduce((t,a)=>t+a.cantidad,0);
+      const disponible = existing.stock - apt;
+      if (disponible < cantidad) {
+        toast('Stock insuficiente — ' + disponible + ' uds libres (' + apt + ' apartadas)', 'error');
+        return;
+      }
+      existing.stock -= cantidad;
+      existing.totalVendidas = (existing.totalVendidas||0) + cantidad;
+
+      // Recalculate dynamic stockMin based on sales velocity
+      const allVentasRef = [...movData.filter(m => m.tipo==='venta' && m.stockKey===existing.id)];
+      if (allVentasRef.length >= 1) {
+        const fechas = allVentasRef.map(m => m.fecha||'').filter(Boolean).sort();
+        let mesesActivos = 1;
+        if (fechas.length >= 2) {
+          const d1 = new Date(fechas[0]+'T00:00');
+          const d2 = new Date(fechas[fechas.length-1]+'T00:00');
+          mesesActivos = Math.max(1, Math.round((d2-d1)/2592000000)+1);
+        }
+        const udsTotal = allVentasRef.reduce((t,m)=>t+(parseInt(m.cantidad)||1),0) + cantidad;
+        const nuevoMin = Math.ceil((udsTotal / mesesActivos) * 1.5);
+        existing.stockMin = nuevoMin;
+      }
+
+      saveToFirebase(DB_STOCK, existing.id, existing);
+      toast('✅ Venta registrada por ' + asesor + ' — quedan ' + existing.stock + ' uds', 'success', 4000);
+    }
+  } else {
+    if (movTipo === 'venta') {
+      toast('No existe esta referencia en stock. Registra primero una entrada.', 'error');
+      return;
+    }
+    const newId = referencia || (medida.replace(/[/\s]/g,'_') + '_' + Date.now().toString(36));
+    stockKey = newId;
+    const newRef = {
+      id: newId, medida, referencia, marca, tipo: tipoNeum, indice, ubicacion,
+      stock: cantidad, stockMin, pvp, coste,
+      fechaRecepcion: fecha, totalVendidas: 0,
+      fechaCreacion: new Date().toISOString()
+    };
+    stockData.push(newRef);
+    saveToFirebase(DB_STOCK, newRef.id, newRef);
+    toast('✅ ' + medida + ' añadida al stock — ' + cantidad + ' uds', 'success');
+  }
+
+  // Save movement
+  const mov = {
+    id: uid(), tipo: movTipo, medida, referencia, marca,
+    cantidad, pvp, coste, fecha, nota, archivo, fechaCita,
+    asesor: asesor || '',
+    stockKey,
+    fechaCreacion: new Date().toISOString()
+  };
+  movData.unshift(mov);
+  saveToFirebase(DB_MOV, mov.id, mov);
+
+  renderStock(); updateStats(); renderHistorial(); renderAnalytics();
+
+  // Auto-apartado si hay archivo indicado en compra
+  if (movTipo === 'compra' && archivo) {
+    const asesorMov = asesor || '';
+    if (stockKey) crearAutoApartado(stockKey, medida, archivo, cantidad, fechaCita, asesorMov);
+  }
+
+  limpiarMov();
+}
+
+
+
+function limpiarMov() {
+  ['mov_medida','mov_referencia','mov_marca','mov_indice','mov_ubicacion','mov_nota'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('mov_cantidad').value = '4';
+  document.getElementById('mov_coste').value = '';
+  document.getElementById('mov_pvp').value = '';
+  document.getElementById('mov_fecha').value = '';
+  document.getElementById('mov_archivo').value = '';
+  document.getElementById('mov_cita').value = '';
+  const movAsesorEl = document.getElementById('mov_asesor'); if(movAsesorEl) movAsesorEl.value='';
+  document.getElementById('mov_stockMin').value = '4';
+}
+
+// ══════════════════════════════════════════════════════════════════
+// STOCK TABLE
+// ══════════════════════════════════════════════════════════════════
+function setStockFilter(f) {
+  stockFilter = f;
+  ['all','ok','low','out'].forEach(x => document.getElementById('sf-'+x).classList.toggle('active', x===f));
+  renderStock();
+}
+
+function sortStock(field) {
+  if (stockSortField===field) stockSortDir*=-1;
+  else { stockSortField=field; stockSortDir=1; }
+  renderStock();
+}
+
+function getStockStatus(s) {
+  const aptUds = apartados.filter(a => a.medidaRef === s.id).reduce((t,a)=>t+a.cantidad,0);
+  const libre  = s.stock - aptUds;
+  if (libre <= 0)           return 'out';
+  if (s.stockMin > 0 && libre <= s.stockMin) return 'low';
+  return 'ok';
+}
+
+function stockBadge(s) {
+  const st = getStockStatus(s);
+  let badge = '';
+  if (st==='out') badge = '<span class="badge badge-out">🚨 Agotado</span>';
+  else if (st==='low') badge = '<span class="badge badge-low">⚠️ Stock bajo</span>';
+  else badge = '<span class="badge badge-ok">✓ OK</span>';
+  // Pedido necesario indicator
+  if (st !== 'ok' && s.totalVendidas > 0) {
+    badge += '<div style="font-size:.6rem;color:#c47200;font-weight:600;margin-top:3px">📋 Pedir ' + Math.max(s.stockMin, 2) + ' uds</div>';
+  }
+  return badge;
+}
+
+function stockBar(s) {
+  const aptUds = apartados.filter(a => a.medidaRef === s.id).reduce((t,a)=>t+a.cantidad,0);
+  const libre  = Math.max(0, s.stock - aptUds);
+  const pct = s.stockMin > 0 ? Math.min(100, Math.round((libre/(s.stockMin*3))*100)) : (libre>0?50:0);
+  const color = libre<=0 ? '#f87171' : libre<=s.stockMin ? '#fbbf24' : '#34d399';
+  const title = s.stock+' total · '+aptUds+' apartadas · '+libre+' libres';
+  return '<div class="stock-bar-wrap"><span class="stock-num" style="color:'+color+'" title="'+title+'">'+libre+'<span style="font-size:.6rem;opacity:.6">/'+s.stock+'</span></span><div class="stock-bar"><div class="stock-bar-fill" style="width:'+pct+'%;background:'+color+'"></div></div></div>';
+}
+
+function renderStock() {
+  const raw = (document.getElementById('stockSearch').value||'').trim();
+  const q   = raw.toLowerCase();
+
+  // Intuitive medida parsing: "2055516" → "205/55R16"
+  function parseMedida(s) {
+    const n = s.replace(/[^0-9]/g,'');
+    if (n.length === 7) return n.slice(0,3) + '/' + n.slice(3,5) + 'R' + n.slice(5,7);
+    if (n.length === 6) return n.slice(0,3) + '/' + n.slice(3,5) + 'R' + n.slice(5,6);
+    return '';
+  }
+  const medidaParsed = parseMedida(raw).toLowerCase();
+  const medidaClean  = raw.replace(/[\s\/\-]/g,'').toLowerCase();
+
+  let rows = stockData.filter(s => {
+    if (stockFilter==='ok'  && getStockStatus(s)!=='ok')  return false;
+    if (stockFilter==='low' && getStockStatus(s)!=='low') return false;
+    if (stockFilter==='out' && getStockStatus(s)!=='out') return false;
+    if (!q) return true;
+    const sClean = s.medida.replace(/[\s\/\-]/g,'').toLowerCase();
+    // Numeric-only search: "2055516" matches "205/55R16"
+    if (medidaClean.length >= 5 && sClean.includes(medidaClean)) return true;
+    if (medidaParsed && s.medida.toLowerCase().includes(medidaParsed.slice(0,6))) return true;
+    // Normal text search
+    const hay = [s.medida,s.referencia,s.marca,s.ubicacion,s.tipo,s.indice].join(' ').toLowerCase();
+    return hay.includes(q);
+  }).sort((a,b) => {
+    let va=a[stockSortField]||'', vb=b[stockSortField]||'';
+    if (typeof va==='number') return (va-vb)*stockSortDir;
+    return String(va)<String(vb)?-stockSortDir:String(va)>String(vb)?stockSortDir:0;
+  });
+
+  const tbody = document.getElementById('stockBody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="14" class="empty-row">📦 Sin referencias que coincidan con los filtros.</td></tr>';
+    return;
+  }
+  const st = getStockStatus;
+  tbody.innerHTML = rows.map(s => `<tr class="${st(s)==='out'?'stock-out':st(s)==='low'?'stock-low':''}">
+    <td>
+      <span class="medida-tag">${esc(s.medida||'—')}</span>
+      ${(()=>{const a=apartados.filter(x=>x.medidaRef===s.id);if(!a.length)return '';const f=[...new Set(a.map(x=>x.archivo))].join(', ');return '<div style="font-size:.62rem;color:#7c3aed;font-weight:600;margin-top:3px">📌 '+a.reduce((t,x)=>t+x.cantidad,0)+' uds apartadas · '+f+'</div>';})()}
+    </td>
+    <td>${(()=>{
+      const enCamp = campanaData.find(c => c.referencia === s.referencia);
+      return '<span class="ref-tag">'+esc(s.referencia||'—')+'</span>' +
+        (enCamp ? '<div class="badge-campana" style="margin-top:3px">🏷️ EN CAMPAÑA</div><div class="campana-info">Neto: '+enCamp.netoCampana.toFixed(2)+'€ · '+esc(enCamp.dibujo||'')+'</div>' : '');
+    })()}</td>
+    <td style="font-weight:600">${esc(s.marca||'—')}</td>
+    <td style="font-size:.72rem">${esc(s.tipo||'—')}</td>
+    <td><span class="ref-tag">${esc(s.indice||'—')}</span></td>
+    <td><span class="cell-editable ${!s.ubicacion?'empty':''}" onclick="editInline('${s.id}','ubicacion',this,'text')">${esc(s.ubicacion||'Añadir ubi.')}</span></td>
+    <td>${stockBar(s)}</td>
+    <td><span class="cell-editable" onclick="editInline('${s.id}','stockMin',this,'number')" style="color:var(--muted)">${s.stockMin||0}</span></td>
+    <td>${stockBadge(s)}</td>
+    <td><span class="cell-editable ${!s.pvp?'empty':''}" onclick="editInline('${s.id}','pvp',this,'number')">${s.pvp?parseFloat(s.pvp).toFixed(2)+'€':'PVP'}</span></td>
+    <td><span class="cell-editable ${!s.coste?'empty':''}" onclick="editInline('${s.id}','coste',this,'number')">${s.coste?parseFloat(s.coste).toFixed(2)+'€':'Coste'}</span></td>
+    <td style="font-size:.73rem;color:var(--muted);white-space:nowrap">${fmtDate(s.fechaRecepcion)}</td>
+    <td style="text-align:center;font-weight:700;color:var(--primary)">${s.totalVendidas||0}</td>
+    <td>${(()=>{
+      const aptCita = apartados.filter(a=>a.medidaRef===s.id&&a.fechaLimite).map(a=>a.fechaLimite).sort()[0];
+      const badge = citaBadgeNeum(aptCita||'');
+      return '<span onclick="editCitaStock(''+s.id+'')" style="cursor:pointer" title="Clic para editar cita">'+badge+'</span>';
+    })()}</td>
+    <td>${(()=>{
+      const aptAses = apartados.filter(a=>a.medidaRef===s.id&&a.asesor).map(a=>a.asesor);
+      const pill = aptAses.length ? aptAses.map(a=>'<span class="asesor-pill asesor-'+a+'">'+a+'</span>').join(' ') : '<span class="cell-editable empty" style="font-size:.7rem">Asignar</span>';
+      return '<span onclick="editAsesorStock(''+s.id+'')" style="cursor:pointer" title="Clic para asignar asesor">'+pill+'</span>';
+    })()}</td>
+    <td>
+      <div style="display:flex;gap:3px;flex-wrap:wrap">
+        <button class="act-btn green" onclick="entradaRapida('${s.id}')" title="Entrada rápida">📥</button>
+        <button class="act-btn red" onclick="abrirVentaModal('${s.id}')" title="Registrar venta">📤</button>
+        <button class="act-btn orange" onclick="abrirEdit('${s.id}')" title="Editar">✏️</button>
+        <button class="act-btn" onclick="eliminarRef('${s.id}')" title="Eliminar" style="color:var(--red)">🗑️</button>
+      </div>
+    </td>
+  </tr>`).join('');
+
+  // Sync scroll top
+  setTimeout(() => {
+    const inner = document.getElementById('scrollInnerStock');
+    const wrap  = document.getElementById('tblWrapStock');
+    if (inner && wrap) inner.style.width = wrap.scrollWidth + 'px';
+  }, 50);
+}
+
+function entradaRapida(id) {
+  const s = stockData.find(x => x.id === id);
+  if (!s) return;
+  const qty = parseInt(prompt(`Entrada rápida para ${s.medida}\n¿Cuántas unidades entran?`, '4')) || 0;
+  if (qty <= 0) return;
+  s.stock += qty;
+  s.fechaRecepcion = new Date().toISOString().slice(0,10);
+  saveToFirebase(DB_STOCK, s.id, s);
+  // Log movement
+  const mov = { id:uid(), tipo:'compra', medida:s.medida, referencia:s.referencia, marca:s.marca,
+    cantidad:qty, pvp:s.pvp, coste:s.coste, fecha:s.fechaRecepcion, nota:'Entrada rápida',
+    stockKey:s.id, fechaCreacion:new Date().toISOString() };
+  movData.unshift(mov);
+  saveToFirebase(DB_MOV, mov.id, mov);
+  toast(`✅ +${qty} unidades añadidas a ${s.medida}`, 'success');
+}
+
+function eliminarRef(id) {
+  if (!confirm('¿Eliminar esta referencia del stock? Se perderá el historial de ventas asociado.')) return;
+  stockData = stockData.filter(s => s.id !== id);
+  deleteFromFirebase(DB_STOCK, id);
+  toast('Referencia eliminada', 'info');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// EDIT MODAL
+// ══════════════════════════════════════════════════════════════════
+function abrirEdit(id) {
+  const s = stockData.find(x => x.id === id);
+  if (!s) return;
+  editingId = id;
+  document.getElementById('e_medida').value    = s.medida||'';
+  document.getElementById('e_referencia').value= s.referencia||'';
+  document.getElementById('e_marca').value     = s.marca||'';
+  document.getElementById('e_tipo_neum').value = s.tipo||'Verano';
+  document.getElementById('e_indice').value    = s.indice||'';
+  document.getElementById('e_ubicacion').value = s.ubicacion||'';
+  document.getElementById('e_stock').value     = s.stock||0;
+  document.getElementById('e_stockMin').value  = s.stockMin||0;
+  document.getElementById('e_coste').value     = s.coste||'';
+  document.getElementById('e_pvp').value       = s.pvp||'';
+  document.getElementById('editModal').classList.add('open');
+}
+
+function cerrarEdit() {
+  document.getElementById('editModal').classList.remove('open');
+  editingId = null;
+}
+
+function guardarEdit() {
+  const idx = stockData.findIndex(s => s.id === editingId);
+  if (idx === -1) { cerrarEdit(); return; }
+  stockData[idx] = {
+    ...stockData[idx],
+    medida:    document.getElementById('e_medida').value.trim().toUpperCase(),
+    referencia:document.getElementById('e_referencia').value.trim().toUpperCase(),
+    marca:     document.getElementById('e_marca').value.trim(),
+    tipo:      document.getElementById('e_tipo_neum').value,
+    indice:    document.getElementById('e_indice').value.trim().toUpperCase(),
+    ubicacion: document.getElementById('e_ubicacion').value.trim(),
+    stock:     parseInt(document.getElementById('e_stock').value)||0,
+    stockMin:  parseInt(document.getElementById('e_stockMin').value)||0,
+    coste:     parseFloat(document.getElementById('e_coste').value)||0,
+    pvp:       parseFloat(document.getElementById('e_pvp').value)||0,
+  };
+  saveToFirebase(DB_STOCK, editingId, stockData[idx]);
+  toast('✅ Referencia actualizada ✓', 'success');
+  cerrarEdit();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// STATS
+// ══════════════════════════════════════════════════════════════════
+function updateStats() {
+  document.getElementById('statRefs').textContent     = stockData.length;
+  document.getElementById('statUnidades').textContent = stockData.reduce((s,r)=>s+(r.stock||0),0);
+  document.getElementById('statBajo').textContent     = stockData.filter(s=>getStockStatus(s)==='low').length;
+  document.getElementById('statAgotado').textContent  = stockData.filter(s=>getStockStatus(s)==='out').length;
+  // Citas próximas (7 días)
+  const hoy7 = new Date(); hoy7.setHours(0,0,0,0);
+  const en7  = new Date(hoy7); en7.setDate(en7.getDate()+7);
+  const citas7 = apartados.filter(a => {
+    if (!a.fechaLimite) return false;
+    const f = new Date(a.fechaLimite+'T00:00');
+    return f >= hoy7 && f <= en7;
+  }).length;
+  const citasStat = document.getElementById('statCitas');
+  if (citasStat) {
+    citasStat.textContent = citas7;
+    citasStat.style.color = citas7>0?'#fbbf24':'rgba(255,255,255,.5)';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ANALYTICS
+// ══════════════════════════════════════════════════════════════════
+function renderAnalytics() {
+  const ventas = movData.filter(m => m.tipo==='venta');
+  const compras = movData.filter(m => m.tipo==='compra');
+
+  // Top refs
+  const byRef = {};
+  ventas.forEach(m => { const k=m.medida+(m.referencia?'/'+m.referencia:''); byRef[k]=(byRef[k]||{qty:0,ref:m.referencia,medida:m.medida}); byRef[k].qty+=m.cantidad; });
+  const topRefsArr = Object.values(byRef).sort((a,b)=>b.qty-a.qty).slice(0,5);
+  document.getElementById('topRefs').innerHTML = topRefsArr.length ? topRefsArr.map((r,i)=>`
+    <div class="top-item">
+      <div class="top-rank r${i+1}">${i+1}</div>
+      <div class="top-info">
+        <div class="top-ref">${esc(r.ref||r.medida)}</div>
+        <div class="top-medida">${esc(r.medida)}</div>
+      </div>
+      <div class="top-val">${r.qty} uds</div>
+    </div>`).join('') : '<div style="color:var(--muted2);font-size:.8rem">Sin ventas todavía</div>';
+
+  // Top medidas
+  const byMed = {};
+  ventas.forEach(m => { byMed[m.medida]=(byMed[m.medida]||0)+m.cantidad; });
+  const topMedArr = Object.entries(byMed).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  document.getElementById('topMedidas').innerHTML = topMedArr.length ? topMedArr.map(([med,qty],i)=>`
+    <div class="top-item">
+      <div class="top-rank r${i+1}">${i+1}</div>
+      <div class="top-info"><div class="top-ref">${esc(med)}</div></div>
+      <div class="top-val">${qty} uds</div>
+    </div>`).join('') : '<div style="color:var(--muted2);font-size:.8rem">Sin ventas todavía</div>';
+
+  // Top marcas
+  const byMarca = {};
+  ventas.forEach(m => { if(m.marca) byMarca[m.marca]=(byMarca[m.marca]||0)+m.cantidad; });
+  const topMarcaArr = Object.entries(byMarca).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  document.getElementById('topMarcas').innerHTML = topMarcaArr.length ? topMarcaArr.map(([marca,qty],i)=>`
+    <div class="top-item">
+      <div class="top-rank r${i+1}">${i+1}</div>
+      <div class="top-info"><div class="top-ref">${esc(marca)}</div></div>
+      <div class="top-val">${qty} uds</div>
+    </div>`).join('') : '<div style="color:var(--muted2);font-size:.8rem">Sin ventas todavía</div>';
+
+  // Resumen económico
+  // PVP y coste son UNITARIOS → multiplicar por cantidad
+  const ingresos = ventas.reduce((s,m)=>s+(parseFloat(m.pvp)||0)*(parseInt(m.cantidad)||1),0);
+  const costesCompra = compras.reduce((s,m)=>s+(parseFloat(m.coste)||0)*(parseInt(m.cantidad)||1),0);
+  const costesVenta  = ventas.reduce((s,m)=>s+(parseFloat(m.coste)||0)*(parseInt(m.cantidad)||1),0);
+  const margen   = ingresos - costesVenta;
+  const udsVenta  = ventas.reduce((s,m)=>s+(parseInt(m.cantidad)||1),0);
+  const udsCompra = compras.reduce((s,m)=>s+(parseInt(m.cantidad)||1),0);
+  document.getElementById('resumenEcon').innerHTML = '<div class="top-item"><div style="flex:1;font-size:.78rem;color:var(--muted)">📤 Total vendidos</div><div class="top-val" style="color:var(--green)">'+udsVenta+' uds</div></div>'+
+    '<div class="top-item"><div style="flex:1;font-size:.78rem;color:var(--muted)">💶 Ingresos ventas (PVP×cant)</div><div class="top-val" style="color:var(--green)">'+ingresos.toFixed(2)+'€</div></div>'+
+    '<div class="top-item"><div style="flex:1;font-size:.78rem;color:var(--muted)">📥 Total comprados</div><div class="top-val">'+udsCompra+' uds</div></div>'+
+    '<div class="top-item"><div style="flex:1;font-size:.78rem;color:var(--muted)">💸 Coste compras (coste×cant)</div><div class="top-val" style="color:var(--red)">'+costesCompra.toFixed(2)+'€</div></div>'+
+    '<div class="top-item"><div style="flex:1;font-size:.78rem;color:var(--muted)">📈 Margen estimado</div><div class="top-val" style="color:'+(margen>=0?'var(--green)':'var(--red)')+'">'+margen.toFixed(2)+'€</div></div>';
+
+  // Ventas por mes
+  const byMes = {};
+  ventas.forEach(m => {
+    if (!m.fecha) return;
+    const mes = m.fecha.slice(0,7); // YYYY-MM
+    byMes[mes] = (byMes[mes]||0) + m.cantidad;
+  });
+  const meses = Object.entries(byMes).sort((a,b)=>a[0].localeCompare(b[0]));
+  const maxVal = meses.length ? Math.max(...meses.map(m=>m[1])) : 1;
+  document.getElementById('ventasMes').innerHTML = meses.length ? `
+    <div style="display:flex;align-items:flex-end;gap:8px;height:120px;padding-bottom:24px;position:relative">
+      ${meses.map(([mes,qty])=>{
+        const pct = Math.round((qty/maxVal)*100);
+        const [y,m] = mes.split('-');
+        const label = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][parseInt(m)-1]+' '+y.slice(2);
+        return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <span style="font-size:.65rem;font-weight:700;color:var(--primary)">${qty}</span>
+          <div style="width:100%;background:linear-gradient(135deg,var(--primary),#2a5298);border-radius:4px 4px 0 0;height:${pct}%;min-height:4px"></div>
+          <span style="font-size:.6rem;color:var(--muted);transform:rotate(-30deg);white-space:nowrap;margin-top:4px">${label}</span>
+        </div>`;
+      }).join('')}
+    </div>` : '<div style="color:var(--muted2);text-align:center;padding:30px">Sin ventas registradas todavía</div>';
+}
+
+// ══════════════════════════════════════════════════════════════════
+// HISTORIAL
+// ══════════════════════════════════════════════════════════════════
+function setHistFilter(f) {
+  histFilter = f;
+  ['all','compra','venta'].forEach(x => document.getElementById('hf-'+x).classList.toggle('active', x===f));
+  renderHistorial();
+}
+
+function renderHistorial() {
+  const q = (document.getElementById('histSearch').value||'').toLowerCase().trim();
+  let rows = movData.filter(m => {
+    if (histFilter==='compra' && m.tipo!=='compra') return false;
+    if (histFilter==='venta'  && m.tipo!=='venta')  return false;
+    if (q) {
+      const hay = [m.medida,m.referencia,m.marca,m.nota].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  const body = document.getElementById('historialBody');
+  if (!rows.length) {
+    body.innerHTML = '<div style="color:var(--muted2);text-align:center;padding:40px">Sin movimientos que coincidan</div>';
+    return;
+  }
+  body.innerHTML = rows.map(m => `
+    <div class="mov-item">
+      <div class="mov-icon ${m.tipo}">${m.tipo==='compra'?'📥':'📤'}</div>
+      <div class="mov-info">
+        <div class="mov-title">${esc(m.medida)} ${m.referencia?'· '+esc(m.referencia):''} ${m.marca?'· '+esc(m.marca):''}</div>
+        <div class="mov-sub">${m.nota?esc(m.nota):'Sin nota'}</div>
+      </div>
+      <div class="mov-qty ${m.tipo}">${m.tipo==='compra'?'+':'-'}${m.cantidad} uds</div>
+      <div style="text-align:right;margin-left:8px">
+        <div style="font-size:.78rem;font-weight:600">${fmtMoney(m.pvp)}/ud · <strong>${((parseFloat(m.pvp)||0)*(parseInt(m.cantidad)||1)).toFixed(2)}€ total</strong></div>
+        <div class="mov-date">${fmtDate(m.fecha)}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// EXPORTAR
+// ══════════════════════════════════════════════════════════════════
+function exportarStock() {
+  const BOM='\uFEFF', sep=';';
+  const qv = v => '"'+String(v||'').replace(/"/g,'""')+'"';
+  const headers=['Medida','Referencia','Marca','Tipo','Indice','Ubicacion','Stock','Stock Min','Estado','PVP','Coste','Ult Recepcion','Total Vendidas'];
+  const rows = stockData.map(s=>[s.medida,s.referencia,s.marca,s.tipo,s.indice,s.ubicacion,s.stock,s.stockMin,getStockStatus(s)==='ok'?'OK':getStockStatus(s)==='low'?'Bajo':'Agotado',s.pvp,s.coste,fmtDate(s.fechaRecepcion),s.totalVendidas||0].map(qv).join(sep));
+  const csv=BOM+headers.map(qv).join(sep)+'\n'+rows.join('\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download='MOTORSAN_Stock_Neumaticos_'+new Date().toLocaleDateString('es-ES').split('/').join('-')+'.csv'; a.click();
+  toast('📊 Stock exportado ✓','success');
+}
+
+function exportarHistorial() {
+  const BOM='\uFEFF', sep=';';
+  const qv = v => '"'+String(v||'').replace(/"/g,'""')+'"';
+  const headers=['Tipo','Medida','Referencia','Marca','Cantidad','PVP','Coste','Fecha','Nota'];
+  const rows = movData.map(m=>[m.tipo,m.medida,m.referencia,m.marca,m.cantidad,m.pvp,m.coste,fmtDate(m.fecha),m.nota].map(qv).join(sep));
+  const csv=BOM+headers.map(qv).join(sep)+'\n'+rows.join('\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download='MOTORSAN_Historial_Neumaticos_'+new Date().toLocaleDateString('es-ES').split('/').join('-')+'.csv'; a.click();
+  toast('📊 Historial exportado ✓','success');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SUGGESTIONS (datalist)
+// ══════════════════════════════════════════════════════════════════
+function updateSuggestions() {
+  const medidas  = [...new Set(stockData.map(s=>s.medida).filter(Boolean))];
+  const marcas   = [...new Set(stockData.map(s=>s.marca).filter(Boolean))];
+  const ubics    = [...new Set(stockData.map(s=>s.ubicacion).filter(Boolean))];
+  document.getElementById('medidaSuggestions').innerHTML = medidas.map(m=>`<option value="${esc(m)}">`).join('');
+  document.getElementById('marcaSuggestions').innerHTML  = marcas.map(m=>`<option value="${esc(m)}">`).join('');
+  document.getElementById('ubicSuggestions').innerHTML   = ubics.map(u=>`<option value="${esc(u)}">`).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════════════════════════
+const CFG_KEY = 'motorsan_neum_cfg';
+let cfg = { mo2: 40, mo4: 70, dto_neum: 0, dto_mo: 0 };
+let presRef = null;
+let presCantidad = 4;
+let apartados = [];
+
+function loadCfg() {
+  try { const c = JSON.parse(localStorage.getItem(CFG_KEY)); if(c) cfg = {...cfg,...c}; } catch {}
+  document.getElementById('cfg_mo2').value       = cfg.mo2;
+  document.getElementById('cfg_mo4').value       = cfg.mo4;
+  document.getElementById('cfg_dto_neum').value  = cfg.dto_neum;
+  document.getElementById('cfg_dto_mo').value    = cfg.dto_mo;
+  document.getElementById('dto_neum').value      = cfg.dto_neum;
+  document.getElementById('dto_mo').value        = cfg.dto_mo;
+}
+function saveCfg() {
+  cfg.mo2      = parseFloat(document.getElementById('cfg_mo2').value) || 40;
+  cfg.mo4      = parseFloat(document.getElementById('cfg_mo4').value) || 70;
+  cfg.dto_neum = parseFloat(document.getElementById('cfg_dto_neum').value) || 0;
+  cfg.dto_mo   = parseFloat(document.getElementById('cfg_dto_mo').value) || 0;
+  localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
+}
+
+// ══════════════════════════════════════════════════════════════════
+// BÚSQUEDA INTUITIVA
+// ══════════════════════════════════════════════════════════════════
+function normalizarMedida(input) {
+  // Quitar espacios y guiones
+  let s = input.replace(/[\s\-\.]/g,'').toUpperCase();
+  // Si empieza por ZTS devolver tal cual
+  if (s.startsWith('ZTS')) return [s];
+  // Convertir "2255517" → "225/55R17"
+  // Detectar patron: 3dig + 2dig + 2dig (ancho+perfil+radio)
+  const m = s.match(/^(\d{3})(\d{2})(\d{2})$/);
+  if (m) return [`${m[1]}/${m[2]}R${m[3]}`, `${m[1]}/${m[2]}r${m[3]}`];
+  // "205/55/17" → "205/55R17"
+  const m2 = s.match(/^(\d{3})[\/\-](\d{2})[\/\-](\d{2})$/);
+  if (m2) return [`${m2[1]}/${m2[2]}R${m2[3]}`];
+  return [s];
+}
+
+function normalizarBusqueda(raw) {
+  const s = raw.trim().toUpperCase().replace(/\s/g,'');
+  const terms = [s, raw.toLowerCase()];
+  // "2255517" o "22555R17" → "225/55R17"
+  const m1 = s.match(/^(\d{3})(\d{2})R?(\d{2})$/);
+  if (m1) { terms.push(m1[1]+'/'+m1[2]+'R'+m1[3]); terms.push(m1[1]+m1[2]+m1[3]); }
+  // "225/55/17" → "225/55R17"
+  const m2 = s.match(/^(\d{3})[\/](\d{2})[\/](\d{2})$/);
+  if (m2) terms.push(m2[1]+'/'+m2[2]+'R'+m2[3]);
+  return [...new Set(terms)];
+}
+
+function buscarAsesor() {
+  const raw = document.getElementById('asesorSearch').value.trim();
+  if (!raw) { document.getElementById('asesorResultados').innerHTML = ''; return; }
+
+  const terminos = normalizarMedida(raw);
+  const q = raw.toLowerCase();
+
+  const results = stockData.filter(s => {
+    const medidaClean = s.medida.replace(/[\s\/]/g,'').toUpperCase();
+    for (const t of terminos) {
+      const tc = t.replace(/[\/\sR]/g,'').toUpperCase();
+      if (tc.length >= 4 && (medidaClean.includes(tc) || tc.includes(medidaClean.slice(0,6)))) return true;
+    }
+    const hay = [s.medida, s.referencia, s.marca, s.tipo, s.indice, s.ubicacion].join(' ').toLowerCase();
+    return hay.includes(q);
+  });
+
+  const cont = document.getElementById('asesorResultados');
+  if (!results.length) {
+    cont.innerHTML = '<div style="color:var(--muted2);padding:16px;text-align:center">🔍 Sin resultados. Prueba con otro formato: "215/55R17", "2155517" o la marca.</div>';
+    return;
+  }
+
+  cont.innerHTML = results.map(s => {
+    const st = getStockStatus(s);
+    const stColor = st==='ok'?'var(--green)':st==='low'?'var(--orange)':'var(--red)';
+    const apt = apartados.filter(a => a.medidaRef === s.id).reduce((t,a)=>t+a.cantidad,0);
+    const stockDisp = s.stock - apt;
+    return `<div class="stock-result-mini" onclick="seleccionarNeumAsesor('${s.id}')">
+      <div style="flex:1">
+        <div class="srm-medida">${esc(s.medida)} <span style="font-size:.7rem;font-weight:400;color:var(--muted)">${esc(s.indice)}</span></div>
+        <div class="srm-marca">${esc(s.marca)} · ${esc(s.tipo)} · Ref: ${esc(s.referencia)}</div>
+        ${apt>0?`<div style="font-size:.68rem;color:#7c3aed;margin-top:2px">📌 ${apt} ud${apt>1?'s':''} apartadas</div>`:''}
+      </div>
+      <div style="text-align:right">
+        <div class="srm-pvp">${s.pvp?s.pvp.toFixed(2)+'€':'Sin PVP'}</div>
+        <div style="font-size:.72rem;font-weight:600;color:${stColor};margin-top:2px">${stockDisp} uds libres</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function seleccionarNeumAsesor(id) {
+  presRef = stockData.find(s => s.id === id);
+  if (!presRef) return;
+  // Mark selected
+  document.querySelectorAll('.stock-result-mini').forEach(el => el.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+  setPrescantidad(4);
+  document.getElementById('presupuestoPanel').style.display = 'block';
+  document.getElementById('presupuestoPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function setPrescantidad(n) {
+  presCantidad = n;
+  calcPresupuesto();
+}
+
+function calcPresupuesto() {
+  if (!presRef) return;
+  const cant      = presCantidad;
+  const pvpUnit   = parseFloat(presRef.pvp) || 0;
+  const dtoNeum   = parseFloat(document.getElementById('dto_neum').value) || 0;
+  const dtoMO     = parseFloat(document.getElementById('dto_mo').value) || 0;
+  const mo        = cant === 2 ? (parseFloat(document.getElementById('cfg_mo2').value)||40)
+                                : (parseFloat(document.getElementById('cfg_mo4').value)||70);
+
+  const subtotalNeum = pvpUnit * cant;
+  const descNeum     = subtotalNeum * dtoNeum / 100;
+  const subtotalMO   = mo;
+  const descMO       = subtotalMO * dtoMO / 100;
+  const total        = (subtotalNeum - descNeum) + (subtotalMO - descMO);
+
+  const apt = apartados.filter(a => a.medidaRef === presRef.id).reduce((t,a)=>t+a.cantidad,0);
+  const stockDisp = presRef.stock - apt;
+
+  document.getElementById('pres_medida').textContent     = presRef.medida;
+  document.getElementById('pres_marca').textContent      = presRef.marca;
+  document.getElementById('pres_stock').textContent      = stockDisp + ' libres';
+  document.getElementById('pres_pvp_unit').textContent   = pvpUnit.toFixed(2) + '€';
+  document.getElementById('pres_cant').textContent       = cant + ' ud' + (cant>1?'s':'');
+  document.getElementById('pres_subtotal_neum').textContent = (subtotalNeum-descNeum).toFixed(2)+'€';
+  document.getElementById('pres_dto_neum_lbl').textContent  = dtoNeum>0?`-${dtoNeum}% dto aplicado`:'sin descuento';
+  document.getElementById('pres_mo').textContent            = (subtotalMO-descMO).toFixed(2)+'€';
+  document.getElementById('pres_dto_mo_lbl').textContent    = dtoMO>0?`-${dtoMO}% dto aplicado`:'sin descuento';
+  document.getElementById('pres_total').textContent         = total.toFixed(2)+'€';
+}
+
+function resetPresupuesto() {
+  presRef = null;
+  presCantidad = 4;
+  document.getElementById('presupuestoPanel').style.display = 'none';
+  document.getElementById('asesorSearch').value = '';
+  document.getElementById('asesorResultados').innerHTML = '';
+  document.getElementById('dto_neum').value = cfg.dto_neum;
+  document.getElementById('dto_mo').value   = cfg.dto_mo;
+}
+
+function apartarDesdePresupuesto() {
+  if (!presRef) return;
+  setTab('apartados');
+  document.getElementById('apt_medida').value   = presRef.medida + ' · ' + presRef.referencia;
+  document.getElementById('apt_cantidad').value = presCantidad;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// PVP EDITABLE EN TABLA
+// ══════════════════════════════════════════════════════════════════
+function editarPVP(id, el) {
+  const s = stockData.find(x => x.id === id);
+  if (!s) return;
+  const input = document.createElement('input');
+  input.type = 'number'; input.step = '0.01'; input.min = '0';
+  input.value = s.pvp || 0;
+  input.className = 'pvp-edit-input';
+  el.replaceWith(input);
+  input.focus(); input.select();
+  function guardar() {
+    const newVal = parseFloat(input.value) || 0;
+    s.pvp = newVal;
+    saveToFirebase(DB_STOCK, id, s);
+    const span = document.createElement('span');
+    span.className = 'pvp-editable';
+    span.title = 'Clic para editar PVP';
+    span.textContent = newVal.toFixed(2) + '€';
+    span.onclick = () => editarPVP(id, span);
+    input.replaceWith(span);
+    toast('✅ PVP actualizado: ' + newVal.toFixed(2) + '€', 'success');
+  }
+  input.addEventListener('blur', guardar);
+  input.addEventListener('keydown', e => { if(e.key==='Enter') guardar(); if(e.key==='Escape') { renderStock(); } });
+}
+
+// ══════════════════════════════════════════════════════════════════
+// APARTADOS
+// ══════════════════════════════════════════════════════════════════
+const APT_KEY = 'motorsan_neum_apt_v1';
+function loadApartados() {
+  try { apartados = JSON.parse(localStorage.getItem(APT_KEY)||'[]'); } catch { apartados=[]; }
+  renderApartados();
+}
+function saveApartados() { localStorage.setItem(APT_KEY, JSON.stringify(apartados)); }
+
+function guardarApartado() {
+  const medida   = document.getElementById('apt_medida').value.trim();
+  const archivo  = document.getElementById('apt_archivo').value.trim();
+  const cliente  = document.getElementById('apt_cliente').value.trim();
+  const cantidad = parseInt(document.getElementById('apt_cantidad').value)||4;
+  const fechaLim = document.getElementById('apt_fechaLimite').value;
+  const nota     = document.getElementById('apt_nota').value.trim();
+  if (!medida)  { toast('Indica la medida o referencia', 'error'); return; }
+  if (!archivo) { toast('Indica el nº de archivo del cliente', 'error'); return; }
+
+  // Find matching stock
+  const found = stockData.find(s => s.medida===medida||s.referencia===medida||
+    (medida.includes(s.medida)||medida.includes(s.referencia)));
+
+  const apt = {
+    id: uid(), medida, medidaRef: found?.id||'',
+    archivo, cliente, cantidad, fechaLimite: fechaLim,
+    nota, fecha: new Date().toISOString(), activo: true
+  };
+  apartados.unshift(apt);
+  saveApartados();
+  renderApartados();
+  toast(`📌 ${cantidad} ud${cantidad>1?'s':''} apartadas para ${archivo}`, 'success');
+  // Clear form
+  ['apt_medida','apt_archivo','apt_cliente','apt_nota'].forEach(id=>{ const el=document.getElementById(id); if(el)el.value=''; });
+  document.getElementById('apt_cantidad').value='4';
+  document.getElementById('apt_fechaLimite').value='';
+}
+
+function liberarApartado(id) {
+  if (!confirm('¿Liberar este apartado?')) return;
+  apartados = apartados.filter(a => a.id !== id);
+  saveApartados();
+  renderApartados();
+  toast('Apartado liberado', 'info');
+}
+
+function renderApartados() {
+  const cont = document.getElementById('apartadosList');
+  if (!cont) return;
+  if (!apartados.length) {
+    cont.innerHTML = '<div style="text-align:center;color:var(--muted2);padding:40px">📌 Sin neumáticos apartados</div>';
+    return;
+  }
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  cont.innerHTML = apartados.map(a => {
+    let alertColor = '#7c3aed';
+    let alertTxt = '';
+    if (a.fechaLimite) {
+      const lim = new Date(a.fechaLimite+'T00:00');
+      const diff = Math.round((lim-hoy)/86400000);
+      if (diff<0)  { alertColor='var(--red)'; alertTxt=`⚠️ Vencido hace ${Math.abs(diff)}d`; }
+      else if(diff<=3) { alertColor='var(--orange)'; alertTxt=`⏰ Vence en ${diff}d`; }
+      else alertTxt = `✓ Recogida hasta ${fmtDate(a.fechaLimite)}`;
+    }
+    return `<div class="apartado-card" style="border-color:${alertColor}20">
+      <div class="apt-icon">📌</div>
+      <div class="apt-info">
+        <div class="apt-medida">${esc(a.medida)}</div>
+        <div class="apt-archivo">🗂️ Archivo: ${esc(a.archivo)} ${a.cliente?'· 👤 '+esc(a.cliente):''}</div>
+        <div class="apt-sub">${a.cantidad} ud${a.cantidad>1?'s':''} · Apartado: ${fmtDate(a.fecha.slice(0,10))}</div>
+        <div style="margin-top:4px">${citaBadgeNeum(a.fechaLimite)}</div>
+        ${a.nota?`<div class="apt-sub" style="margin-top:3px;font-style:italic">${esc(a.nota)}</div>`:''}
+      </div>
+      <div class="apt-actions">
+        <button class="act-btn red" onclick="liberarApartado('${a.id}')" title="Liberar apartado">✓ Liberar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CITA BADGE
+// ══════════════════════════════════════════════════════════════════
+function citaBadgeNeum(fecha) {
+  if (!fecha) return '<span class="cita-none">Sin cita</span>';
+  const hoy  = new Date(); hoy.setHours(0,0,0,0);
+  const cita = new Date(fecha + 'T00:00');
+  const diff = Math.round((cita - hoy) / 86400000);
+  const str  = cita.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'});
+  if (diff < 0)  return '<span class="cita-hoy">⚠️ VENCIDA · ' + str + '</span>';
+  if (diff === 0) return '<span class="cita-hoy">🔔 HOY · ' + str + '</span>';
+  if (diff <= 3)  return '<span class="cita-soon">⏰ ' + diff + 'd · ' + str + '</span>';
+  if (diff <= 7)  return '<span class="cita-soon">📅 ' + diff + 'd · ' + str + '</span>';
+  return '<span class="cita-ok">✓ ' + str + '</span>';
+}
+
+// ══════════════════════════════════════════════════════════════════
+// RECORDATORIO SEMANAL TARIFAS
+// ══════════════════════════════════════════════════════════════════
+const TARIFA_KEY = 'motorsan_neum_tarifa_check';
+
+function checkRecordatorioTarifa() {
+  const last = localStorage.getItem(TARIFA_KEY);
+  if (!last) {
+    // Primera vez: marcar hoy
+    localStorage.setItem(TARIFA_KEY, new Date().toISOString());
+    return;
+  }
+  const diasDesde = Math.round((new Date() - new Date(last)) / 86400000);
+  if (diasDesde >= 7) {
+    const banner = document.getElementById('tarifaBanner');
+    const sub    = document.getElementById('tarifaBannerSub');
+    if (banner) {
+      sub.textContent = 'Han pasado ' + diasDesde + ' días desde la última revisión de PVP. Revisa las tarifas en la tabla de stock.';
+      banner.style.display = 'flex';
+      // Auto-hide after 30s
+      setTimeout(() => { banner.style.display = 'none'; }, 30000);
+    }
+  }
+}
+
+function irActualizarTarifas() {
+  document.getElementById('tarifaBanner').style.display = 'none';
+  localStorage.setItem(TARIFA_KEY, new Date().toISOString());
+  setTab('stock');
+  toast('💰 Haz clic en cualquier precio PVP para editarlo directamente', 'info', 6000);
+}
+
+function posponerRecordatorio() {
+  document.getElementById('tarifaBanner').style.display = 'none';
+  localStorage.setItem(TARIFA_KEY, new Date().toISOString());
+  toast('Recordatorio pospuesto 7 días', 'info');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// AUTO-APARTADO AL REGISTRAR COMPRA CON ARCHIVO
+// ══════════════════════════════════════════════════════════════════
+function crearAutoApartado(stockId, medida, archivo, cantidad, fechaCita, asesorArg) {
+  if (!archivo || !archivo.trim()) return;
+  // Evitar duplicados
+  const yaExiste = apartados.find(a => a.medidaRef === stockId && a.archivo === archivo.trim());
+  if (yaExiste) { toast('Ya existe un apartado para ' + archivo + ' — actualizado', 'info'); return; }
+
+  const apt = {
+    id: uid(), medida, medidaRef: stockId, asesor: asesorArg||'',
+    archivo: archivo.trim(), cliente: '',
+    cantidad, fechaLimite: fechaCita || '',
+    nota: 'Apartado automático — compra asociada a archivo',
+    fecha: new Date().toISOString(), activo: true
+  };
+  apartados.unshift(apt);
+  saveApartados();
+  updateStats();
+  toast('📌 Apartado automático creado para ' + archivo + (fechaCita?' · Cita: '+fmtDate(fechaCita):''), 'success', 5000);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// VENTA DESDE STOCK MODAL
+// ══════════════════════════════════════════════════════════════════
+let ventaStockId = null;
+let asesorVentaSel = '';
+
+function abrirVentaModal(id) {
+  const s = stockData.find(x => x.id === id);
+  if (!s) return;
+  ventaStockId = id;
+  asesorVentaSel = '';
+  ['TONI','PEREA','ROBERTO','OTRO'].forEach(a => {
+    const btn = document.getElementById('vbtn-'+a);
+    if (btn) btn.className = 'asesor-btn';
+  });
+  document.getElementById('ventaModalInfo').innerHTML =
+    '<strong>' + esc(s.medida) + '</strong> · ' + esc(s.marca) + ' · Stock disponible: <strong>' + s.stock + ' uds</strong>';
+  document.getElementById('venta_cantidad').value = 4;
+  document.getElementById('venta_pvp').value = s.pvp || '';
+  document.getElementById('venta_archivo').value = '';
+  document.getElementById('venta_nota').value = '';
+  document.getElementById('ventaModal').classList.add('open');
+}
+
+function cerrarVentaModal() {
+  document.getElementById('ventaModal').classList.remove('open');
+  ventaStockId = null;
+}
+
+function selAsesorVenta(asesor) {
+  asesorVentaSel = asesor;
+  ['TONI','PEREA','ROBERTO','OTRO'].forEach(a => {
+    const btn = document.getElementById('vbtn-'+a);
+    if (btn) btn.className = 'asesor-btn' + (a===asesor?' sel-'+a:'');
+  });
+}
+
+function confirmarVenta() {
+  if (!ventaStockId) return;
+  if (!asesorVentaSel) { toast('Selecciona el asesor que realiza la venta', 'error'); return; }
+
+  const s = stockData.find(x => x.id === ventaStockId);
+  if (!s) return;
+
+  const cantidad = parseInt(document.getElementById('venta_cantidad').value) || 1;
+  const pvp      = parseFloat(document.getElementById('venta_pvp').value) || s.pvp || 0;
+  const archivo  = document.getElementById('venta_archivo').value.trim();
+  const nota     = document.getElementById('venta_nota').value.trim();
+  const fecha    = new Date().toISOString().slice(0,10);
+
+  const apt = apartados.filter(a => a.medidaRef === s.id).reduce((t,a)=>t+a.cantidad,0);
+  const disponible = s.stock - apt;
+  if (cantidad > disponible) {
+    toast('Stock insuficiente — ' + disponible + ' uds libres (' + apt + ' apartadas)', 'error');
+    return;
+  }
+
+  // Update stock
+  s.stock -= cantidad;
+  s.totalVendidas = (s.totalVendidas||0) + cantidad;
+
+  // Dynamic stockMin: recalculate based on sales velocity
+  const allVentasRef = movData.filter(m => m.tipo==='venta' && m.stockKey===s.id);
+  if (allVentasRef.length >= 1) {
+    const fechas = allVentasRef.map(m => m.fecha||'').filter(Boolean).sort();
+    let mesesActivos = 1;
+    if (fechas.length >= 2) {
+      const d1 = new Date(fechas[0]+'T00:00');
+      const d2 = new Date(fechas[fechas.length-1]+'T00:00');
+      mesesActivos = Math.max(1, Math.round((d2-d1)/2592000000)+1);
+    }
+    const udsTotal = allVentasRef.reduce((t,m)=>t+(parseInt(m.cantidad)||1),0) + cantidad;
+    const media = udsTotal / mesesActivos;
+    const nuevoMin = Math.ceil(media * 1.5); // 1.5x media = safety stock
+    if (nuevoMin !== s.stockMin) {
+      s.stockMin = nuevoMin;
+    }
+  }
+
+  saveToFirebase(DB_STOCK, s.id, s);
+
+  // Save movement with asesor
+  const mov = {
+    id: uid(), tipo: 'venta', medida: s.medida, referencia: s.referencia,
+    marca: s.marca, cantidad, pvp, coste: s.coste||0,
+    fecha, nota: (nota||'') + (archivo?' · Archivo:'+archivo:''),
+    archivo, asesor: asesorVentaSel, stockKey: s.id,
+    fechaCreacion: new Date().toISOString()
+  };
+  movData.unshift(mov);
+  saveToFirebase(DB_MOV, mov.id, mov);
+
+  // Remove apartado if exists for this archivo
+  if (archivo) {
+    const aptIdx = apartados.findIndex(a => a.archivo === archivo && a.medidaRef === s.id);
+    if (aptIdx !== -1) { apartados.splice(aptIdx, 1); saveApartados(); }
+  }
+
+  renderStock(); updateStats(); renderHistorial(); renderAnalytics();
+  cerrarVentaModal();
+  toast('✅ Venta registrada — ' + cantidad + ' uds · ' + asesorVentaSel, 'success', 4000);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// EDITAR CAMPO INLINE (PVP y COSTE)
+// ══════════════════════════════════════════════════════════════════
+function editarField(id, field, el) {
+  const s = stockData.find(x => x.id === id);
+  if (!s) return;
+  const input = document.createElement('input');
+  input.type = 'number'; input.step = '0.01'; input.min = '0';
+  input.value = s[field] || 0;
+  input.className = 'pvp-edit-input';
+  el.replaceWith(input);
+  input.focus(); input.select();
+  function guardar() {
+    const v = parseFloat(input.value) || 0;
+    s[field] = v;
+    saveToFirebase(DB_STOCK, id, s);
+    const span = document.createElement('span');
+    span.className = 'pvp-editable';
+    span.title = 'Clic para editar ' + (field==='pvp'?'PVP':'Coste');
+    span.textContent = v.toFixed(2) + '€';
+    span.onclick = () => editarField(id, field, span);
+    input.replaceWith(span);
+    toast('✅ ' + (field==='pvp'?'PVP':'Coste') + ' actualizado: ' + v.toFixed(2) + '€', 'success');
+  }
+  input.addEventListener('blur', guardar);
+  input.addEventListener('keydown', e => { if(e.key==='Enter') guardar(); if(e.key==='Escape') renderStock(); });
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ANÁLISIS POR ASESOR
+// ══════════════════════════════════════════════════════════════════
+let asesorTabActivo = 'TODOS';
+
+function setAsesorTab(asesor) {
+  asesorTabActivo = asesor;
+  ['TODOS','TONI','PEREA','ROBERTO','OTRO'].forEach(a => {
+    const btn = document.getElementById('atab-'+a);
+    if (btn) btn.classList.toggle('active', a===asesor);
+  });
+  renderAsesorVentas();
+}
+
+function renderAsesorVentas() {
+  const cont = document.getElementById('asesorVentasContent');
+  if (!cont) return;
+
+  const ASESORES = asesorTabActivo==='TODOS' ? ['TONI','PEREA','ROBERTO','OTRO'] : [asesorTabActivo];
+  let html = '';
+
+  for (const asesor of ASESORES) {
+    const ventas = movData.filter(m => m.tipo==='venta' && m.asesor===asesor);
+    if (!ventas.length && asesorTabActivo==='TODOS') continue;
+
+    const totalUds  = ventas.reduce((s,m)=>s+(parseInt(m.cantidad)||1),0);
+    const totalEur  = ventas.reduce((s,m)=>s+(parseFloat(m.pvp)||0)*(parseInt(m.cantidad)||1),0);
+    const totalCost = ventas.reduce((s,m)=>s+(parseFloat(m.coste)||0)*(parseInt(m.cantidad)||1),0);
+    const margen    = totalEur - totalCost;
+
+    // By month
+    const byMes = {};
+    ventas.forEach(m => {
+      if (!m.fecha) return;
+      const mes = m.fecha.slice(0,7);
+      if (!byMes[mes]) byMes[mes] = {uds:0,eur:0};
+      byMes[mes].uds += parseInt(m.cantidad)||1;
+      byMes[mes].eur += (parseFloat(m.pvp)||0)*(parseInt(m.cantidad)||1);
+    });
+    const mesesArr = Object.entries(byMes).sort((a,b)=>a[0].localeCompare(b[0]));
+    const mesesNames = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    const maxUds = mesesArr.length ? Math.max(...mesesArr.map(m=>m[1].uds)) : 1;
+
+    const colorClass = {TONI:'#1d4ed8',PEREA:'#6d28d9',ROBERTO:'#be123c',OTRO:'#15803d'}[asesor]||'#1a3a6e';
+
+    html += `<div style="background:#fff;border:1px solid #e2e5ea;border-radius:10px;padding:20px;margin-bottom:18px;border-top:3px solid ${colorClass}">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <div style="font-size:1.4rem">👨</div>
+        <div><div style="font-size:1rem;font-weight:700;color:${colorClass}">${asesor==='TONI'?'Toni Moya':asesor==='PEREA'?'Perea':asesor==='ROBERTO'?'Roberto Carlos':'Otro'}</div>
+        <div style="font-size:.72rem;color:var(--muted)">${ventas.length} ventas registradas</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
+        <div class="asesor-kpi"><div class="asesor-kpi-val" style="color:${colorClass}">${totalUds}</div><div class="asesor-kpi-lbl">Uds vendidas</div></div>
+        <div class="asesor-kpi"><div class="asesor-kpi-val" style="color:#1a7f4e">${totalEur.toFixed(0)}€</div><div class="asesor-kpi-lbl">Importe ventas</div></div>
+        <div class="asesor-kpi"><div class="asesor-kpi-val" style="color:#bb0a21">${totalCost.toFixed(0)}€</div><div class="asesor-kpi-lbl">Coste</div></div>
+        <div class="asesor-kpi"><div class="asesor-kpi-val" style="color:${margen>=0?'#1a7f4e':'#bb0a21'}">${margen.toFixed(0)}€</div><div class="asesor-kpi-lbl">Margen</div></div>
+      </div>`;
+
+    // Monthly chart
+    if (mesesArr.length) {
+      html += `<div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px;font-weight:600">Ventas mensuales</div>
+        <div style="display:flex;align-items:flex-end;gap:6px;height:80px;margin-bottom:16px">
+        ${mesesArr.map(([mes,d])=>{
+          const [y,m2]=mes.split('-');
+          const pct=Math.round((d.uds/maxUds)*100);
+          const lbl=mesesNames[parseInt(m2)-1]+' '+y.slice(2);
+          return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+            <span style="font-size:.6rem;font-weight:700;color:${colorClass}">${d.uds}</span>
+            <div style="width:100%;background:${colorClass};border-radius:3px 3px 0 0;height:${pct}%;min-height:3px"></div>
+            <span style="font-size:.55rem;color:var(--muted);transform:rotate(-30deg);white-space:nowrap;margin-top:4px">${lbl}</span>
+          </div>`;
+        }).join('')}
+        </div>`;
+    }
+
+    // Top refs sold
+    const byRef = {};
+    ventas.forEach(m => {
+      const k = m.medida||m.referencia||'?';
+      if (!byRef[k]) byRef[k]={uds:0,eur:0,marca:m.marca||''};
+      byRef[k].uds+=(parseInt(m.cantidad)||1);
+      byRef[k].eur+=(parseFloat(m.pvp)||0)*(parseInt(m.cantidad)||1);
+    });
+    const topRefs = Object.entries(byRef).sort((a,b)=>b[1].uds-a[1].uds).slice(0,5);
+    if (topRefs.length) {
+      html += `<div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px;font-weight:600">Top referencias vendidas</div>`;
+      html += topRefs.map(([ref,d],i)=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f0f2f5">
+        <div style="width:20px;height:20px;border-radius:50%;background:${colorClass};color:#fff;font-size:.62rem;font-weight:700;display:flex;align-items:center;justify-content:center">${i+1}</div>
+        <div style="flex:1;font-family:var(--mono);font-size:.76rem;color:var(--primary)">${esc(ref)}</div>
+        <div style="font-size:.8rem;font-weight:700;color:${colorClass}">${d.uds} uds</div>
+        <div style="font-size:.75rem;color:#1a7f4e">${d.eur.toFixed(0)}€</div>
+      </div>`).join('');
+    }
+
+    html += '</div>';
+  }
+
+  if (!html) html = '<div style="text-align:center;color:var(--muted2);padding:40px">Sin ventas registradas todavía para este asesor</div>';
+  cont.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// INLINE EDITING — UNIVERSAL
+// ══════════════════════════════════════════════════════════════════
+function editInline(id, field, el, type='text') {
+  const s = stockData.find(x => x.id === id);
+  if (!s) return;
+
+  const input = document.createElement('input');
+  input.type = type === 'number' ? 'number' : 'text';
+  if (type === 'number') { input.step = '0.01'; input.min = '0'; }
+  input.value = s[field] || '';
+  input.className = 'cell-inline-input';
+  input.style.width = type === 'number' ? '80px' : '120px';
+  el.replaceWith(input);
+  input.focus(); input.select();
+
+  function guardar() {
+    let val = type === 'number' ? (parseFloat(input.value)||0) : input.value.trim();
+    s[field] = val;
+    saveToFirebase(DB_STOCK, id, s);
+    renderStock();
+    const labels = {pvp:'PVP',coste:'Coste',stockMin:'Stock mín.',ubicacion:'Ubicación'};
+    toast('✅ ' + (labels[field]||field) + ' actualizado', 'success', 2000);
+  }
+  input.addEventListener('blur', guardar);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); guardar(); }
+    if (e.key === 'Escape') renderStock();
+  });
+}
+
+function editCitaStock(stockId) {
+  const s = stockData.find(x => x.id === stockId);
+  if (!s) return;
+  const apt = apartados.find(a => a.medidaRef === stockId);
+  const cur = apt?.fechaLimite || '';
+
+  const existing = document.getElementById('cita-float-sel');
+  if (existing) existing.remove();
+
+  const div = document.createElement('div');
+  div.id = 'cita-float-sel';
+  div.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:3000;background:#fff;border-radius:12px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.3);min-width:280px';
+  div.innerHTML = '<div style="font-size:.8rem;font-weight:700;color:var(--text);margin-bottom:12px">📅 Fecha de cita — ' + esc(s.medida) + '</div>' +
+    '<input type="date" id="cita-input-fl" value="' + cur + '" style="width:100%;padding:10px;border-radius:8px;border:2px solid var(--primary);font-size:.9rem;margin-bottom:10px">' +
+    '<div style="display:flex;gap:8px">' +
+    '<button onclick="guardarCitaStock(''+stockId+'')" style="flex:1;padding:9px;border-radius:8px;border:none;background:var(--primary);color:#fff;font-family:var(--font);font-weight:600;cursor:pointer">✓ Guardar</button>' +
+    '<button onclick="guardarCitaStock(''+stockId+'',true)" style="padding:9px 12px;border-radius:8px;border:1px solid #e2e5ea;background:#fff;font-family:var(--font);font-size:.75rem;color:#6b7280;cursor:pointer">✕ Quitar</button>' +
+    '</div>';
+
+  const bd = document.createElement('div');
+  bd.style.cssText = 'position:fixed;inset:0;z-index:2999;background:rgba(0,0,0,.3)';
+  bd.onclick = () => { div.remove(); bd.remove(); };
+
+  document.body.appendChild(bd);
+  document.body.appendChild(div);
+  setTimeout(() => document.getElementById('cita-input-fl')?.focus(), 50);
+}
+
+function guardarCitaStock(stockId, clear=false) {
+  document.getElementById('cita-float-sel')?.remove();
+  document.querySelectorAll('[style*="inset:0;z-index:2999"]').forEach(el => el.remove());
+
+  const fecha = clear ? '' : (document.getElementById('cita-input-fl')?.value || '');
+  const s = stockData.find(x => x.id === stockId);
+  if (!s) return;
+  const apt = apartados.find(a => a.medidaRef === stockId);
+
+  if (apt) { apt.fechaLimite = fecha; saveApartados(); }
+  else if (fecha) {
+    apartados.unshift({ id: uid(), medida: s.medida, medidaRef: stockId,
+      archivo:'', cliente:'', cantidad:0, fechaLimite: fecha,
+      nota:'Cita asignada desde stock', fecha: new Date().toISOString(), activo:true });
+    saveApartados();
+  }
+  renderStock(); updateStats();
+  toast(fecha ? '📅 Cita: ' + fmtDate(fecha) : '📅 Cita eliminada', 'success', 2000);
+}
+
+function editAsesorStock(stockId) {
+  const s = stockData.find(x => x.id === stockId);
+  if (!s) return;
+  const apt = apartados.find(a => a.medidaRef === stockId);
+
+  const opciones = ['TONI — Toni Moya','PEREA — Perea','ROBERTO — Roberto Carlos','OTRO — Otro','— Ninguno'];
+  const sel = prompt('Selecciona asesor:
+1. Toni Moya
+2. Perea
+3. Roberto Carlos
+4. Otro
+5. Ninguno
+
+Escribe el número:');
+  if (!sel) return;
+  const map = {'1':'TONI','2':'PEREA','3':'ROBERTO','4':'OTRO','5':''};
+  const asesor = map[sel.trim()] !== undefined ? map[sel.trim()] : '';
+
+  if (apt) { apt.asesor = asesor; saveApartados(); }
+  else if (asesor) {
+    apartados.unshift({
+      id: uid(), medida: s.medida, medidaRef: stockId,
+      archivo: '', cliente: '', cantidad: 0, asesor,
+      fechaLimite: '', nota: 'Asesor asignado desde stock',
+      fecha: new Date().toISOString(), activo: true
+    });
+    saveApartados();
+  }
+  renderStock();
+  toast('👤 Asesor actualizado: ' + (asesor||'ninguno'), 'success', 2500);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// IMPORTAR CAMPAÑA DESDE EXCEL
+// ══════════════════════════════════════════════════════════════════
+function importarCampana(file) {
+  if (!file) return;
+  toast('⏳ Procesando campaña…', 'info', 3000);
+
+  function procesarRows(rows) {
+    campanaData = [];
+    let headerRow = -1;
+
+    // Detect header
+    for (let i = 0; i < Math.min(5, rows.length); i++) {
+      const r = rows[i].join(' ').toLowerCase();
+      if (r.includes('referencia') || r.includes('medida') || r.includes('neto')) {
+        headerRow = i; break;
+      }
+    }
+
+    const dataStart = headerRow + 1;
+    let colMedida=0, colRef=1, colMarca=3, colDibujo=4, colPVP=7, colNeto=8, colCamp=10;
+
+    if (headerRow >= 0) {
+      const hdr = rows[headerRow].map(c => String(c||'').toLowerCase());
+      hdr.forEach((h,i) => {
+        if (h.includes('medida') || (h.includes('/') && h.includes('r'))) colMedida = i;
+        if (h.includes('referencia') || h.includes('ref')) colRef = i;
+        if (h.includes('marca')) colMarca = i;
+        if (h.includes('modelo') || h.includes('dibujo')) colDibujo = i;
+        if (h.includes('pvp') && !h.includes('neto')) colPVP = i;
+        if (h.includes('neto') && !h.includes('camp')) colNeto = i;
+        if (h.includes('camp') || (h.includes('neto') && h.includes('camp'))) colCamp = i;
+      });
+    }
+
+    for (let i = dataStart; i < rows.length; i++) {
+      const r = rows[i];
+      const medida = String(r[colMedida]||'').trim();
+      const ref    = String(r[colRef]||'').trim();
+      if (!medida && !ref) continue;
+      if (!medida.includes('/') && !ref.startsWith('ZTS')) continue;
+
+      campanaData.push({
+        medida:       medida,
+        referencia:   ref,
+        marca:        String(r[colMarca]||'').trim(),
+        dibujo:       String(r[colDibujo]||'').trim(),
+        pvp:          parseFloat(r[colPVP]||0) || 0,
+        netoNormal:   parseFloat(r[colNeto]||0) || 0,
+        netoCampana:  parseFloat(r[colCamp]||0) || 0,
+      });
+    }
+
+    // Save and cross-reference with stock
+    try { localStorage.setItem(LOCAL_CAMP, JSON.stringify(campanaData)); } catch {}
+
+    const matches = stockData.filter(s =>
+      campanaData.some(c => c.referencia === s.referencia ||
+        (c.medida && s.medida && c.medida.replace(/\s/g,'').toUpperCase() === s.medida.replace(/\s/g,'').toUpperCase()))
+    );
+
+    renderStock();
+    toast('✅ Campaña importada — ' + campanaData.length + ' productos · ' + matches.length + ' coinciden con tu stock 🏷️', 'success', 7000);
+    if (matches.length) {
+      setTimeout(() => toast('🏷️ Ref. en campaña: ' + matches.map(s=>s.medida).join(' · '), 'info', 8000), 1000);
+    }
+  }
+
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'csv') {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const rows = e.target.result.split('\n').map(l => l.split(/[;,\t]/).map(c => c.trim().replace(/^"|"$/g,'')));
+      procesarRows(rows);
+    };
+    reader.readAsText(file, 'utf-8');
+  } else {
+    // Excel via SheetJS
+    loadSheetJS(() => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const wb = XLSX.read(e.target.result, { type: 'binary' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+        procesarRows(rows);
+      };
+      reader.readAsBinaryString(file);
+    });
+  }
+}
+
+function loadCampana() {
+  try {
+    const d = localStorage.getItem(LOCAL_CAMP);
+    if (d) campanaData = JSON.parse(d);
+  } catch {}
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ASESOR STOCK SELECTOR (floating UI)
+// ══════════════════════════════════════════════════════════════════
+function editAsesorStock(stockId) {
+  const s = stockData.find(x => x.id === stockId);
+  if (!s) return;
+  document.getElementById('asesor-float-sel')?.remove();
+  document.querySelectorAll('.float-backdrop').forEach(el => el.remove());
+
+  const div = document.createElement('div');
+  div.id = 'asesor-float-sel';
+  div.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:3000;background:#fff;border-radius:12px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.3);min-width:260px';
+  const asesores = [['TONI','👨 Toni Moya','#1d4ed8'],['PEREA','👨 Perea','#6d28d9'],['ROBERTO','👨 Roberto Carlos','#be123c'],['OTRO','👤 Otro','#15803d']];
+  div.innerHTML = '<div style="font-size:.8rem;font-weight:700;color:var(--text);margin-bottom:14px">👤 Asignar asesor — '+esc(s.medida)+'</div>' +
+    '<div style="display:grid;gap:8px">' +
+    asesores.map(([val,lbl,col])=>'<button onclick="setAsesorStock(''+stockId+'',''+val+'')" style="padding:11px 14px;border-radius:8px;border:2px solid #e2e5ea;background:#f8f9fb;font-family:var(--font);font-size:.84rem;font-weight:600;cursor:pointer;text-align:left;color:'+col+';transition:all .15s">'+lbl+'</button>').join('') +
+    '<button onclick="setAsesorStock(''+stockId+'','')" style="padding:8px;border-radius:8px;border:1px solid #e2e5ea;background:#fff;font-family:var(--font);font-size:.73rem;color:#9ca3af;cursor:pointer;margin-top:4px">✕ Quitar asesor</button>' +
+    '</div>';
+
+  const bd = document.createElement('div');
+  bd.className = 'float-backdrop';
+  bd.style.cssText = 'position:fixed;inset:0;z-index:2999;background:rgba(0,0,0,.35)';
+  bd.onclick = () => { div.remove(); bd.remove(); };
+  document.body.appendChild(bd);
+  document.body.appendChild(div);
+}
+
+function setAsesorStock(stockId, asesor) {
+  document.getElementById('asesor-float-sel')?.remove();
+  document.querySelectorAll('.float-backdrop').forEach(el => el.remove());
+  const s = stockData.find(x => x.id === stockId);
+  if (!s) return;
+  const apt = apartados.find(a => a.medidaRef === stockId);
+  if (apt) { apt.asesor = asesor; saveApartados(); }
+  else if (asesor) {
+    apartados.unshift({ id:uid(), medida:s.medida, medidaRef:stockId, archivo:'', cliente:'',
+      cantidad:0, asesor, fechaLimite:'', nota:'Asesor desde stock', fecha:new Date().toISOString(), activo:true });
+    saveApartados();
+  }
+  renderStock();
+  toast('👤 Asesor: '+(asesor||'eliminado'), 'success', 2000);
+}
+
+// ── DUAL SCROLL ──
+(function() {
+  function init() {
+    const top=document.getElementById('scrollTopStock'), bot=document.getElementById('tblWrapStock'), inner=document.getElementById('scrollInnerStock');
+    if(!top||!bot||!inner) return;
+    function syncW(){ inner.style.width=bot.scrollWidth+'px'; }
+    syncW(); new ResizeObserver(syncW).observe(bot);
+    top.addEventListener('scroll',()=>{ bot.scrollLeft=top.scrollLeft; });
+    bot.addEventListener('scroll',()=>{ top.scrollLeft=bot.scrollLeft; });
+  }
+  setTimeout(init,600);
+})();
+
+// ── CLOSE MODAL ON BG ──
+document.getElementById('editModal').addEventListener('click', e => {
+  if(e.target===document.getElementById('editModal')) cerrarEdit();
+});
+document.getElementById('ventaModal').addEventListener('click', e => {
+  if(e.target===document.getElementById('ventaModal')) cerrarVentaModal();
+});
+
+// ── LOAD CONFIG & APARTADOS ──
+loadCfg();
+loadApartados();
+loadCampana();
+
+checkRecordatorioTarifa();
+
+// ── VENTAS HISTÓRICAS ANTONIO MOYA ──
+function registrarVentasHistoricas() {
+  const KEY = 'motorsan_ventas_hist_v1';
+  if (localStorage.getItem(KEY)) return;
+
+  const ventasHist = [
+    {
+      id: 'hist_venta_001',
+      tipo: 'venta',
+      medida: '225/40R18',
+      referencia: 'ZTS226408YCC5C',
+      marca: 'Continental',
+      cantidad: 2,
+      pvp: 102.89,
+      coste: 87.46,
+      fecha: '2026-06-01',
+      asesor: 'TONI',
+      nota: 'Venta registrada retroactivamente',
+      archivo: '',
+      stockKey: 'ZTS226408YCC5C',
+      fechaCreacion: '2026-06-01T00:00:00.000Z'
+    },
+    {
+      id: 'hist_venta_002',
+      tipo: 'venta',
+      medida: '245/40R19',
+      referencia: 'ZTS248409YBZ0A',
+      marca: 'Bridgestone',
+      cantidad: 4,
+      pvp: 206.68,
+      coste: 175.68,
+      fecha: '2026-06-02',
+      asesor: 'TONI',
+      nota: 'Venta registrada retroactivamente',
+      archivo: '',
+      stockKey: 'ZTS248409YBZ0A',
+      fechaCreacion: '2026-06-02T00:00:00.000Z'
+    }
+  ];
+
+  ventasHist.forEach(mov => {
+    // Add to movData if not already present
+    if (!movData.find(m => m.id === mov.id)) {
+      movData.push(mov);
+      saveToFirebase(DB_MOV, mov.id, mov);
+    }
+
+    // Update stock if reference exists
+    const s = stockData.find(x => x.id === mov.stockKey || x.referencia === mov.referencia);
+    if (s) {
+      s.totalVendidas = (s.totalVendidas||0) + mov.cantidad;
+      // Don't touch current stock as it's already been sold
+      saveToFirebase(DB_STOCK, s.id, s);
+    } else {
+      // Reference ZTS248409YBZ0A doesn't exist yet — create it as sold out
+      const newRef = {
+        id: mov.referencia,
+        medida: mov.medida,
+        referencia: mov.referencia,
+        marca: mov.marca,
+        tipo: 'Verano',
+        indice: '98Y',
+        ubicacion: 'PREPICKING',
+        stock: 0,
+        stockMin: 0,
+        pvp: mov.pvp,
+        coste: mov.coste,
+        fechaRecepcion: mov.fecha,
+        totalVendidas: mov.cantidad,
+        fechaCreacion: mov.fechaCreacion
+      };
+      stockData.push(newRef);
+      saveToFirebase(DB_STOCK, newRef.id, newRef);
+    }
+  });
+
+  localStorage.setItem(KEY, '1');
+  renderStock(); updateStats(); renderHistorial(); renderAnalytics();
+  toast('✅ 2 ventas de Antonio Moya registradas retroactivamente', 'success', 5000);
+}
+
+// ── SET TODAY DATE ──
+document.getElementById('mov_fecha').value = new Date().toISOString().slice(0,10);
+
+// ── IMPORT STOCK INICIAL ──
+const STOCK_INICIAL = {
+  "ZTS216557WCZ00": {id:"ZTS216557WCZ00",medida:"215/55R17",referencia:"ZTS216557WCZ00",marca:"Continental",tipo:"Verano",indice:"W",ubicacion:"Sin ubicación",stock:2,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS256401YCZ0C": {id:"ZTS256401YCZ0C",medida:"255/40R21",referencia:"ZTS256401YCZ0C",marca:"Continental",tipo:"Verano",indice:"Y",ubicacion:"2R0",stock:2,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS185604HCZ00": {id:"ZTS185604HCZ00",medida:"185/60R14",referencia:"ZTS185604HCZ00",marca:"Continental",tipo:"Verano",indice:"H",ubicacion:"2R2",stock:2,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS235557VCP5A": {id:"ZTS235557VCP5A",medida:"235/55R17",referencia:"ZTS235557VCP5A",marca:"Pirelli",tipo:"Verano",indice:"V",ubicacion:"2R4",stock:1,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS215508WCC5A": {id:"ZTS215508WCC5A",medida:"215/50R18",referencia:"ZTS215508WCC5A",marca:"Continental",tipo:"Verano",indice:"W",ubicacion:"2T",stock:4,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS226408YCC5C": {id:"ZTS226408YCC5C",medida:"225/40R18",referencia:"ZTS226408YCC5C",marca:"Continental",tipo:"Verano",indice:"Y",ubicacion:"2T2",stock:4,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS215557VCE6A": {id:"ZTS215557VCE6A",medida:"215/55R17",referencia:"ZTS215557VCE6A",marca:"Continental",tipo:"Verano",indice:"V",ubicacion:"2T4",stock:3,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS236608WMZ0A": {id:"ZTS236608WMZ0A",medida:"235/60R18",referencia:"ZTS236608WMZ0A",marca:"Michelin",tipo:"Verano",indice:"W",ubicacion:"2T4",stock:2,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS215508WBTNA": {id:"ZTS215508WBTNA",medida:"215/50R18",referencia:"ZTS215508WBTNA",marca:"Bridgestone",tipo:"Verano",indice:"W",ubicacion:"2U2",stock:2,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS235458WCE60": {id:"ZTS235458WCE60",medida:"235/45R18",referencia:"ZTS235458WCE60",marca:"Continental",tipo:"Verano",indice:"W",ubicacion:"2U2",stock:2,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS226508WCZ00": {id:"ZTS226508WCZ00",medida:"225/50R18",referencia:"ZTS226508WCZ00",marca:"Continental",tipo:"Verano",indice:"W",ubicacion:"2U4",stock:2,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS256401YCZ00": {id:"ZTS256401YCZ00",medida:"255/40R21",referencia:"ZTS256401YCZ00",marca:"Continental",tipo:"Verano",indice:"Y",ubicacion:"2V0",stock:4,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS215557VBTN0": {id:"ZTS215557VBTN0",medida:"215/55R17",referencia:"ZTS215557VBTN0",marca:"Bridgestone",tipo:"Verano",indice:"V",ubicacion:"2V4",stock:2,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS215557VCZ00": {id:"ZTS215557VCZ00",medida:"215/55R17",referencia:"ZTS215557VCZ00",marca:"Continental",tipo:"Verano",indice:"V",ubicacion:"2V4",stock:2,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS245408YCC5C": {id:"ZTS245408YCC5C",medida:"245/40R18",referencia:"ZTS245408YCC5C",marca:"Continental",tipo:"Verano",indice:"Y",ubicacion:"2W4",stock:3,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS185605HCZ00": {id:"ZTS185605HCZ00",medida:"185/60R15",referencia:"ZTS185605HCZ00",marca:"Continental",tipo:"Verano",indice:"H",ubicacion:"EXPO SK",stock:2,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS206458VCZ00": {id:"ZTS206458VCZ00",medida:"205/45R18",referencia:"ZTS206458VCZ00",marca:"Continental",tipo:"Verano",indice:"V",ubicacion:"EXPOAU",stock:2,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS226558YCE6C": {id:"ZTS226558YCE6C",medida:"225/55R18",referencia:"ZTS226558YCE6C",marca:"Continental",tipo:"Verano",indice:"Y",ubicacion:"MONTADOS USADOS",stock:2,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS256459YC6CA": {id:"ZTS256459YC6CA",medida:"255/45R19",referencia:"ZTS256459YC6CA",marca:"Continental",tipo:"Verano",indice:"104Y",ubicacion:"Estante A-3, Almacén",stock:2,stockMin:0,pvp:221.49,coste:110.75,fechaRecepcion:"2026-06-02",totalVendidas:0,fechaCreacion:"2026-06-02T00:00:00.000Z"}
+};
+
+function importarStockInicial() {
+  const KEY = 'motorsan_neum_import_v4';
+  if (localStorage.getItem(KEY)) return; // ya importado
+  
+  const entries = Object.values(STOCK_INICIAL);
+  entries.forEach(rec => {
+    // Only add if not already exists
+    if (!stockData.find(s => s.id === rec.id)) {
+      stockData.push(rec);
+      saveToFirebase(DB_STOCK, rec.id, rec);
+    }
+  });
+  
+  localStorage.setItem(KEY, '1');
+  toast('✅ Stock inicial importado — 18 referencias · 43 unidades ✓', 'success', 5000);
+  renderStock(); updateStats(); updateSuggestions();
+}
+
+// ── BORRAR DATOS DE PRUEBA (ejecutar una vez desde consola) ──
+// Para borrar: llamar borrarDatosPrueba() desde la consola del navegador
+function borrarDatosPrueba() {
+  if (!confirm('¿Borrar TODOS los movimientos del historial y análisis? El stock importado del PDF se mantendrá.')) return;
+  movData = [];
+  localStorage.setItem(LOCAL_MOV, JSON.stringify([]));
+  if (useFirebase && fbDb) {
+    fbDb.ref(DB_MOV).remove().then(() => toast('✅ Historial borrado — Stock del PDF conservado', 'success', 5000));
+  }
+  renderHistorial();
+  renderAnalytics();
+  updateStats();
+  toast('✅ Historial y análisis limpiados', 'success');
+}
+
+// ── INIT ──
+initFirebase();
+setTimeout(importarStockInicial, 2000);
+setTimeout(registrarVentasHistoricas, 3000);
+</script>
+</body>
+</html>  tbody.innerHTML = rows.map(s => {
+    const aptUds   = apartados.filter(a => a.medidaRef === s.id).reduce((t,a)=>t+a.cantidad,0);
+    const libre    = Math.max(0, s.stock - aptUds);
+    const aptFiles = [...new Set(apartados.filter(a=>a.medidaRef===s.id&&a.archivo).map(a=>a.archivo))].join(', ');
+    const aptCita  = apartados.filter(a=>a.medidaRef===s.id&&a.fechaLimite).map(a=>a.fechaLimite).sort()[0]||'';
+    const aptAses  = [...new Set(apartados.filter(a=>a.medidaRef===s.id&&a.asesor).map(a=>a.asesor))];
+    const enCamp   = campanaData.find(c => c.referencia===s.referencia || (c.medida&&s.medida&&c.medida.replace(/\s/g,'').toUpperCase()===s.medida.replace(/\s/g,'').toUpperCase()));
+    const st       = getStockStatus(s);
+    const stockColor = libre<=0?'#ef4444':libre<=s.stockMin&&s.stockMin>0?'#f59e0b':'#10b981';
+    return `<tr class="${st==='out'?'stock-out':st==='low'?'stock-low':''}">
+      <td style="min-width:180px">
+        <div style="font-weight:700;font-size:.92rem;color:var(--primary)">${esc(s.medida||'—')}</div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:2px">${esc(s.marca||'')} ${s.indice?'· '+esc(s.indice):''} · ${esc(s.tipo||'')}</div>
+        <div style="font-size:.62rem;color:var(--muted2);font-family:var(--mono);margin-top:1px">${esc(s.referencia||'')}</div>
+        ${enCamp?'<div class="badge-campana" style="margin-top:4px">🏷️ EN CAMPAÑA · '+enCamp.netoCampana.toFixed(2)+'€ neto</div>':''}
+        ${aptUds>0?'<div style="font-size:.62rem;color:#7c3aed;margin-top:3px;font-weight:600">📌 '+aptUds+' uds · '+esc(aptFiles)+'</div>':''}
+      </td>
+      <td class="stock-cell">
+        <span class="stock-num-big" style="color:${stockColor}">${libre}</span>
+        ${aptUds>0?'<span class="stock-sub">'+aptUds+' apt.</span>':'<span class="stock-sub">uds</span>'}
+      </td>
+      <td>${stockBadge(s)}</td>
+      <td><span onclick="editCitaStock('${s.id}')" style="cursor:pointer" title="Clic para editar cita">${citaBadgeNeum(aptCita)}</span></td>
+      <td><span onclick="editAsesorStock('${s.id}')" style="cursor:pointer" title="Clic para asignar asesor">
+        ${aptAses.length?aptAses.map(a=>'<span class="asesor-pill asesor-'+a+'">'+a+'</span>').join(' '):'<span class="cell-editable empty" style="font-size:.7rem">Asignar</span>'}
+      </span></td>
+      <td><span class="cell-editable${!s.ubicacion?' empty':''}" onclick="editInline('${s.id}','ubicacion',this,'text')">${esc(s.ubicacion||'Añadir')}</span></td>
+      <td><span class="cell-editable${!s.pvp?' empty':''}" onclick="editInline('${s.id}','pvp',this,'number')" style="font-weight:700;color:#059669">${s.pvp?parseFloat(s.pvp).toFixed(2)+'€':'—'}</span></td>
+      <td><span class="cell-editable${!s.coste?' empty':''}" onclick="editInline('${s.id}','coste',this,'number')" style="color:var(--muted)">${s.coste?parseFloat(s.coste).toFixed(2)+'€':'—'}</span></td>
+      <td class="stock-cell"><span class="cell-editable" onclick="editInline('${s.id}','stockMin',this,'number')" style="color:var(--muted);font-size:.85rem">${s.stockMin||0}</span></td>
+      <td style="text-align:center;font-weight:700;color:var(--primary)">${s.totalVendidas||0}</td>
+      <td style="font-size:.72rem;color:var(--muted2);white-space:nowrap">${fmtDate(s.fechaRecepcion)}</td>
+      <td>
+        <div style="display:flex;gap:3px;justify-content:center">
+          <button class="act-btn green" onclick="entradaRapida('${s.id}')" title="Entrada rápida">📥</button>
+          <button class="act-btn red" onclick="abrirVentaModal('${s.id}')" title="Registrar venta">📤</button>
+          <button class="act-btn orange" onclick="abrirEdit('${s.id}')" title="Editar completo">✏️</button>
+          <button class="act-btn" onclick="eliminarRef('${s.id}')" title="Eliminar" style="color:var(--red)">🗑️</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');tml>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>Stock Neumáticos · MOTORSAN v1.0</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Source+Code+Pro:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js" crossorigin="anonymous"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f2f5;--surface:#fff;--surface2:#f8f9fb;--border:#e2e5ea;--border2:#d0d5de;
+  --text:#1a1d23;--text2:#3d4251;--muted:#6b7280;--muted2:#9ca3af;
+  --red:#bb0a21;--green:#1a7f4e;--green-bg:#eaf5ef;
+  --blue:#1a3a6e;--blue-bg:#eef3fc;
+  --orange:#c47200;--orange-bg:#fff8ec;--orange-border:#f0c060;
+  --primary:#1a3a6e;--primary2:#0d2a5e;
+  --mono:"Source Code Pro",monospace;--font:"Inter",sans-serif;
+  --r:10px;--rs:6px;
+  --shadow:0 2px 8px rgba(0,0,0,.08);--shadow-lg:0 12px 40px rgba(0,0,0,.15);
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+
+/* HEADER */
+.header{background:linear-gradient(135deg,#0d1b3e 0%,#1a3a6e 100%);color:#fff;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:58px;box-shadow:0 2px 12px rgba(0,0,0,.3);position:sticky;top:0;z-index:100}
+.header-brand{display:flex;align-items:center;gap:12px}
+.header-title{font-size:.85rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.header-sub{font-size:.62rem;opacity:.55;letter-spacing:.06em;margin-top:1px}
+.header-stats{display:flex;gap:6px}
+.hstat{background:rgba(255,255,255,.1);border-radius:var(--rs);padding:5px 14px;text-align:center;border:1px solid rgba(255,255,255,.12);cursor:pointer;transition:background .15s}
+.hstat:hover{background:rgba(255,255,255,.18)}
+.hstat-val{font-size:1.1rem;font-weight:700;line-height:1}
+.hstat-lbl{font-size:.55rem;text-transform:uppercase;letter-spacing:.08em;opacity:.6;margin-top:2px}
+.hstat.green .hstat-val{color:#34d399}
+.hstat.orange .hstat-val{color:#fbbf24}
+.hstat.red .hstat-val{color:#f87171}
+.hstat.blue .hstat-val{color:#60a5fa}
+.conn-dot{width:8px;height:8px;border-radius:50%;background:#f87171;display:inline-block;margin-right:6px;transition:background .3s}
+.conn-dot.on{background:#34d399;animation:pulse-green 2s infinite}
+@keyframes pulse-green{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* TABS */
+.tabs{background:#fff;border-bottom:2px solid var(--border);padding:0 24px;display:flex;gap:0}
+.tab{padding:15px 22px;font-size:.88rem;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;display:flex;align-items:center;gap:7px;white-space:nowrap}
+.tab:hover{color:var(--text);background:var(--surface2)}
+.tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+.tab .badge{background:var(--primary);color:#fff;border-radius:20px;padding:1px 7px;font-size:.6rem;font-weight:700}
+.tab.orange.active{color:var(--orange);border-bottom-color:var(--orange)}
+.tab.red.active{color:var(--red);border-bottom-color:var(--red)}
+
+/* LAYOUT */
+.main{max-width:1600px;margin:0 auto;padding:20px 16px}
+
+/* CARDS */
+.card{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;margin-bottom:18px}
+.card-hdr{background:linear-gradient(135deg,#0d1b3e,#1a3a6e);color:#fff;padding:12px 20px;display:flex;align-items:center;justify-content:space-between}
+.card-hdr h2{font-size:.78rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.card-body{padding:18px 20px}
+
+/* FORM GRID */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;font-weight:600;color:var(--muted)}
+.field input,.field select,.field textarea{padding:10px 13px;border-radius:var(--rs);border:1.5px solid var(--border2);font-family:var(--font);font-size:.9rem;outline:none;background:var(--surface2);transition:border-color .15s}
+.field input:focus,.field select:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(26,58,110,.08)}
+.field input.mono{font-family:var(--mono);font-size:.82rem;letter-spacing:.03em;text-transform:uppercase}
+.field-wide{grid-column:span 2}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 18px;border-radius:var(--rs);border:none;font-family:var(--font);font-size:.82rem;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary2)}
+.btn-green{background:var(--green);color:#fff}
+.btn-green:hover{background:#155232}
+.btn-red{background:var(--red);color:#fff}
+.btn-red:hover{background:#9b0018}
+.btn-ghost{background:var(--surface2);color:var(--muted);border:1px solid var(--border2)}
+.btn-ghost:hover{color:var(--text);border-color:var(--border)}
+.btn-orange{background:#c47200;color:#fff}
+.btn-orange:hover{background:#9b5a00}
+.form-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)}
+
+/* TOOLBAR */
+.toolbar{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.search-wrap{position:relative;display:flex;align-items:center}
+.search-wrap input{padding:7px 10px 7px 32px;border-radius:var(--rs);border:1.5px solid var(--border2);font-family:var(--font);font-size:.8rem;outline:none;background:var(--surface);width:240px;transition:border-color .15s}
+.search-wrap input:focus{border-color:var(--primary)}
+.search-ico{position:absolute;left:9px;color:var(--muted2);font-size:13px;pointer-events:none}
+.filter-btn{padding:5px 13px;border-radius:20px;border:1.5px solid var(--border2);background:var(--surface);font-size:.72rem;font-weight:600;cursor:pointer;color:var(--muted);transition:all .15s;white-space:nowrap}
+.filter-btn:hover{border-color:var(--border);color:var(--text)}
+.filter-btn.active{border-color:var(--primary);background:var(--blue-bg);color:var(--primary)}
+.filter-btn.ok.active{border-color:var(--green);background:var(--green-bg);color:var(--green)}
+.filter-btn.warn.active{border-color:var(--orange);background:var(--orange-bg);color:var(--orange)}
+.filter-btn.danger.active{border-color:var(--red);background:#fff0f0;color:var(--red)}
+.export-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--rs);background:#1d6f42;color:#fff;border:none;font-family:var(--font);font-size:.78rem;font-weight:600;cursor:pointer;margin-left:auto}
+.export-btn:hover{background:#155232}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto}
+.tbl-scroll-top{overflow-x:auto;overflow-y:hidden;height:10px;margin-bottom:2px}
+.tbl-scroll-inner{height:1px}
+table{width:100%;border-collapse:collapse;font-size:.84rem}
+th{padding:10px 12px;text-align:left;font-size:.62rem;text-transform:uppercase;letter-spacing:.07em;color:rgba(255,255,255,.85);font-weight:700;white-space:nowrap;background:linear-gradient(135deg,#0d1b3e,#1a3a6e);border-right:1px solid rgba(255,255,255,.06);cursor:pointer;user-select:none;transition:background .15s}
+th:hover{background:linear-gradient(135deg,#1a2d5a,#2a4a8e)}
+th:last-child{border-right:none}
+td{padding:10px 12px;border-bottom:1px solid #eef0f4;vertical-align:middle;color:var(--text2)}
+tr:hover td{background:#f4f7ff}
+tr.stock-low td{background:#fffbf0}
+tr.stock-low:hover td{background:#fff5e0}
+tr.stock-out td{background:#fff5f5}
+tr.stock-out:hover td{background:#ffecec}
+.empty-row{text-align:center;padding:60px;color:var(--muted2);font-size:.88rem}
+/* STOCK NUMERO GRANDE */
+.stock-num-big{font-size:1.4rem;font-weight:800;line-height:1;display:block}
+.stock-sub{font-size:.6rem;color:var(--muted2);font-weight:400;margin-top:1px}
+.stock-cell{text-align:center;min-width:50px}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:700;white-space:nowrap}
+.badge-ok{background:var(--green-bg);color:var(--green);border:1px solid #b2dfc9}
+.badge-low{background:var(--orange-bg);color:var(--orange);border:1px solid var(--orange-border);animation:pulse-orange 2s infinite}
+.badge-out{background:#fff0f0;color:var(--red);border:1px solid #f0c0c5;animation:pulse-red 1.5s infinite}
+@keyframes pulse-orange{0%,100%{opacity:1}50%{opacity:.55}}
+@keyframes pulse-red{0%,100%{opacity:1}50%{opacity:.4}}
+.medida-tag{font-family:var(--mono);font-size:.76rem;font-weight:700;background:var(--blue-bg);color:var(--primary);border:1px solid #b8d0f0;border-radius:4px;padding:2px 7px;display:inline-block}
+.ref-tag{font-family:var(--mono);font-size:.72rem;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px 6px;display:inline-block;color:var(--text2)}
+.loc-tag{font-size:.7rem;font-weight:600;background:#f5f3ff;color:#5b21b6;border:1px solid #c4b5fd;border-radius:4px;padding:2px 7px;display:inline-block}
+
+/* STOCK BAR */
+.stock-bar-wrap{display:flex;align-items:center;gap:8px;min-width:100px}
+.stock-bar{height:6px;border-radius:3px;background:var(--border2);flex:1;overflow:hidden}
+.stock-bar-fill{height:100%;border-radius:3px;transition:width .3s}
+.stock-num{font-size:.82rem;font-weight:700;min-width:24px;text-align:right}
+
+/* ACTION BUTTONS */
+.act-btn{width:26px;height:26px;border-radius:var(--rs);border:1px solid var(--border2);background:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:12px;transition:all .15s;color:var(--muted)}
+.act-btn:hover{border-color:var(--primary);color:var(--primary)}
+.act-btn.green:hover{border-color:var(--green);color:var(--green)}
+.act-btn.orange:hover{border-color:var(--orange);color:var(--orange)}
+.act-btn.red:hover{border-color:var(--red);color:var(--red)}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);z-index:2000;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:14px;padding:28px 32px;max-width:680px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
+.modal h2{font-size:.9rem;font-weight:700;margin-bottom:20px;color:var(--text);display:flex;align-items:center;gap:8px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+.modal-type{display:flex;gap:8px;margin-bottom:18px}
+.modal-type-btn{flex:1;padding:10px;border-radius:var(--rs);border:2px solid var(--border2);background:var(--surface2);cursor:pointer;font-family:var(--font);font-size:.82rem;font-weight:600;color:var(--muted);transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px}
+.modal-type-btn.active-compra{border-color:var(--green);background:var(--green-bg);color:var(--green)}
+.modal-type-btn.active-venta{border-color:var(--red);background:#fff0f0;color:var(--red)}
+
+/* CHART / ANALYTICS */
+.analytics-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:18px}
+.analytics-card{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);padding:18px;box-shadow:var(--shadow)}
+.analytics-card h3{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:14px;font-weight:600}
+.top-item{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)}
+.top-item:last-child{border-bottom:none}
+.top-rank{width:22px;height:22px;border-radius:50%;background:var(--primary);color:#fff;font-size:.65rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.top-rank.r1{background:#f59e0b}
+.top-rank.r2{background:#9ca3af}
+.top-rank.r3{background:#cd7c2a}
+.top-info{flex:1}
+.top-ref{font-family:var(--mono);font-size:.74rem;font-weight:700;color:var(--primary)}
+.top-medida{font-size:.68rem;color:var(--muted);margin-top:1px}
+.top-val{font-size:.85rem;font-weight:700;color:var(--text)}
+
+/* HISTORIAL */
+.mov-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+.mov-item:last-child{border-bottom:none}
+.mov-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.mov-icon.compra{background:var(--green-bg)}
+.mov-icon.venta{background:#fff0f0}
+.mov-info{flex:1}
+.mov-title{font-size:.78rem;font-weight:600;color:var(--text)}
+.mov-sub{font-size:.68rem;color:var(--muted);margin-top:2px}
+.mov-qty{font-size:.88rem;font-weight:700}
+.mov-qty.compra{color:var(--green)}
+.mov-qty.venta{color:var(--red)}
+.mov-date{font-size:.65rem;color:var(--muted2);font-family:var(--mono);white-space:nowrap}
+
+/* TOAST */
+.toast-wrap{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast-msg{display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:var(--rs);background:#1a1d23;color:#fff;font-size:.78rem;box-shadow:var(--shadow-lg);animation:toastIn .3s ease;min-width:240px}
+@keyframes toastIn{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+.toast-msg.success{border-left:3px solid #34d399}
+.toast-msg.error{border-left:3px solid #f87171}
+.toast-msg.info{border-left:3px solid #60a5fa}
+
+/* FOOTER */
+.footer-legal{background:linear-gradient(135deg,#0d1b3e,#1a3a6e);color:rgba(255,255,255,.6);text-align:center;padding:16px 24px;margin-top:32px;font-size:.7rem;line-height:1.7}
+.footer-legal strong{color:#fff}
+.footer-legal .footer-warn{color:#fbbf24;font-size:.65rem;margin-top:4px}
+
+
+/* ── ASESORES PANEL ── */
+.asesor-search-big{background:#fff;border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--shadow);padding:24px;margin-bottom:18px}
+.asesor-search-big h2{font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.asesor-input-wrap{display:flex;gap:10px;align-items:center;margin-bottom:12px}
+.asesor-input{flex:1;padding:14px 16px;border-radius:var(--r);border:2px solid var(--border2);font-family:var(--mono);font-size:1.1rem;font-weight:600;outline:none;letter-spacing:.04em;text-transform:uppercase;transition:border-color .15s}
+.asesor-input:focus{border-color:#059669;box-shadow:0 0 0 4px rgba(5,150,105,.1)}
+.asesor-hint{font-size:.72rem;color:var(--muted);margin-top:4px}
+
+.presupuesto-card{background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:2px solid #86efac;border-radius:var(--r);padding:24px;margin-bottom:18px}
+.presupuesto-card h3{font-size:.82rem;text-transform:uppercase;letter-spacing:.08em;color:#059669;margin-bottom:18px;font-weight:700;display:flex;align-items:center;gap:7px}
+.presupuesto-result{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
+.pres-item{background:#fff;border-radius:var(--rs);padding:14px;border:1px solid #86efac}
+.pres-item-lbl{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:#059669;font-weight:600;margin-bottom:4px}
+.pres-item-val{font-size:1.3rem;font-weight:700;color:var(--text)}
+.pres-item-sub{font-size:.7rem;color:var(--muted);margin-top:2px}
+.descuento-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid #86efac}
+.descuento-row label{font-size:.75rem;font-weight:600;color:#059669;flex:1}
+.descuento-input{width:70px;padding:6px 10px;border-radius:var(--rs);border:1.5px solid #86efac;font-family:var(--font);font-size:.88rem;font-weight:700;text-align:center;outline:none}
+.descuento-input:focus{border-color:#059669}
+.total-final{background:linear-gradient(135deg,#059669,#047857);color:#fff;border-radius:var(--r);padding:16px 20px;display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+.total-final-lbl{font-size:.78rem;font-weight:600;opacity:.85}
+.total-final-val{font-size:1.6rem;font-weight:700}
+
+.stock-result-mini{background:#fff;border-radius:var(--rs);border:1px solid var(--border);padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .15s}
+.stock-result-mini:hover{border-color:#059669;background:#f0fdf4}
+.stock-result-mini.selected{border-color:#059669;background:#f0fdf4}
+.srm-medida{font-family:var(--mono);font-size:.9rem;font-weight:700;color:var(--primary)}
+.srm-marca{font-size:.75rem;color:var(--muted);margin-top:2px}
+.srm-stock{font-size:.8rem;font-weight:700;color:var(--green)}
+.srm-pvp{font-size:.9rem;font-weight:700;color:#059669;margin-left:auto}
+
+.pvp-editable{cursor:pointer;border-bottom:1px dashed var(--border2);padding:2px 4px;border-radius:2px;transition:background .15s}
+.pvp-editable:hover{background:#fff8ec}
+.pvp-edit-input{width:80px;padding:4px 8px;border-radius:var(--rs);border:1.5px solid var(--orange);font-family:var(--font);font-size:.82rem;text-align:center;outline:none}
+
+/* ── APARTADOS ── */
+.apartado-card{background:#fff;border:2px solid #c4b5fd;border-radius:var(--r);padding:16px;margin-bottom:10px;display:flex;align-items:flex-start;gap:12px}
+.apartado-card .apt-icon{font-size:1.4rem;flex-shrink:0}
+.apartado-card .apt-info{flex:1}
+.apartado-card .apt-medida{font-family:var(--mono);font-size:.88rem;font-weight:700;color:var(--primary)}
+.apartado-card .apt-archivo{font-size:.72rem;color:#7c3aed;font-weight:600;margin-top:2px}
+.apartado-card .apt-sub{font-size:.7rem;color:var(--muted);margin-top:2px}
+.apartado-card .apt-actions{display:flex;gap:6px;flex-shrink:0}
+.apt-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:.65rem;font-weight:700;background:#f5f3ff;color:#7c3aed;border:1px solid #c4b5fd}
+
+/* ── CITA COUNTDOWN ── */
+.cita-ok{display:inline-flex;align-items:center;gap:3px;padding:2px 9px;border-radius:20px;font-size:.68rem;font-weight:700;background:#eaf5ef;color:#1a7f4e;border:1px solid #b2dfc9;white-space:nowrap}
+.cita-soon{display:inline-flex;align-items:center;gap:3px;padding:2px 9px;border-radius:20px;font-size:.68rem;font-weight:700;background:#fff8ec;color:#c47200;border:1px solid #f0c060;white-space:nowrap;animation:pulse-orange 1.5s infinite}
+.cita-hoy{display:inline-flex;align-items:center;gap:3px;padding:2px 9px;border-radius:20px;font-size:.68rem;font-weight:700;background:#fff0f0;color:#bb0a21;border:1px solid #f0c0c5;white-space:nowrap;animation:pulse-red 1s infinite}
+.cita-none{display:inline-flex;align-items:center;gap:3px;padding:2px 9px;border-radius:20px;font-size:.68rem;font-weight:700;background:var(--surface2);color:var(--muted2);border:1px solid var(--border);white-space:nowrap}
+@keyframes pulse-orange{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes pulse-red{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── RECORDATORIO TARIFA ── */
+.tarifa-banner{position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:500;background:linear-gradient(135deg,#1a3a6e,#2a5298);color:#fff;border-radius:12px;padding:14px 24px;box-shadow:0 8px 32px rgba(0,0,0,.3);display:flex;align-items:center;gap:14px;min-width:420px;max-width:600px;animation:slideDown .4s ease}
+@keyframes slideDown{from{transform:translateX(-50%) translateY(-30px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}
+.tarifa-banner-icon{font-size:1.8rem;flex-shrink:0}
+.tarifa-banner-body{flex:1}
+.tarifa-banner-title{font-size:.88rem;font-weight:700;margin-bottom:3px}
+.tarifa-banner-sub{font-size:.72rem;opacity:.8}
+.tarifa-banner-actions{display:flex;gap:8px;flex-shrink:0}
+.tbtn{padding:6px 14px;border-radius:var(--rs);border:none;font-family:var(--font);font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s}
+.tbtn-ok{background:rgba(255,255,255,.2);color:#fff}
+.tbtn-ok:hover{background:rgba(255,255,255,.35)}
+.tbtn-later{background:rgba(255,255,255,.08);color:rgba(255,255,255,.7)}
+.tbtn-later:hover{background:rgba(255,255,255,.15)}
+
+/* ── CITAS COUNTER BADGE ── */
+.citas-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700}
+
+/* ── ASESORES VENTAS ── */
+.asesor-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:.68rem;font-weight:700;border:1.5px solid;white-space:nowrap}
+.asesor-TONI{background:#eff6ff;color:#1d4ed8;border-color:#93c5fd}
+.asesor-PEREA{background:#f5f3ff;color:#6d28d9;border-color:#c4b5fd}
+.asesor-ROBERTO{background:#fff1f2;color:#be123c;border-color:#fda4af}
+.asesor-OTRO{background:#f0fdf4;color:#15803d;border-color:#86efac}
+
+/* ── VENTA MODAL ── */
+.venta-modal{background:#fff;border-radius:14px;padding:28px 32px;max-width:520px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.asesor-selector{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.asesor-btn{padding:12px;border-radius:var(--r);border:2px solid var(--border2);background:var(--surface2);cursor:pointer;font-family:var(--font);font-size:.82rem;font-weight:600;color:var(--muted);transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.asesor-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--blue-bg)}
+.asesor-btn.sel-TONI{border-color:#1d4ed8;background:#eff6ff;color:#1d4ed8}
+.asesor-btn.sel-PEREA{border-color:#6d28d9;background:#f5f3ff;color:#6d28d9}
+.asesor-btn.sel-ROBERTO{border-color:#be123c;background:#fff1f2;color:#be123c}
+.asesor-btn.sel-OTRO{border-color:#15803d;background:#f0fdf4;color:#15803d}
+
+/* ── VENDIDO BADGE ── */
+.badge-vendido{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:20px;font-size:.65rem;font-weight:700;background:#1a1d23;color:#fff;white-space:nowrap}
+
+/* ── ANALISIS ASESOR ── */
+.asesor-tab-sel{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.asesor-tab-btn{padding:7px 16px;border-radius:20px;border:2px solid var(--border2);background:var(--surface);font-size:.78rem;font-weight:600;color:var(--muted);cursor:pointer;transition:all .15s}
+.asesor-tab-btn.active{border-color:var(--primary);background:var(--blue-bg);color:var(--primary)}
+.asesor-kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;text-align:center}
+.asesor-kpi-val{font-size:1.6rem;font-weight:700;color:var(--primary);line-height:1}
+.asesor-kpi-lbl{font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-top:4px}
+
+/* ── CAMPAÑA BADGE ── */
+.badge-campana{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:.62rem;font-weight:700;background:linear-gradient(135deg,#fef3c7,#fde68a);color:#92400e;border:1.5px solid #f59e0b;white-space:nowrap;animation:pulse-gold 2s infinite}
+@keyframes pulse-gold{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.4)}70%{box-shadow:0 0 0 5px rgba(245,158,11,0)}}
+.campana-info{font-size:.6rem;color:#92400e;margin-top:2px;font-weight:600}
+
+/* ── INLINE EDIT ── */
+.cell-editable{cursor:pointer;padding:3px 6px;border-radius:4px;border-bottom:1.5px dashed var(--border2);transition:background .15s;display:inline-block;min-width:40px}
+.cell-editable:hover{background:#fffbeb;border-bottom-color:var(--orange)}
+.cell-editable.empty{color:var(--muted2);font-style:italic;font-size:.72rem}
+.cell-inline-input{padding:4px 8px;border-radius:var(--rs);border:1.5px solid var(--primary);font-family:var(--font);font-size:.82rem;outline:none;background:#fff;min-width:60px;max-width:120px}
+.cell-inline-select{padding:4px 8px;border-radius:var(--rs);border:1.5px solid var(--primary);font-family:var(--font);font-size:.78rem;outline:none;background:#fff}
+
+@media(max-width:768px){.header-stats{display:none}.tabs{overflow-x:auto}.main{padding:12px 8px}}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-brand">
+    <svg width="44" height="44" viewBox="0 0 44 44" style="flex-shrink:0">
+      <circle cx="22" cy="22" r="21" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="1"/>
+      <circle cx="12" cy="22" r="8" fill="none" stroke="#fff" stroke-width="2.2"/>
+      <circle cx="19" cy="22" r="8" fill="none" stroke="#fff" stroke-width="2.2"/>
+      <circle cx="26" cy="22" r="8" fill="none" stroke="#fff" stroke-width="2.2"/>
+      <circle cx="33" cy="22" r="8" fill="none" stroke="#fff" stroke-width="2.2"/>
+    </svg>
+    <div>
+      <div class="header-title"><span class="conn-dot" id="connDot"></span>Stock Neumáticos · MOTORSAN</div>
+      <div class="header-sub">GESTIÓN DE STOCK · VENTAS · ANÁLISIS · v1.0</div>
     </div>
   </div>
   <div class="header-stats">
