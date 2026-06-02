@@ -234,6 +234,31 @@ tr.stock-out td{background:#fff0f0}
 .apartado-card .apt-actions{display:flex;gap:6px;flex-shrink:0}
 .apt-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:.65rem;font-weight:700;background:#f5f3ff;color:#7c3aed;border:1px solid #c4b5fd}
 
+/* ── CITA COUNTDOWN ── */
+.cita-ok{display:inline-flex;align-items:center;gap:3px;padding:2px 9px;border-radius:20px;font-size:.68rem;font-weight:700;background:#eaf5ef;color:#1a7f4e;border:1px solid #b2dfc9;white-space:nowrap}
+.cita-soon{display:inline-flex;align-items:center;gap:3px;padding:2px 9px;border-radius:20px;font-size:.68rem;font-weight:700;background:#fff8ec;color:#c47200;border:1px solid #f0c060;white-space:nowrap;animation:pulse-orange 1.5s infinite}
+.cita-hoy{display:inline-flex;align-items:center;gap:3px;padding:2px 9px;border-radius:20px;font-size:.68rem;font-weight:700;background:#fff0f0;color:#bb0a21;border:1px solid #f0c0c5;white-space:nowrap;animation:pulse-red 1s infinite}
+.cita-none{display:inline-flex;align-items:center;gap:3px;padding:2px 9px;border-radius:20px;font-size:.68rem;font-weight:700;background:var(--surface2);color:var(--muted2);border:1px solid var(--border);white-space:nowrap}
+@keyframes pulse-orange{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes pulse-red{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── RECORDATORIO TARIFA ── */
+.tarifa-banner{position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:500;background:linear-gradient(135deg,#1a3a6e,#2a5298);color:#fff;border-radius:12px;padding:14px 24px;box-shadow:0 8px 32px rgba(0,0,0,.3);display:flex;align-items:center;gap:14px;min-width:420px;max-width:600px;animation:slideDown .4s ease}
+@keyframes slideDown{from{transform:translateX(-50%) translateY(-30px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}
+.tarifa-banner-icon{font-size:1.8rem;flex-shrink:0}
+.tarifa-banner-body{flex:1}
+.tarifa-banner-title{font-size:.88rem;font-weight:700;margin-bottom:3px}
+.tarifa-banner-sub{font-size:.72rem;opacity:.8}
+.tarifa-banner-actions{display:flex;gap:8px;flex-shrink:0}
+.tbtn{padding:6px 14px;border-radius:var(--rs);border:none;font-family:var(--font);font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s}
+.tbtn-ok{background:rgba(255,255,255,.2);color:#fff}
+.tbtn-ok:hover{background:rgba(255,255,255,.35)}
+.tbtn-later{background:rgba(255,255,255,.08);color:rgba(255,255,255,.7)}
+.tbtn-later:hover{background:rgba(255,255,255,.15)}
+
+/* ── CITAS COUNTER BADGE ── */
+.citas-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700}
+
 @media(max-width:768px){.header-stats{display:none}.tabs{overflow-x:auto}.main{padding:12px 8px}}
 </style>
 </head>
@@ -260,6 +285,9 @@ tr.stock-out td{background:#fff0f0}
     </div>
     <div class="hstat red" onclick="setTab('stock')" title="Sin stock">
       <div class="hstat-val" id="statAgotado">0</div><div class="hstat-lbl">Agotado</div>
+    </div>
+    <div class="hstat" style="border-color:rgba(251,191,36,.3)" onclick="setTab('apartados')" title="Citas próximas (7 días)">
+      <div class="hstat-val" id="statCitas" style="color:#fbbf24">0</div><div class="hstat-lbl">Citas 7d</div>
     </div>
   </div>
 </div>
@@ -597,6 +625,19 @@ tr.stock-out td{background:#fff0f0}
 <!-- TOAST -->
 <div class="toast-wrap" id="toastWrap"></div>
 
+<!-- RECORDATORIO TARIFA -->
+<div class="tarifa-banner" id="tarifaBanner" style="display:none">
+  <div class="tarifa-banner-icon">💰</div>
+  <div class="tarifa-banner-body">
+    <div class="tarifa-banner-title">Recordatorio semanal — Actualización de tarifas</div>
+    <div class="tarifa-banner-sub" id="tarifaBannerSub">Han pasado 7 días desde la última revisión de PVP. Revisa las tarifas de los neumáticos en stock.</div>
+  </div>
+  <div class="tarifa-banner-actions">
+    <button class="tbtn tbtn-ok" onclick="irActualizarTarifas()">📊 Revisar tarifas</button>
+    <button class="tbtn tbtn-later" onclick="posponerRecordatorio()">Recordar en 7 días</button>
+  </div>
+</div>
+
 <!-- FOOTER -->
 <footer class="footer-legal">
   <div><strong>© 2026 Sergio Aguado Mena · MOTORSAN</strong> · Todos los derechos reservados.</div>
@@ -743,6 +784,8 @@ function guardarMovimiento() {
   const fecha     = document.getElementById('mov_fecha').value || new Date().toISOString().slice(0,10);
   const stockMin  = parseInt(document.getElementById('mov_stockMin').value) || 4;
   const nota      = document.getElementById('mov_nota').value.trim();
+  const archivo   = document.getElementById('mov_archivo').value.trim();
+  const fechaCita = document.getElementById('mov_cita').value;
 
   if (!medida) { toast('Introduce la medida del neumático', 'error'); return; }
   if (!cantidad || cantidad < 1) { toast('La cantidad debe ser mayor a 0', 'error'); return; }
@@ -782,15 +825,18 @@ function guardarMovimiento() {
   // Guardar movimiento
   const mov = {
     id: uid(), tipo: movTipo, medida, referencia, marca,
-    cantidad, pvp, coste, fecha, nota,
+    cantidad, pvp, coste, fecha, nota, archivo, fechaCita,
     stockKey, fechaCreacion: new Date().toISOString()
   };
   movData.unshift(mov);
   saveToFirebase(DB_MOV, mov.id, mov);
 
   toast(movTipo==='compra' ? `✅ Entrada de ${cantidad} ud${cantidad>1?'s':''} registrada ✓` : `✅ Venta de ${cantidad} ud${cantidad>1?'s':''} registrada ✓`, 'success');
-  // Si la nota tiene formato de archivo (#XXXXXX), crear apartado automático
-  if (movTipo === 'compra' && nota && nota.match(/^#\d+/)) {
+  // Auto-apartado si hay archivo indicado
+  if (movTipo === 'compra' && archivo) {
+    const refId = existing ? existing.id : stockData[stockData.length-1]?.id || '';
+    if (refId) crearAutoApartado(refId, medida, archivo, cantidad, fechaCita);
+  } else if (movTipo === 'compra' && nota && nota.match(/^#\d+/)) {
     const recId = existing ? existing.id : stockData[stockData.length-1]?.id || '';
     if (recId) {
       const autoApt = {
@@ -816,6 +862,8 @@ function limpiarMov() {
   document.getElementById('mov_coste').value = '';
   document.getElementById('mov_pvp').value = '';
   document.getElementById('mov_fecha').value = '';
+  document.getElementById('mov_archivo').value = '';
+  document.getElementById('mov_cita').value = '';
   document.getElementById('mov_stockMin').value = '4';
 }
 
@@ -991,6 +1039,19 @@ function updateStats() {
   document.getElementById('statUnidades').textContent = stockData.reduce((s,r)=>s+(r.stock||0),0);
   document.getElementById('statBajo').textContent     = stockData.filter(s=>getStockStatus(s)==='low').length;
   document.getElementById('statAgotado').textContent  = stockData.filter(s=>getStockStatus(s)==='out').length;
+  // Citas próximas (7 días)
+  const hoy7 = new Date(); hoy7.setHours(0,0,0,0);
+  const en7  = new Date(hoy7); en7.setDate(en7.getDate()+7);
+  const citas7 = apartados.filter(a => {
+    if (!a.fechaLimite) return false;
+    const f = new Date(a.fechaLimite+'T00:00');
+    return f >= hoy7 && f <= en7;
+  }).length;
+  const citasStat = document.getElementById('statCitas');
+  if (citasStat) {
+    citasStat.textContent = citas7;
+    citasStat.style.color = citas7>0?'#fbbf24':'rgba(255,255,255,.5)';
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -1399,7 +1460,8 @@ function renderApartados() {
       <div class="apt-info">
         <div class="apt-medida">${esc(a.medida)}</div>
         <div class="apt-archivo">🗂️ Archivo: ${esc(a.archivo)} ${a.cliente?'· 👤 '+esc(a.cliente):''}</div>
-        <div class="apt-sub">${a.cantidad} ud${a.cantidad>1?'s':''} · Apartado: ${fmtDate(a.fecha.slice(0,10))} ${alertTxt?'· <strong style="color:'+alertColor+'">'+alertTxt+'</strong>':''}</div>
+        <div class="apt-sub">${a.cantidad} ud${a.cantidad>1?'s':''} · Apartado: ${fmtDate(a.fecha.slice(0,10))}</div>
+        <div style="margin-top:4px">${citaBadgeNeum(a.fechaLimite)}</div>
         ${a.nota?`<div class="apt-sub" style="margin-top:3px;font-style:italic">${esc(a.nota)}</div>`:''}
       </div>
       <div class="apt-actions">
@@ -1407,6 +1469,82 @@ function renderApartados() {
       </div>
     </div>`;
   }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CITA BADGE
+// ══════════════════════════════════════════════════════════════════
+function citaBadgeNeum(fecha) {
+  if (!fecha) return '<span class="cita-none">Sin cita</span>';
+  const hoy  = new Date(); hoy.setHours(0,0,0,0);
+  const cita = new Date(fecha + 'T00:00');
+  const diff = Math.round((cita - hoy) / 86400000);
+  const str  = cita.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'});
+  if (diff < 0)  return '<span class="cita-hoy">⚠️ VENCIDA · ' + str + '</span>';
+  if (diff === 0) return '<span class="cita-hoy">🔔 HOY · ' + str + '</span>';
+  if (diff <= 3)  return '<span class="cita-soon">⏰ ' + diff + 'd · ' + str + '</span>';
+  if (diff <= 7)  return '<span class="cita-soon">📅 ' + diff + 'd · ' + str + '</span>';
+  return '<span class="cita-ok">✓ ' + str + '</span>';
+}
+
+// ══════════════════════════════════════════════════════════════════
+// RECORDATORIO SEMANAL TARIFAS
+// ══════════════════════════════════════════════════════════════════
+const TARIFA_KEY = 'motorsan_neum_tarifa_check';
+
+function checkRecordatorioTarifa() {
+  const last = localStorage.getItem(TARIFA_KEY);
+  if (!last) {
+    // Primera vez: marcar hoy
+    localStorage.setItem(TARIFA_KEY, new Date().toISOString());
+    return;
+  }
+  const diasDesde = Math.round((new Date() - new Date(last)) / 86400000);
+  if (diasDesde >= 7) {
+    const banner = document.getElementById('tarifaBanner');
+    const sub    = document.getElementById('tarifaBannerSub');
+    if (banner) {
+      sub.textContent = 'Han pasado ' + diasDesde + ' días desde la última revisión de PVP. Revisa las tarifas en la tabla de stock.';
+      banner.style.display = 'flex';
+      // Auto-hide after 30s
+      setTimeout(() => { banner.style.display = 'none'; }, 30000);
+    }
+  }
+}
+
+function irActualizarTarifas() {
+  document.getElementById('tarifaBanner').style.display = 'none';
+  localStorage.setItem(TARIFA_KEY, new Date().toISOString());
+  setTab('stock');
+  toast('💰 Haz clic en cualquier precio PVP para editarlo directamente', 'info', 6000);
+}
+
+function posponerRecordatorio() {
+  document.getElementById('tarifaBanner').style.display = 'none';
+  localStorage.setItem(TARIFA_KEY, new Date().toISOString());
+  toast('Recordatorio pospuesto 7 días', 'info');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// AUTO-APARTADO AL REGISTRAR COMPRA CON ARCHIVO
+// ══════════════════════════════════════════════════════════════════
+function crearAutoApartado(stockId, medida, archivo, cantidad, fechaCita) {
+  if (!archivo || !archivo.trim()) return;
+  // Evitar duplicados
+  const yaExiste = apartados.find(a => a.medidaRef === stockId && a.archivo === archivo.trim());
+  if (yaExiste) { toast('Ya existe un apartado para ' + archivo + ' — actualizado', 'info'); return; }
+
+  const apt = {
+    id: uid(), medida, medidaRef: stockId,
+    archivo: archivo.trim(), cliente: '',
+    cantidad, fechaLimite: fechaCita || '',
+    nota: 'Apartado automático — compra asociada a archivo',
+    fecha: new Date().toISOString(), activo: true
+  };
+  apartados.unshift(apt);
+  saveApartados();
+  updateStats();
+  toast('📌 Apartado automático creado para ' + archivo + (fechaCita?' · Cita: '+fmtDate(fechaCita):''), 'success', 5000);
 }
 
 // ── DUAL SCROLL ──
@@ -1430,6 +1568,8 @@ document.getElementById('editModal').addEventListener('click', e => {
 // ── LOAD CONFIG & APARTADOS ──
 loadCfg();
 loadApartados();
+
+checkRecordatorioTarifa();
 
 // ── SET TODAY DATE ──
 document.getElementById('mov_fecha').value = new Date().toISOString().slice(0,10);
