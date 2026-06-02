@@ -287,6 +287,18 @@ tr.stock-out td{background:#fff0f0}
 .asesor-kpi-val{font-size:1.6rem;font-weight:700;color:var(--primary);line-height:1}
 .asesor-kpi-lbl{font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-top:4px}
 
+/* ── CAMPAÑA BADGE ── */
+.badge-campana{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:.62rem;font-weight:700;background:linear-gradient(135deg,#fef3c7,#fde68a);color:#92400e;border:1.5px solid #f59e0b;white-space:nowrap;animation:pulse-gold 2s infinite}
+@keyframes pulse-gold{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.4)}70%{box-shadow:0 0 0 5px rgba(245,158,11,0)}}
+.campana-info{font-size:.6rem;color:#92400e;margin-top:2px;font-weight:600}
+
+/* ── INLINE EDIT ── */
+.cell-editable{cursor:pointer;padding:3px 6px;border-radius:4px;border-bottom:1.5px dashed var(--border2);transition:background .15s;display:inline-block;min-width:40px}
+.cell-editable:hover{background:#fffbeb;border-bottom-color:var(--orange)}
+.cell-editable.empty{color:var(--muted2);font-style:italic;font-size:.72rem}
+.cell-inline-input{padding:4px 8px;border-radius:var(--rs);border:1.5px solid var(--primary);font-family:var(--font);font-size:.82rem;outline:none;background:#fff;min-width:60px;max-width:120px}
+.cell-inline-select{padding:4px 8px;border-radius:var(--rs);border:1.5px solid var(--primary);font-family:var(--font);font-size:.78rem;outline:none;background:#fff}
+
 @media(max-width:768px){.header-stats{display:none}.tabs{overflow-x:auto}.main{padding:12px 8px}}
 </style>
 </head>
@@ -338,13 +350,17 @@ tr.stock-out td{background:#fff0f0}
   <div class="toolbar">
     <div class="search-wrap">
       <span class="search-ico">🔍</span>
-      <input type="text" id="stockSearch" placeholder="Buscar medida, referencia, marca…" oninput="renderStock()">
+      <input type="text" id="stockSearch" placeholder="2055516 · 205/55R16 · Continental · ZTS..." oninput="renderStock()">
     </div>
     <button class="filter-btn active" id="sf-all"    onclick="setStockFilter('all')">Todos</button>
     <button class="filter-btn ok"     id="sf-ok"     onclick="setStockFilter('ok')">✓ OK</button>
     <button class="filter-btn warn"   id="sf-low"    onclick="setStockFilter('low')">⚠️ Bajo</button>
     <button class="filter-btn danger" id="sf-out"    onclick="setStockFilter('out')">🚨 Agotado</button>
     <button class="export-btn" onclick="exportarStock()">📊 Exportar Excel</button>
+    <label class="export-btn" style="background:#92400e;cursor:pointer" title="Importar Excel de campaña">
+      🏷️ Importar Campaña
+      <input type="file" id="campanaFileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="importarCampana(this.files[0])">
+    </label>
   </div>
 
   <div class="tbl-scroll-top" id="scrollTopStock"><div class="tbl-scroll-inner" id="scrollInnerStock"></div></div>
@@ -755,14 +771,17 @@ tr.stock-out td{background:#fff0f0}
 // ══════════════════════════════════════════════════════════════════
 const FIREBASE_URL    = 'https://accesorios-alcala-default-rtdb.europe-west1.firebasedatabase.app';
 const FIREBASE_APIKEY = 'AIzaSyDApTnRdr3LLFowFDzbu_WfDF4teKT75Wo';
-const DB_STOCK = 'neumaticos_stock';
-const DB_MOV   = 'neumaticos_movimientos';
+const DB_STOCK    = 'neumaticos_stock';
+const DB_MOV      = 'neumaticos_movimientos';
+const DB_CAMPANAS = 'neumaticos_campanas';
+const LOCAL_CAMP  = 'motorsan_neum_camp_v1';
 const LOCAL_STOCK = 'motorsan_stock_neum_v1';
 const LOCAL_MOV   = 'motorsan_mov_neum_v1';
 
 let fbDb = null, useFirebase = false;
-let stockData = [];   // array of {id, medida, referencia, marca, tipo, indice, ubicacion, stock, stockMin, pvp, coste, fechaRecepcion, totalVendidas}
-let movData   = [];   // array of {id, tipo:'compra'|'venta', medida, referencia, marca, cantidad, pvp, coste, fecha, nota}
+let stockData  = [];
+let movData    = [];
+let campanaData = [];  // {referencia, medida, marca, dibujo, pvp, netoNormal, netoCampana, fechaFin}
 let editingId = null;
 let stockFilter = 'all', histFilter = 'all';
 let stockSortField = 'medida', stockSortDir = 1;
@@ -1057,16 +1076,31 @@ function stockBar(s) {
 }
 
 function renderStock() {
-  const q = (document.getElementById('stockSearch').value||'').toLowerCase().trim();
+  const raw = (document.getElementById('stockSearch').value||'').trim();
+  const q   = raw.toLowerCase();
+
+  // Intuitive medida parsing: "2055516" → "205/55R16"
+  function parseMedida(s) {
+    const n = s.replace(/[^0-9]/g,'');
+    if (n.length === 7) return n.slice(0,3) + '/' + n.slice(3,5) + 'R' + n.slice(5,7);
+    if (n.length === 6) return n.slice(0,3) + '/' + n.slice(3,5) + 'R' + n.slice(5,6);
+    return '';
+  }
+  const medidaParsed = parseMedida(raw).toLowerCase();
+  const medidaClean  = raw.replace(/[\s\/\-]/g,'').toLowerCase();
+
   let rows = stockData.filter(s => {
     if (stockFilter==='ok'  && getStockStatus(s)!=='ok')  return false;
     if (stockFilter==='low' && getStockStatus(s)!=='low') return false;
     if (stockFilter==='out' && getStockStatus(s)!=='out') return false;
-    if (q) {
-      const hay = [s.medida,s.referencia,s.marca,s.ubicacion,s.tipo].join(' ').toLowerCase();
-      if (!hay.includes(q)) return false;
-    }
-    return true;
+    if (!q) return true;
+    const sClean = s.medida.replace(/[\s\/\-]/g,'').toLowerCase();
+    // Numeric-only search: "2055516" matches "205/55R16"
+    if (medidaClean.length >= 5 && sClean.includes(medidaClean)) return true;
+    if (medidaParsed && s.medida.toLowerCase().includes(medidaParsed.slice(0,6))) return true;
+    // Normal text search
+    const hay = [s.medida,s.referencia,s.marca,s.ubicacion,s.tipo,s.indice].join(' ').toLowerCase();
+    return hay.includes(q);
   }).sort((a,b) => {
     let va=a[stockSortField]||'', vb=b[stockSortField]||'';
     if (typeof va==='number') return (va-vb)*stockSortDir;
@@ -1084,26 +1118,31 @@ function renderStock() {
       <span class="medida-tag">${esc(s.medida||'—')}</span>
       ${(()=>{const a=apartados.filter(x=>x.medidaRef===s.id);if(!a.length)return '';const f=[...new Set(a.map(x=>x.archivo))].join(', ');return '<div style="font-size:.62rem;color:#7c3aed;font-weight:600;margin-top:3px">📌 '+a.reduce((t,x)=>t+x.cantidad,0)+' uds apartadas · '+f+'</div>';})()}
     </td>
-    <td><span class="ref-tag">${esc(s.referencia||'—')}</span></td>
+    <td>${(()=>{
+      const enCamp = campanaData.find(c => c.referencia === s.referencia);
+      return '<span class="ref-tag">'+esc(s.referencia||'—')+'</span>' +
+        (enCamp ? '<div class="badge-campana" style="margin-top:3px">🏷️ EN CAMPAÑA</div><div class="campana-info">Neto: '+enCamp.netoCampana.toFixed(2)+'€ · '+esc(enCamp.dibujo||'')+'</div>' : '');
+    })()}</td>
     <td style="font-weight:600">${esc(s.marca||'—')}</td>
     <td style="font-size:.72rem">${esc(s.tipo||'—')}</td>
     <td><span class="ref-tag">${esc(s.indice||'—')}</span></td>
-    <td><span class="loc-tag">${esc(s.ubicacion||'—')}</span></td>
+    <td><span class="cell-editable ${!s.ubicacion?'empty':''}" onclick="editInline('${s.id}','ubicacion',this,'text')">${esc(s.ubicacion||'Añadir ubi.')}</span></td>
     <td>${stockBar(s)}</td>
-    <td><span class="pvp-editable" title="Clic para editar Stock Mínimo" onclick="editarField('${s.id}','stockMin',this)" style="color:var(--muted)">${s.stockMin||0}</span></td>
+    <td><span class="cell-editable" onclick="editInline('${s.id}','stockMin',this,'number')" style="color:var(--muted)">${s.stockMin||0}</span></td>
     <td>${stockBadge(s)}</td>
-    <td><span class="pvp-editable" title="Clic para editar PVP" onclick="editarField('${s.id}','pvp',this)">${s.pvp?parseFloat(s.pvp).toFixed(2)+'€':'Añadir PVP'}</span></td>
-    <td><span class="pvp-editable" title="Clic para editar Coste" onclick="editarField('${s.id}','coste',this)">${s.coste?parseFloat(s.coste).toFixed(2)+'€':'Añadir'}</span></td>
+    <td><span class="cell-editable ${!s.pvp?'empty':''}" onclick="editInline('${s.id}','pvp',this,'number')">${s.pvp?parseFloat(s.pvp).toFixed(2)+'€':'PVP'}</span></td>
+    <td><span class="cell-editable ${!s.coste?'empty':''}" onclick="editInline('${s.id}','coste',this,'number')">${s.coste?parseFloat(s.coste).toFixed(2)+'€':'Coste'}</span></td>
     <td style="font-size:.73rem;color:var(--muted);white-space:nowrap">${fmtDate(s.fechaRecepcion)}</td>
     <td style="text-align:center;font-weight:700;color:var(--primary)">${s.totalVendidas||0}</td>
     <td>${(()=>{
       const aptCita = apartados.filter(a=>a.medidaRef===s.id&&a.fechaLimite).map(a=>a.fechaLimite).sort()[0];
-      return citaBadgeNeum(aptCita||'');
+      const badge = citaBadgeNeum(aptCita||'');
+      return '<span onclick="editCitaStock(''+s.id+'')" style="cursor:pointer" title="Clic para editar cita">'+badge+'</span>';
     })()}</td>
     <td>${(()=>{
       const aptAses = apartados.filter(a=>a.medidaRef===s.id&&a.asesor).map(a=>a.asesor);
-      if(!aptAses.length) return '<span style="color:var(--muted2);font-size:.72rem">—</span>';
-      return aptAses.map(a=>'<span class="asesor-pill asesor-'+a+'">'+a+'</span>').join(' ');
+      const pill = aptAses.length ? aptAses.map(a=>'<span class="asesor-pill asesor-'+a+'">'+a+'</span>').join(' ') : '<span class="cell-editable empty" style="font-size:.7rem">Asignar</span>';
+      return '<span onclick="editAsesorStock(''+s.id+'')" style="cursor:pointer" title="Clic para asignar asesor">'+pill+'</span>';
     })()}</td>
     <td>
       <div style="display:flex;gap:3px;flex-wrap:wrap">
@@ -1953,6 +1992,194 @@ function renderAsesorVentas() {
   cont.innerHTML = html;
 }
 
+// ══════════════════════════════════════════════════════════════════
+// INLINE EDITING — UNIVERSAL
+// ══════════════════════════════════════════════════════════════════
+function editInline(id, field, el, type='text') {
+  const s = stockData.find(x => x.id === id);
+  if (!s) return;
+
+  const input = document.createElement('input');
+  input.type = type === 'number' ? 'number' : 'text';
+  if (type === 'number') { input.step = '0.01'; input.min = '0'; }
+  input.value = s[field] || '';
+  input.className = 'cell-inline-input';
+  input.style.width = type === 'number' ? '80px' : '120px';
+  el.replaceWith(input);
+  input.focus(); input.select();
+
+  function guardar() {
+    let val = type === 'number' ? (parseFloat(input.value)||0) : input.value.trim();
+    s[field] = val;
+    saveToFirebase(DB_STOCK, id, s);
+    renderStock();
+    const labels = {pvp:'PVP',coste:'Coste',stockMin:'Stock mín.',ubicacion:'Ubicación'};
+    toast('✅ ' + (labels[field]||field) + ' actualizado', 'success', 2000);
+  }
+  input.addEventListener('blur', guardar);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); guardar(); }
+    if (e.key === 'Escape') renderStock();
+  });
+}
+
+function editCitaStock(stockId) {
+  // Find or create apartado for this stock entry
+  const s = stockData.find(x => x.id === stockId);
+  if (!s) return;
+  const apt = apartados.find(a => a.medidaRef === stockId);
+  const currentFecha = apt?.fechaLimite || '';
+
+  const fecha = prompt('Fecha de cita del cliente (AAAA-MM-DD):', currentFecha);
+  if (fecha === null) return;
+
+  if (apt) {
+    apt.fechaLimite = fecha;
+    saveApartados();
+  } else if (fecha) {
+    // Create a minimal apartado just for the cita
+    apartados.unshift({
+      id: uid(), medida: s.medida, medidaRef: stockId,
+      archivo: '', cliente: '', cantidad: 0,
+      fechaLimite: fecha, nota: 'Cita asignada desde stock',
+      fecha: new Date().toISOString(), activo: true
+    });
+    saveApartados();
+  }
+  renderStock(); updateStats();
+  toast('📅 Cita actualizada: ' + fmtDate(fecha), 'success', 2500);
+}
+
+function editAsesorStock(stockId) {
+  const s = stockData.find(x => x.id === stockId);
+  if (!s) return;
+  const apt = apartados.find(a => a.medidaRef === stockId);
+
+  const opciones = ['TONI — Toni Moya','PEREA — Perea','ROBERTO — Roberto Carlos','OTRO — Otro','— Ninguno'];
+  const sel = prompt('Selecciona asesor:
+1. Toni Moya
+2. Perea
+3. Roberto Carlos
+4. Otro
+5. Ninguno
+
+Escribe el número:');
+  if (!sel) return;
+  const map = {'1':'TONI','2':'PEREA','3':'ROBERTO','4':'OTRO','5':''};
+  const asesor = map[sel.trim()] !== undefined ? map[sel.trim()] : '';
+
+  if (apt) { apt.asesor = asesor; saveApartados(); }
+  else if (asesor) {
+    apartados.unshift({
+      id: uid(), medida: s.medida, medidaRef: stockId,
+      archivo: '', cliente: '', cantidad: 0, asesor,
+      fechaLimite: '', nota: 'Asesor asignado desde stock',
+      fecha: new Date().toISOString(), activo: true
+    });
+    saveApartados();
+  }
+  renderStock();
+  toast('👤 Asesor actualizado: ' + (asesor||'ninguno'), 'success', 2500);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// IMPORTAR CAMPAÑA DESDE EXCEL
+// ══════════════════════════════════════════════════════════════════
+function importarCampana(file) {
+  if (!file) return;
+  toast('⏳ Procesando campaña…', 'info', 3000);
+
+  function procesarRows(rows) {
+    campanaData = [];
+    let headerRow = -1;
+
+    // Detect header
+    for (let i = 0; i < Math.min(5, rows.length); i++) {
+      const r = rows[i].join(' ').toLowerCase();
+      if (r.includes('referencia') || r.includes('medida') || r.includes('neto')) {
+        headerRow = i; break;
+      }
+    }
+
+    const dataStart = headerRow + 1;
+    let colMedida=0, colRef=1, colMarca=3, colDibujo=4, colPVP=7, colNeto=8, colCamp=10;
+
+    if (headerRow >= 0) {
+      const hdr = rows[headerRow].map(c => String(c||'').toLowerCase());
+      hdr.forEach((h,i) => {
+        if (h.includes('medida') || (h.includes('/') && h.includes('r'))) colMedida = i;
+        if (h.includes('referencia') || h.includes('ref')) colRef = i;
+        if (h.includes('marca')) colMarca = i;
+        if (h.includes('modelo') || h.includes('dibujo')) colDibujo = i;
+        if (h.includes('pvp') && !h.includes('neto')) colPVP = i;
+        if (h.includes('neto') && !h.includes('camp')) colNeto = i;
+        if (h.includes('camp') || (h.includes('neto') && h.includes('camp'))) colCamp = i;
+      });
+    }
+
+    for (let i = dataStart; i < rows.length; i++) {
+      const r = rows[i];
+      const medida = String(r[colMedida]||'').trim();
+      const ref    = String(r[colRef]||'').trim();
+      if (!medida && !ref) continue;
+      if (!medida.includes('/') && !ref.startsWith('ZTS')) continue;
+
+      campanaData.push({
+        medida:       medida,
+        referencia:   ref,
+        marca:        String(r[colMarca]||'').trim(),
+        dibujo:       String(r[colDibujo]||'').trim(),
+        pvp:          parseFloat(r[colPVP]||0) || 0,
+        netoNormal:   parseFloat(r[colNeto]||0) || 0,
+        netoCampana:  parseFloat(r[colCamp]||0) || 0,
+      });
+    }
+
+    // Save and cross-reference with stock
+    try { localStorage.setItem(LOCAL_CAMP, JSON.stringify(campanaData)); } catch {}
+
+    const matches = stockData.filter(s =>
+      campanaData.some(c => c.referencia === s.referencia ||
+        (c.medida && s.medida && c.medida.replace(/\s/g,'').toUpperCase() === s.medida.replace(/\s/g,'').toUpperCase()))
+    );
+
+    renderStock();
+    toast('✅ Campaña importada — ' + campanaData.length + ' productos · ' + matches.length + ' coinciden con tu stock 🏷️', 'success', 7000);
+    if (matches.length) {
+      setTimeout(() => toast('🏷️ Ref. en campaña: ' + matches.map(s=>s.medida).join(' · '), 'info', 8000), 1000);
+    }
+  }
+
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'csv') {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const rows = e.target.result.split('\n').map(l => l.split(/[;,\t]/).map(c => c.trim().replace(/^"|"$/g,'')));
+      procesarRows(rows);
+    };
+    reader.readAsText(file, 'utf-8');
+  } else {
+    // Excel via SheetJS
+    loadSheetJS(() => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const wb = XLSX.read(e.target.result, { type: 'binary' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+        procesarRows(rows);
+      };
+      reader.readAsBinaryString(file);
+    });
+  }
+}
+
+function loadCampana() {
+  try {
+    const d = localStorage.getItem(LOCAL_CAMP);
+    if (d) campanaData = JSON.parse(d);
+  } catch {}
+}
+
 // ── DUAL SCROLL ──
 (function() {
   function init() {
@@ -1977,8 +2204,90 @@ document.getElementById('ventaModal').addEventListener('click', e => {
 // ── LOAD CONFIG & APARTADOS ──
 loadCfg();
 loadApartados();
+loadCampana();
 
 checkRecordatorioTarifa();
+
+// ── VENTAS HISTÓRICAS ANTONIO MOYA ──
+function registrarVentasHistoricas() {
+  const KEY = 'motorsan_ventas_hist_v1';
+  if (localStorage.getItem(KEY)) return;
+
+  const ventasHist = [
+    {
+      id: 'hist_venta_001',
+      tipo: 'venta',
+      medida: '225/40R18',
+      referencia: 'ZTS226408YCC5C',
+      marca: 'Continental',
+      cantidad: 2,
+      pvp: 102.89,
+      coste: 87.46,
+      fecha: '2026-06-01',
+      asesor: 'TONI',
+      nota: 'Venta registrada retroactivamente',
+      archivo: '',
+      stockKey: 'ZTS226408YCC5C',
+      fechaCreacion: '2026-06-01T00:00:00.000Z'
+    },
+    {
+      id: 'hist_venta_002',
+      tipo: 'venta',
+      medida: '245/40R19',
+      referencia: 'ZTS248409YBZ0A',
+      marca: 'Bridgestone',
+      cantidad: 4,
+      pvp: 206.68,
+      coste: 175.68,
+      fecha: '2026-06-02',
+      asesor: 'TONI',
+      nota: 'Venta registrada retroactivamente',
+      archivo: '',
+      stockKey: 'ZTS248409YBZ0A',
+      fechaCreacion: '2026-06-02T00:00:00.000Z'
+    }
+  ];
+
+  ventasHist.forEach(mov => {
+    // Add to movData if not already present
+    if (!movData.find(m => m.id === mov.id)) {
+      movData.push(mov);
+      saveToFirebase(DB_MOV, mov.id, mov);
+    }
+
+    // Update stock if reference exists
+    const s = stockData.find(x => x.id === mov.stockKey || x.referencia === mov.referencia);
+    if (s) {
+      s.totalVendidas = (s.totalVendidas||0) + mov.cantidad;
+      // Don't touch current stock as it's already been sold
+      saveToFirebase(DB_STOCK, s.id, s);
+    } else {
+      // Reference ZTS248409YBZ0A doesn't exist yet — create it as sold out
+      const newRef = {
+        id: mov.referencia,
+        medida: mov.medida,
+        referencia: mov.referencia,
+        marca: mov.marca,
+        tipo: 'Verano',
+        indice: '98Y',
+        ubicacion: 'PREPICKING',
+        stock: 0,
+        stockMin: 0,
+        pvp: mov.pvp,
+        coste: mov.coste,
+        fechaRecepcion: mov.fecha,
+        totalVendidas: mov.cantidad,
+        fechaCreacion: mov.fechaCreacion
+      };
+      stockData.push(newRef);
+      saveToFirebase(DB_STOCK, newRef.id, newRef);
+    }
+  });
+
+  localStorage.setItem(KEY, '1');
+  renderStock(); updateStats(); renderHistorial(); renderAnalytics();
+  toast('✅ 2 ventas de Antonio Moya registradas retroactivamente', 'success', 5000);
+}
 
 // ── SET TODAY DATE ──
 document.getElementById('mov_fecha').value = new Date().toISOString().slice(0,10);
@@ -2042,6 +2351,7 @@ function borrarDatosPrueba() {
 // ── INIT ──
 initFirebase();
 setTimeout(importarStockInicial, 2000);
+setTimeout(registrarVentasHistoricas, 3000);
 </script>
 </body>
 </html>
