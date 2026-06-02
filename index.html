@@ -789,6 +789,22 @@ function guardarMovimiento() {
   saveToFirebase(DB_MOV, mov.id, mov);
 
   toast(movTipo==='compra' ? `✅ Entrada de ${cantidad} ud${cantidad>1?'s':''} registrada ✓` : `✅ Venta de ${cantidad} ud${cantidad>1?'s':''} registrada ✓`, 'success');
+  // Si la nota tiene formato de archivo (#XXXXXX), crear apartado automático
+  if (movTipo === 'compra' && nota && nota.match(/^#\d+/)) {
+    const recId = existing ? existing.id : stockData[stockData.length-1]?.id || '';
+    if (recId) {
+      const autoApt = {
+        id: uid(), medida: medida, medidaRef: recId,
+        archivo: nota.trim(), cliente: '', cantidad: cantidad,
+        fechaLimite: '', nota: 'Apartado automático al registrar compra',
+        fecha: new Date().toISOString(), activo: true
+      };
+      apartados.unshift(autoApt);
+      saveApartados();
+      renderApartados();
+      toast('📌 Apartado automático creado para ' + nota, 'info', 4000);
+    }
+  }
   limpiarMov();
 }
 
@@ -1021,15 +1037,18 @@ function renderAnalytics() {
     </div>`).join('') : '<div style="color:var(--muted2);font-size:.8rem">Sin ventas todavía</div>';
 
   // Resumen económico
-  const ingresos = ventas.reduce((s,m)=>s+(m.pvp||0)*(m.cantidad||1),0);
-  const costes   = compras.reduce((s,m)=>s+(m.coste||0)*(m.cantidad||1),0);
-  const margen   = ingresos - ventas.reduce((s,m)=>s+(m.coste||0)*(m.cantidad||1),0);
-  document.getElementById('resumenEcon').innerHTML = `
-    <div class="top-item"><div style="flex:1;font-size:.78rem;color:var(--muted)">📤 Total ventas</div><div class="top-val" style="color:var(--green)">${ventas.reduce((s,m)=>s+m.cantidad,0)} uds</div></div>
-    <div class="top-item"><div style="flex:1;font-size:.78rem;color:var(--muted)">💶 Ingresos ventas</div><div class="top-val" style="color:var(--green)">${ingresos.toFixed(2)}€</div></div>
-    <div class="top-item"><div style="flex:1;font-size:.78rem;color:var(--muted)">📥 Total compras</div><div class="top-val">${compras.reduce((s,m)=>s+m.cantidad,0)} uds</div></div>
-    <div class="top-item"><div style="flex:1;font-size:.78rem;color:var(--muted)">💸 Coste compras</div><div class="top-val" style="color:var(--red)">${costes.toFixed(2)}€</div></div>
-    <div class="top-item"><div style="flex:1;font-size:.78rem;color:var(--muted)">📈 Margen estimado</div><div class="top-val" style="color:${margen>=0?'var(--green)':'var(--red)'}">${margen.toFixed(2)}€</div></div>`;
+  // PVP y coste son UNITARIOS → multiplicar por cantidad
+  const ingresos = ventas.reduce((s,m)=>s+(parseFloat(m.pvp)||0)*(parseInt(m.cantidad)||1),0);
+  const costesCompra = compras.reduce((s,m)=>s+(parseFloat(m.coste)||0)*(parseInt(m.cantidad)||1),0);
+  const costesVenta  = ventas.reduce((s,m)=>s+(parseFloat(m.coste)||0)*(parseInt(m.cantidad)||1),0);
+  const margen   = ingresos - costesVenta;
+  const udsVenta  = ventas.reduce((s,m)=>s+(parseInt(m.cantidad)||1),0);
+  const udsCompra = compras.reduce((s,m)=>s+(parseInt(m.cantidad)||1),0);
+  document.getElementById('resumenEcon').innerHTML = '<div class="top-item"><div style="flex:1;font-size:.78rem;color:var(--muted)">📤 Total vendidos</div><div class="top-val" style="color:var(--green)">'+udsVenta+' uds</div></div>'+
+    '<div class="top-item"><div style="flex:1;font-size:.78rem;color:var(--muted)">💶 Ingresos ventas (PVP×cant)</div><div class="top-val" style="color:var(--green)">'+ingresos.toFixed(2)+'€</div></div>'+
+    '<div class="top-item"><div style="flex:1;font-size:.78rem;color:var(--muted)">📥 Total comprados</div><div class="top-val">'+udsCompra+' uds</div></div>'+
+    '<div class="top-item"><div style="flex:1;font-size:.78rem;color:var(--muted)">💸 Coste compras (coste×cant)</div><div class="top-val" style="color:var(--red)">'+costesCompra.toFixed(2)+'€</div></div>'+
+    '<div class="top-item"><div style="flex:1;font-size:.78rem;color:var(--muted)">📈 Margen estimado</div><div class="top-val" style="color:'+(margen>=0?'var(--green)':'var(--red)')+'">'+margen.toFixed(2)+'€</div></div>';
 
   // Ventas por mes
   const byMes = {};
@@ -1090,7 +1109,7 @@ function renderHistorial() {
       </div>
       <div class="mov-qty ${m.tipo}">${m.tipo==='compra'?'+':'-'}${m.cantidad} uds</div>
       <div style="text-align:right;margin-left:8px">
-        <div style="font-size:.78rem;font-weight:600">${fmtMoney(m.pvp)} / ud</div>
+        <div style="font-size:.78rem;font-weight:600">${fmtMoney(m.pvp)}/ud · <strong>${((parseFloat(m.pvp)||0)*(parseInt(m.cantidad)||1)).toFixed(2)}€ total</strong></div>
         <div class="mov-date">${fmtDate(m.fecha)}</div>
       </div>
     </div>`).join('');
@@ -1434,11 +1453,12 @@ const STOCK_INICIAL = {
   "ZTS245408YCC5C": {id:"ZTS245408YCC5C",medida:"245/40R18",referencia:"ZTS245408YCC5C",marca:"Continental",tipo:"Verano",indice:"Y",ubicacion:"2W4",stock:3,stockMin:2,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
   "ZTS185605HCZ00": {id:"ZTS185605HCZ00",medida:"185/60R15",referencia:"ZTS185605HCZ00",marca:"Continental",tipo:"Verano",indice:"H",ubicacion:"EXPO SK",stock:2,stockMin:2,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
   "ZTS206458VCZ00": {id:"ZTS206458VCZ00",medida:"205/45R18",referencia:"ZTS206458VCZ00",marca:"Continental",tipo:"Verano",indice:"V",ubicacion:"EXPOAU",stock:2,stockMin:2,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
-  "ZTS226558YCE6C": {id:"ZTS226558YCE6C",medida:"225/55R18",referencia:"ZTS226558YCE6C",marca:"Continental",tipo:"Verano",indice:"Y",ubicacion:"MONTADOS USADOS",stock:2,stockMin:2,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"}
+  "ZTS226558YCE6C": {id:"ZTS226558YCE6C",medida:"225/55R18",referencia:"ZTS226558YCE6C",marca:"Continental",tipo:"Verano",indice:"Y",ubicacion:"MONTADOS USADOS",stock:2,stockMin:2,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS256459YC6CA": {id:"ZTS256459YC6CA",medida:"255/45R19",referencia:"ZTS256459YC6CA",marca:"Continental",tipo:"Verano",indice:"Y",ubicacion:"Estante A-3, Almacén",stock:2,stockMin:0,pvp:221.49,coste:110.75,fechaRecepcion:"2026-06-02",totalVendidas:0,fechaCreacion:"2026-06-02T00:00:00.000Z"}
 };
 
 function importarStockInicial() {
-  const KEY = 'motorsan_neum_import_v1';
+  const KEY = 'motorsan_neum_import_v2';
   if (localStorage.getItem(KEY)) return; // ya importado
   
   const entries = Object.values(STOCK_INICIAL);
