@@ -259,6 +259,34 @@ tr.stock-out td{background:#fff0f0}
 /* ── CITAS COUNTER BADGE ── */
 .citas-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700}
 
+/* ── ASESORES VENTAS ── */
+.asesor-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:.68rem;font-weight:700;border:1.5px solid;white-space:nowrap}
+.asesor-TONI{background:#eff6ff;color:#1d4ed8;border-color:#93c5fd}
+.asesor-PEREA{background:#f5f3ff;color:#6d28d9;border-color:#c4b5fd}
+.asesor-ROBERTO{background:#fff1f2;color:#be123c;border-color:#fda4af}
+.asesor-OTRO{background:#f0fdf4;color:#15803d;border-color:#86efac}
+
+/* ── VENTA MODAL ── */
+.venta-modal{background:#fff;border-radius:14px;padding:28px 32px;max-width:520px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.asesor-selector{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.asesor-btn{padding:12px;border-radius:var(--r);border:2px solid var(--border2);background:var(--surface2);cursor:pointer;font-family:var(--font);font-size:.82rem;font-weight:600;color:var(--muted);transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.asesor-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--blue-bg)}
+.asesor-btn.sel-TONI{border-color:#1d4ed8;background:#eff6ff;color:#1d4ed8}
+.asesor-btn.sel-PEREA{border-color:#6d28d9;background:#f5f3ff;color:#6d28d9}
+.asesor-btn.sel-ROBERTO{border-color:#be123c;background:#fff1f2;color:#be123c}
+.asesor-btn.sel-OTRO{border-color:#15803d;background:#f0fdf4;color:#15803d}
+
+/* ── VENDIDO BADGE ── */
+.badge-vendido{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:20px;font-size:.65rem;font-weight:700;background:#1a1d23;color:#fff;white-space:nowrap}
+
+/* ── ANALISIS ASESOR ── */
+.asesor-tab-sel{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.asesor-tab-btn{padding:7px 16px;border-radius:20px;border:2px solid var(--border2);background:var(--surface);font-size:.78rem;font-weight:600;color:var(--muted);cursor:pointer;transition:all .15s}
+.asesor-tab-btn.active{border-color:var(--primary);background:var(--blue-bg);color:var(--primary)}
+.asesor-kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;text-align:center}
+.asesor-kpi-val{font-size:1.6rem;font-weight:700;color:var(--primary);line-height:1}
+.asesor-kpi-lbl{font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-top:4px}
+
 @media(max-width:768px){.header-stats{display:none}.tabs{overflow-x:auto}.main{padding:12px 8px}}
 </style>
 </head>
@@ -300,6 +328,7 @@ tr.stock-out td{background:#fff0f0}
   <div class="tab"        id="tab-historial"  onclick="setTab('historial')">📋 Historial</div>
   <div class="tab" style="color:#059669;border-bottom-color:#059669" id="tab-asesores" onclick="setTab('asesores')">🚗 Presupuesto Asesores</div>
   <div class="tab" style="color:#7c3aed" id="tab-apartados" onclick="setTab('apartados')">📌 Apartados</div>
+  <div class="tab" style="color:#1d4ed8" id="tab-asesoresventas" onclick="setTab('asesoresventas')">👥 Ventas por Asesor</div>
 </div>
 
 <div class="main">
@@ -337,7 +366,9 @@ tr.stock-out td{background:#fff0f0}
             <th onclick="sortStock('coste')">COSTE</th>
             <th onclick="sortStock('fechaRecepcion')">ÚLT. RECEPCIÓN</th>
             <th onclick="sortStock('totalVendidas')">VENDIDAS</th>
-            <th style="width:90px">ACCIONES</th>
+            <th onclick="sortStock('fechaCita')">CITA</th>
+            <th>ASESOR</th>
+            <th style="width:110px">ACCIONES</th>
           </tr>
         </thead>
         <tbody id="stockBody">
@@ -409,11 +440,21 @@ tr.stock-out td{background:#fff0f0}
         </div>
         <div class="field">
           <label>⚡ Stock mínimo</label>
-          <input type="number" id="mov_stockMin" value="4" min="0">
+          <input type="number" id="mov_stockMin" value="0" min="0">
         </div>
         <div class="field">
           <label>🗂️ Nº Archivo (apartar)</label>
           <input type="text" id="mov_archivo" class="mono" placeholder="#119XXX" autocomplete="off" oninput="this.value=this.value.toUpperCase()">
+        </div>
+        <div class="field">
+          <label>👤 Asesor que solicita</label>
+          <select id="mov_asesor">
+            <option value="">— Ninguno —</option>
+            <option value="TONI">Toni Moya</option>
+            <option value="PEREA">Perea</option>
+            <option value="ROBERTO">Roberto Carlos</option>
+            <option value="OTRO">Otro</option>
+          </select>
         </div>
         <div class="field">
           <label>📅 Fecha cita cliente</label>
@@ -602,7 +643,62 @@ tr.stock-out td{background:#fff0f0}
   <div id="apartadosList"></div>
 </div>
 
+
+<!-- ═══ PANEL VENTAS POR ASESOR ═══ -->
+<div id="panelAsesoresventas" style="display:none">
+  <div class="asesor-tab-sel">
+    <button class="asesor-tab-btn active" id="atab-TODOS" onclick="setAsesorTab('TODOS')">📊 Todos</button>
+    <button class="asesor-tab-btn" id="atab-TONI"    onclick="setAsesorTab('TONI')"   >👨 Toni Moya</button>
+    <button class="asesor-tab-btn" id="atab-PEREA"   onclick="setAsesorTab('PEREA')"  >👨 Perea</button>
+    <button class="asesor-tab-btn" id="atab-ROBERTO" onclick="setAsesorTab('ROBERTO')">👨 Roberto Carlos</button>
+    <button class="asesor-tab-btn" id="atab-OTRO"    onclick="setAsesorTab('OTRO')"   >👤 Otro</button>
+  </div>
+  <div id="asesorVentasContent"></div>
+</div>
+
 </div><!-- /main -->
+
+<!-- MODAL VENTA DESDE STOCK -->
+<div class="modal-overlay" id="ventaModal">
+  <div class="venta-modal">
+    <h2 style="color:var(--red)">📤 Registrar venta</h2>
+    <div id="ventaModalInfo" style="background:var(--surface2);border-radius:var(--rs);padding:12px 16px;margin-bottom:16px;font-size:.85rem;color:var(--text2)"></div>
+
+    <div class="field" style="margin-bottom:12px">
+      <label>👤 Asesor que vende</label>
+      <div class="asesor-selector">
+        <button class="asesor-btn" id="vbtn-TONI"    onclick="selAsesorVenta('TONI')">👨 Toni Moya</button>
+        <button class="asesor-btn" id="vbtn-PEREA"   onclick="selAsesorVenta('PEREA')">👨 Perea</button>
+        <button class="asesor-btn" id="vbtn-ROBERTO" onclick="selAsesorVenta('ROBERTO')">👨 Roberto Carlos</button>
+        <button class="asesor-btn" id="vbtn-OTRO"    onclick="selAsesorVenta('OTRO')">👤 Otro</button>
+      </div>
+    </div>
+
+    <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr">
+      <div class="field">
+        <label>🔢 Cantidad</label>
+        <input type="number" id="venta_cantidad" value="4" min="1">
+      </div>
+      <div class="field">
+        <label>💰 PVP aplicado (€)</label>
+        <input type="number" id="venta_pvp" step="0.01" min="0">
+      </div>
+      <div class="field">
+        <label>🗂️ Nº Archivo</label>
+        <input type="text" id="venta_archivo" class="mono" placeholder="#119XXX" oninput="this.value=this.value.toUpperCase()">
+      </div>
+    </div>
+    <div class="field" style="margin-top:8px">
+      <label>📝 Nota</label>
+      <input type="text" id="venta_nota" placeholder="Observaciones de la venta…">
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)">
+      <button class="btn btn-ghost" onclick="cerrarVentaModal()">Cancelar</button>
+      <button class="btn btn-red" onclick="confirmarVenta()">📤 Confirmar venta</button>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL EDITAR REFERENCIA -->
 <div class="modal-overlay" id="editModal">
@@ -742,7 +838,7 @@ function deleteFromFirebase(path, id) {
 // ══════════════════════════════════════════════════════════════════
 function setTab(tab) {
   activeTab = tab;
-  ['stock','movimiento','analytics','historial','asesores','apartados'].forEach(t => {
+  ['stock','movimiento','analytics','historial','asesores','apartados','asesoresventas'].forEach(t => {
     const p = document.getElementById('panel'+t.charAt(0).toUpperCase()+t.slice(1));
     if(p) p.style.display = t===tab?'block':'none';
     const tb = document.getElementById('tab-'+t);
@@ -750,6 +846,7 @@ function setTab(tab) {
   });
   if(tab==='asesores') loadCfg();
   if(tab==='apartados') renderApartados();
+  if(tab==='asesoresventas') renderAsesorVentas();
   if (tab==='analytics') renderAnalytics();
 }
 
@@ -774,7 +871,7 @@ function buscarRefPorMedida() {
     if (found.ubicacion)  document.getElementById('mov_ubicacion').value = found.ubicacion;
     if (found.pvp)        document.getElementById('mov_pvp').value = found.pvp;
     if (found.coste)      document.getElementById('mov_coste').value = found.coste;
-    if (found.stockMin)   document.getElementById('mov_stockMin').value = found.stockMin;
+    document.getElementById('mov_stockMin').value = found.stockMin||0;
     document.getElementById('mov_tipo_neum').value = found.tipo || 'Verano';
   }
 }
@@ -790,10 +887,11 @@ function guardarMovimiento() {
   const coste     = parseFloat(document.getElementById('mov_coste').value) || 0;
   const pvp       = parseFloat(document.getElementById('mov_pvp').value) || 0;
   const fecha     = document.getElementById('mov_fecha').value || new Date().toISOString().slice(0,10);
-  const stockMin  = parseInt(document.getElementById('mov_stockMin').value) || 4;
+  const stockMin  = parseInt(document.getElementById('mov_stockMin').value) || 0;
   const nota      = document.getElementById('mov_nota').value.trim();
   const archivo   = document.getElementById('mov_archivo').value.trim();
   const fechaCita = document.getElementById('mov_cita').value;
+  const asesor    = document.getElementById('mov_asesor')?.value||'';
 
   if (!medida) { toast('Introduce la medida del neumático', 'error'); return; }
   if (!cantidad || cantidad < 1) { toast('La cantidad debe ser mayor a 0', 'error'); return; }
@@ -814,7 +912,7 @@ function guardarMovimiento() {
       existing.stock -= cantidad;
       existing.totalVendidas = (existing.totalVendidas||0) + cantidad;
     }
-    existing.stockMin = stockMin;
+    existing.stockMin = (stockMin !== undefined && stockMin !== null) ? stockMin : (existing.stockMin||0);
     saveToFirebase(DB_STOCK, existing.id, existing);
     toast(movTipo==='compra'?'✅ Stock actualizado — '+existing.stock+' uds':'✅ Venta registrada — quedan '+existing.stock+' uds','success');
   } else {
@@ -833,7 +931,7 @@ function guardarMovimiento() {
   // Guardar movimiento
   const mov = {
     id: uid(), tipo: movTipo, medida, referencia, marca,
-    cantidad, pvp, coste, fecha, nota, archivo, fechaCita,
+    cantidad, pvp, coste, fecha, nota, archivo, fechaCita, asesor,
     stockKey, fechaCreacion: new Date().toISOString()
   };
   movData.unshift(mov);
@@ -843,7 +941,8 @@ function guardarMovimiento() {
   // Auto-apartado si hay archivo indicado
   if (movTipo === 'compra' && archivo) {
     const refId = existing ? existing.id : stockData[stockData.length-1]?.id || '';
-    if (refId) crearAutoApartado(refId, medida, archivo, cantidad, fechaCita);
+    const asesorMov = document.getElementById('mov_asesor')?.value||'';
+    if (refId) crearAutoApartado(refId, medida, archivo, cantidad, fechaCita, asesorMov);
   } else if (movTipo === 'compra' && nota && nota.match(/^#\d+/)) {
     const recId = existing ? existing.id : stockData[stockData.length-1]?.id || '';
     if (recId) {
@@ -872,6 +971,7 @@ function limpiarMov() {
   document.getElementById('mov_fecha').value = '';
   document.getElementById('mov_archivo').value = '';
   document.getElementById('mov_cita').value = '';
+  const movAsesorEl = document.getElementById('mov_asesor'); if(movAsesorEl) movAsesorEl.value='';
   document.getElementById('mov_stockMin').value = '4';
 }
 
@@ -891,22 +991,30 @@ function sortStock(field) {
 }
 
 function getStockStatus(s) {
-  if (s.stock <= 0)            return 'out';
-  if (s.stock <= s.stockMin)   return 'low';
+  const aptUds = apartados.filter(a => a.medidaRef === s.id).reduce((t,a)=>t+a.cantidad,0);
+  const libre  = s.stock - aptUds;
+  if (libre <= 0)           return 'out';
+  if (s.stockMin > 0 && libre <= s.stockMin) return 'low';
   return 'ok';
 }
 
 function stockBadge(s) {
   const st = getStockStatus(s);
-  if (st==='out') return '<span class="badge badge-out">🚨 Agotado</span>';
-  if (st==='low') return '<span class="badge badge-low">⚠️ Stock bajo</span>';
-  return '<span class="badge badge-ok">✓ OK</span>';
+  let badge = '';
+  if (st==='out') badge = '<span class="badge badge-out">🚨 Agotado</span>';
+  else if (st==='low') badge = '<span class="badge badge-low">⚠️ Stock bajo</span>';
+  else badge = '<span class="badge badge-ok">✓ OK</span>';
+  // Pedido necesario indicator
+  if (st !== 'ok' && s.totalVendidas > 0) {
+    badge += '<div style="font-size:.6rem;color:#c47200;font-weight:600;margin-top:3px">📋 Pedir ' + Math.max(s.stockMin, 2) + ' uds</div>';
+  }
+  return badge;
 }
 
 function stockBar(s) {
   const aptUds = apartados.filter(a => a.medidaRef === s.id).reduce((t,a)=>t+a.cantidad,0);
   const libre  = Math.max(0, s.stock - aptUds);
-  const pct = s.stockMin > 0 ? Math.min(100, Math.round((libre/(s.stockMin*3))*100)) : (libre>0?100:0);
+  const pct = s.stockMin > 0 ? Math.min(100, Math.round((libre/(s.stockMin*3))*100)) : (libre>0?50:0);
   const color = libre<=0 ? '#f87171' : libre<=s.stockMin ? '#fbbf24' : '#34d399';
   const title = s.stock+' total · '+aptUds+' apartadas · '+libre+' libres';
   return '<div class="stock-bar-wrap"><span class="stock-num" style="color:'+color+'" title="'+title+'">'+libre+'<span style="font-size:.6rem;opacity:.6">/'+s.stock+'</span></span><div class="stock-bar"><div class="stock-bar-fill" style="width:'+pct+'%;background:'+color+'"></div></div></div>';
@@ -946,17 +1054,27 @@ function renderStock() {
     <td><span class="ref-tag">${esc(s.indice||'—')}</span></td>
     <td><span class="loc-tag">${esc(s.ubicacion||'—')}</span></td>
     <td>${stockBar(s)}</td>
-    <td style="color:var(--muted);font-size:.78rem">${s.stockMin||0}</td>
+    <td><span class="pvp-editable" title="Clic para editar Stock Mínimo" onclick="editarField('${s.id}','stockMin',this)" style="color:var(--muted)">${s.stockMin||0}</span></td>
     <td>${stockBadge(s)}</td>
-    <td><span class="pvp-editable" title="Clic para editar PVP" onclick="editarPVP('${s.id}',this)">${s.pvp?parseFloat(s.pvp).toFixed(2)+'€':'Añadir PVP'}</span></td>
-    <td style="font-size:.75rem;color:var(--muted)">${fmtMoney(s.coste)}</td>
+    <td><span class="pvp-editable" title="Clic para editar PVP" onclick="editarField('${s.id}','pvp',this)">${s.pvp?parseFloat(s.pvp).toFixed(2)+'€':'Añadir PVP'}</span></td>
+    <td><span class="pvp-editable" title="Clic para editar Coste" onclick="editarField('${s.id}','coste',this)">${s.coste?parseFloat(s.coste).toFixed(2)+'€':'Añadir'}</span></td>
     <td style="font-size:.73rem;color:var(--muted);white-space:nowrap">${fmtDate(s.fechaRecepcion)}</td>
     <td style="text-align:center;font-weight:700;color:var(--primary)">${s.totalVendidas||0}</td>
+    <td>${(()=>{
+      const aptCita = apartados.filter(a=>a.medidaRef===s.id&&a.fechaLimite).map(a=>a.fechaLimite).sort()[0];
+      return citaBadgeNeum(aptCita||'');
+    })()}</td>
+    <td>${(()=>{
+      const aptAses = apartados.filter(a=>a.medidaRef===s.id&&a.asesor).map(a=>a.asesor);
+      if(!aptAses.length) return '<span style="color:var(--muted2);font-size:.72rem">—</span>';
+      return aptAses.map(a=>'<span class="asesor-pill asesor-'+a+'">'+a+'</span>').join(' ');
+    })()}</td>
     <td>
-      <div style="display:flex;gap:4px">
-        <button class="act-btn green" onclick="entradaRapida('${s.id}')" title="Entrada rápida (+4)">📥</button>
+      <div style="display:flex;gap:3px;flex-wrap:wrap">
+        <button class="act-btn green" onclick="entradaRapida('${s.id}')" title="Entrada rápida">📥</button>
+        <button class="act-btn red" onclick="abrirVentaModal('${s.id}')" title="Registrar venta">📤</button>
         <button class="act-btn orange" onclick="abrirEdit('${s.id}')" title="Editar">✏️</button>
-        <button class="act-btn red" onclick="eliminarRef('${s.id}')" title="Eliminar">🗑️</button>
+        <button class="act-btn" onclick="eliminarRef('${s.id}')" title="Eliminar" style="color:var(--red)">🗑️</button>
       </div>
     </td>
   </tr>`).join('');
@@ -1007,7 +1125,7 @@ function abrirEdit(id) {
   document.getElementById('e_indice').value    = s.indice||'';
   document.getElementById('e_ubicacion').value = s.ubicacion||'';
   document.getElementById('e_stock').value     = s.stock||0;
-  document.getElementById('e_stockMin').value  = s.stockMin||4;
+  document.getElementById('e_stockMin').value  = s.stockMin||0;
   document.getElementById('e_coste').value     = s.coste||'';
   document.getElementById('e_pvp').value       = s.pvp||'';
   document.getElementById('editModal').classList.add('open');
@@ -1030,7 +1148,7 @@ function guardarEdit() {
     indice:    document.getElementById('e_indice').value.trim().toUpperCase(),
     ubicacion: document.getElementById('e_ubicacion').value.trim(),
     stock:     parseInt(document.getElementById('e_stock').value)||0,
-    stockMin:  parseInt(document.getElementById('e_stockMin').value)||4,
+    stockMin:  parseInt(document.getElementById('e_stockMin').value)||0,
     coste:     parseFloat(document.getElementById('e_coste').value)||0,
     pvp:       parseFloat(document.getElementById('e_pvp').value)||0,
   };
@@ -1548,14 +1666,14 @@ function posponerRecordatorio() {
 // ══════════════════════════════════════════════════════════════════
 // AUTO-APARTADO AL REGISTRAR COMPRA CON ARCHIVO
 // ══════════════════════════════════════════════════════════════════
-function crearAutoApartado(stockId, medida, archivo, cantidad, fechaCita) {
+function crearAutoApartado(stockId, medida, archivo, cantidad, fechaCita, asesorArg) {
   if (!archivo || !archivo.trim()) return;
   // Evitar duplicados
   const yaExiste = apartados.find(a => a.medidaRef === stockId && a.archivo === archivo.trim());
   if (yaExiste) { toast('Ya existe un apartado para ' + archivo + ' — actualizado', 'info'); return; }
 
   const apt = {
-    id: uid(), medida, medidaRef: stockId,
+    id: uid(), medida, medidaRef: stockId, asesor: asesorArg||'',
     archivo: archivo.trim(), cliente: '',
     cantidad, fechaLimite: fechaCita || '',
     nota: 'Apartado automático — compra asociada a archivo',
@@ -1565,6 +1683,238 @@ function crearAutoApartado(stockId, medida, archivo, cantidad, fechaCita) {
   saveApartados();
   updateStats();
   toast('📌 Apartado automático creado para ' + archivo + (fechaCita?' · Cita: '+fmtDate(fechaCita):''), 'success', 5000);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// VENTA DESDE STOCK MODAL
+// ══════════════════════════════════════════════════════════════════
+let ventaStockId = null;
+let asesorVentaSel = '';
+
+function abrirVentaModal(id) {
+  const s = stockData.find(x => x.id === id);
+  if (!s) return;
+  ventaStockId = id;
+  asesorVentaSel = '';
+  ['TONI','PEREA','ROBERTO','OTRO'].forEach(a => {
+    const btn = document.getElementById('vbtn-'+a);
+    if (btn) btn.className = 'asesor-btn';
+  });
+  document.getElementById('ventaModalInfo').innerHTML =
+    '<strong>' + esc(s.medida) + '</strong> · ' + esc(s.marca) + ' · Stock disponible: <strong>' + s.stock + ' uds</strong>';
+  document.getElementById('venta_cantidad').value = 4;
+  document.getElementById('venta_pvp').value = s.pvp || '';
+  document.getElementById('venta_archivo').value = '';
+  document.getElementById('venta_nota').value = '';
+  document.getElementById('ventaModal').classList.add('open');
+}
+
+function cerrarVentaModal() {
+  document.getElementById('ventaModal').classList.remove('open');
+  ventaStockId = null;
+}
+
+function selAsesorVenta(asesor) {
+  asesorVentaSel = asesor;
+  ['TONI','PEREA','ROBERTO','OTRO'].forEach(a => {
+    const btn = document.getElementById('vbtn-'+a);
+    if (btn) btn.className = 'asesor-btn' + (a===asesor?' sel-'+a:'');
+  });
+}
+
+function confirmarVenta() {
+  if (!ventaStockId) return;
+  if (!asesorVentaSel) { toast('Selecciona el asesor que realiza la venta', 'error'); return; }
+
+  const s = stockData.find(x => x.id === ventaStockId);
+  if (!s) return;
+
+  const cantidad = parseInt(document.getElementById('venta_cantidad').value) || 1;
+  const pvp      = parseFloat(document.getElementById('venta_pvp').value) || s.pvp || 0;
+  const archivo  = document.getElementById('venta_archivo').value.trim();
+  const nota     = document.getElementById('venta_nota').value.trim();
+  const fecha    = new Date().toISOString().slice(0,10);
+
+  const apt = apartados.filter(a => a.medidaRef === s.id).reduce((t,a)=>t+a.cantidad,0);
+  const disponible = s.stock - apt;
+  if (cantidad > disponible) {
+    toast('Stock insuficiente — ' + disponible + ' uds libres (' + apt + ' apartadas)', 'error');
+    return;
+  }
+
+  // Update stock
+  s.stock -= cantidad;
+  s.totalVendidas = (s.totalVendidas||0) + cantidad;
+
+  // Dynamic stockMin: recalculate based on sales velocity
+  const allVentasRef = movData.filter(m => m.tipo==='venta' && m.stockKey===s.id);
+  if (allVentasRef.length >= 1) {
+    const fechas = allVentasRef.map(m => m.fecha||'').filter(Boolean).sort();
+    let mesesActivos = 1;
+    if (fechas.length >= 2) {
+      const d1 = new Date(fechas[0]+'T00:00');
+      const d2 = new Date(fechas[fechas.length-1]+'T00:00');
+      mesesActivos = Math.max(1, Math.round((d2-d1)/2592000000)+1);
+    }
+    const udsTotal = allVentasRef.reduce((t,m)=>t+(parseInt(m.cantidad)||1),0) + cantidad;
+    const media = udsTotal / mesesActivos;
+    const nuevoMin = Math.ceil(media * 1.5); // 1.5x media = safety stock
+    if (nuevoMin !== s.stockMin) {
+      s.stockMin = nuevoMin;
+    }
+  }
+
+  saveToFirebase(DB_STOCK, s.id, s);
+
+  // Save movement with asesor
+  const mov = {
+    id: uid(), tipo: 'venta', medida: s.medida, referencia: s.referencia,
+    marca: s.marca, cantidad, pvp, coste: s.coste||0,
+    fecha, nota: (nota||'') + (archivo?' · Archivo:'+archivo:''),
+    archivo, asesor: asesorVentaSel, stockKey: s.id,
+    fechaCreacion: new Date().toISOString()
+  };
+  movData.unshift(mov);
+  saveToFirebase(DB_MOV, mov.id, mov);
+
+  // Remove apartado if exists for this archivo
+  if (archivo) {
+    const aptIdx = apartados.findIndex(a => a.archivo === archivo && a.medidaRef === s.id);
+    if (aptIdx !== -1) { apartados.splice(aptIdx, 1); saveApartados(); }
+  }
+
+  renderStock(); updateStats(); renderHistorial(); renderAnalytics();
+  cerrarVentaModal();
+  toast('✅ Venta registrada — ' + cantidad + ' uds · ' + asesorVentaSel, 'success', 4000);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// EDITAR CAMPO INLINE (PVP y COSTE)
+// ══════════════════════════════════════════════════════════════════
+function editarField(id, field, el) {
+  const s = stockData.find(x => x.id === id);
+  if (!s) return;
+  const input = document.createElement('input');
+  input.type = 'number'; input.step = '0.01'; input.min = '0';
+  input.value = s[field] || 0;
+  input.className = 'pvp-edit-input';
+  el.replaceWith(input);
+  input.focus(); input.select();
+  function guardar() {
+    const v = parseFloat(input.value) || 0;
+    s[field] = v;
+    saveToFirebase(DB_STOCK, id, s);
+    const span = document.createElement('span');
+    span.className = 'pvp-editable';
+    span.title = 'Clic para editar ' + (field==='pvp'?'PVP':'Coste');
+    span.textContent = v.toFixed(2) + '€';
+    span.onclick = () => editarField(id, field, span);
+    input.replaceWith(span);
+    toast('✅ ' + (field==='pvp'?'PVP':'Coste') + ' actualizado: ' + v.toFixed(2) + '€', 'success');
+  }
+  input.addEventListener('blur', guardar);
+  input.addEventListener('keydown', e => { if(e.key==='Enter') guardar(); if(e.key==='Escape') renderStock(); });
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ANÁLISIS POR ASESOR
+// ══════════════════════════════════════════════════════════════════
+let asesorTabActivo = 'TODOS';
+
+function setAsesorTab(asesor) {
+  asesorTabActivo = asesor;
+  ['TODOS','TONI','PEREA','ROBERTO','OTRO'].forEach(a => {
+    const btn = document.getElementById('atab-'+a);
+    if (btn) btn.classList.toggle('active', a===asesor);
+  });
+  renderAsesorVentas();
+}
+
+function renderAsesorVentas() {
+  const cont = document.getElementById('asesorVentasContent');
+  if (!cont) return;
+
+  const ASESORES = asesorTabActivo==='TODOS' ? ['TONI','PEREA','ROBERTO','OTRO'] : [asesorTabActivo];
+  let html = '';
+
+  for (const asesor of ASESORES) {
+    const ventas = movData.filter(m => m.tipo==='venta' && m.asesor===asesor);
+    if (!ventas.length && asesorTabActivo==='TODOS') continue;
+
+    const totalUds  = ventas.reduce((s,m)=>s+(parseInt(m.cantidad)||1),0);
+    const totalEur  = ventas.reduce((s,m)=>s+(parseFloat(m.pvp)||0)*(parseInt(m.cantidad)||1),0);
+    const totalCost = ventas.reduce((s,m)=>s+(parseFloat(m.coste)||0)*(parseInt(m.cantidad)||1),0);
+    const margen    = totalEur - totalCost;
+
+    // By month
+    const byMes = {};
+    ventas.forEach(m => {
+      if (!m.fecha) return;
+      const mes = m.fecha.slice(0,7);
+      if (!byMes[mes]) byMes[mes] = {uds:0,eur:0};
+      byMes[mes].uds += parseInt(m.cantidad)||1;
+      byMes[mes].eur += (parseFloat(m.pvp)||0)*(parseInt(m.cantidad)||1);
+    });
+    const mesesArr = Object.entries(byMes).sort((a,b)=>a[0].localeCompare(b[0]));
+    const mesesNames = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    const maxUds = mesesArr.length ? Math.max(...mesesArr.map(m=>m[1].uds)) : 1;
+
+    const colorClass = {TONI:'#1d4ed8',PEREA:'#6d28d9',ROBERTO:'#be123c',OTRO:'#15803d'}[asesor]||'#1a3a6e';
+
+    html += `<div style="background:#fff;border:1px solid #e2e5ea;border-radius:10px;padding:20px;margin-bottom:18px;border-top:3px solid ${colorClass}">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <div style="font-size:1.4rem">👨</div>
+        <div><div style="font-size:1rem;font-weight:700;color:${colorClass}">${asesor==='TONI'?'Toni Moya':asesor==='PEREA'?'Perea':asesor==='ROBERTO'?'Roberto Carlos':'Otro'}</div>
+        <div style="font-size:.72rem;color:var(--muted)">${ventas.length} ventas registradas</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
+        <div class="asesor-kpi"><div class="asesor-kpi-val" style="color:${colorClass}">${totalUds}</div><div class="asesor-kpi-lbl">Uds vendidas</div></div>
+        <div class="asesor-kpi"><div class="asesor-kpi-val" style="color:#1a7f4e">${totalEur.toFixed(0)}€</div><div class="asesor-kpi-lbl">Importe ventas</div></div>
+        <div class="asesor-kpi"><div class="asesor-kpi-val" style="color:#bb0a21">${totalCost.toFixed(0)}€</div><div class="asesor-kpi-lbl">Coste</div></div>
+        <div class="asesor-kpi"><div class="asesor-kpi-val" style="color:${margen>=0?'#1a7f4e':'#bb0a21'}">${margen.toFixed(0)}€</div><div class="asesor-kpi-lbl">Margen</div></div>
+      </div>`;
+
+    // Monthly chart
+    if (mesesArr.length) {
+      html += `<div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px;font-weight:600">Ventas mensuales</div>
+        <div style="display:flex;align-items:flex-end;gap:6px;height:80px;margin-bottom:16px">
+        ${mesesArr.map(([mes,d])=>{
+          const [y,m2]=mes.split('-');
+          const pct=Math.round((d.uds/maxUds)*100);
+          const lbl=mesesNames[parseInt(m2)-1]+' '+y.slice(2);
+          return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+            <span style="font-size:.6rem;font-weight:700;color:${colorClass}">${d.uds}</span>
+            <div style="width:100%;background:${colorClass};border-radius:3px 3px 0 0;height:${pct}%;min-height:3px"></div>
+            <span style="font-size:.55rem;color:var(--muted);transform:rotate(-30deg);white-space:nowrap;margin-top:4px">${lbl}</span>
+          </div>`;
+        }).join('')}
+        </div>`;
+    }
+
+    // Top refs sold
+    const byRef = {};
+    ventas.forEach(m => {
+      const k = m.medida||m.referencia||'?';
+      if (!byRef[k]) byRef[k]={uds:0,eur:0,marca:m.marca||''};
+      byRef[k].uds+=(parseInt(m.cantidad)||1);
+      byRef[k].eur+=(parseFloat(m.pvp)||0)*(parseInt(m.cantidad)||1);
+    });
+    const topRefs = Object.entries(byRef).sort((a,b)=>b[1].uds-a[1].uds).slice(0,5);
+    if (topRefs.length) {
+      html += `<div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px;font-weight:600">Top referencias vendidas</div>`;
+      html += topRefs.map(([ref,d],i)=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f0f2f5">
+        <div style="width:20px;height:20px;border-radius:50%;background:${colorClass};color:#fff;font-size:.62rem;font-weight:700;display:flex;align-items:center;justify-content:center">${i+1}</div>
+        <div style="flex:1;font-family:var(--mono);font-size:.76rem;color:var(--primary)">${esc(ref)}</div>
+        <div style="font-size:.8rem;font-weight:700;color:${colorClass}">${d.uds} uds</div>
+        <div style="font-size:.75rem;color:#1a7f4e">${d.eur.toFixed(0)}€</div>
+      </div>`).join('');
+    }
+
+    html += '</div>';
+  }
+
+  if (!html) html = '<div style="text-align:center;color:var(--muted2);padding:40px">Sin ventas registradas todavía para este asesor</div>';
+  cont.innerHTML = html;
 }
 
 // ── DUAL SCROLL ──
@@ -1584,6 +1934,9 @@ function crearAutoApartado(stockId, medida, archivo, cantidad, fechaCita) {
 document.getElementById('editModal').addEventListener('click', e => {
   if(e.target===document.getElementById('editModal')) cerrarEdit();
 });
+document.getElementById('ventaModal').addEventListener('click', e => {
+  if(e.target===document.getElementById('ventaModal')) cerrarVentaModal();
+});
 
 // ── LOAD CONFIG & APARTADOS ──
 loadCfg();
@@ -1596,29 +1949,29 @@ document.getElementById('mov_fecha').value = new Date().toISOString().slice(0,10
 
 // ── IMPORT STOCK INICIAL ──
 const STOCK_INICIAL = {
-  "ZTS216557WCZ00": {id:"ZTS216557WCZ00",medida:"215/55R17",referencia:"ZTS216557WCZ00",marca:"Continental",tipo:"Verano",indice:"W",ubicacion:"Sin ubicación",stock:2,stockMin:2,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
-  "ZTS256401YCZ0C": {id:"ZTS256401YCZ0C",medida:"255/40R21",referencia:"ZTS256401YCZ0C",marca:"Continental",tipo:"Verano",indice:"Y",ubicacion:"2R0",stock:2,stockMin:2,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
-  "ZTS185604HCZ00": {id:"ZTS185604HCZ00",medida:"185/60R14",referencia:"ZTS185604HCZ00",marca:"Continental",tipo:"Verano",indice:"H",ubicacion:"2R2",stock:2,stockMin:2,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
-  "ZTS235557VCP5A": {id:"ZTS235557VCP5A",medida:"235/55R17",referencia:"ZTS235557VCP5A",marca:"Pirelli",tipo:"Verano",indice:"V",ubicacion:"2R4",stock:1,stockMin:2,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
-  "ZTS215508WCC5A": {id:"ZTS215508WCC5A",medida:"215/50R18",referencia:"ZTS215508WCC5A",marca:"Continental",tipo:"Verano",indice:"W",ubicacion:"2T",stock:4,stockMin:2,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
-  "ZTS226408YCC5C": {id:"ZTS226408YCC5C",medida:"225/40R18",referencia:"ZTS226408YCC5C",marca:"Continental",tipo:"Verano",indice:"Y",ubicacion:"2T2",stock:4,stockMin:2,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
-  "ZTS215557VCE6A": {id:"ZTS215557VCE6A",medida:"215/55R17",referencia:"ZTS215557VCE6A",marca:"Continental",tipo:"Verano",indice:"V",ubicacion:"2T4",stock:3,stockMin:2,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
-  "ZTS236608WMZ0A": {id:"ZTS236608WMZ0A",medida:"235/60R18",referencia:"ZTS236608WMZ0A",marca:"Michelin",tipo:"Verano",indice:"W",ubicacion:"2T4",stock:2,stockMin:2,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
-  "ZTS215508WBTNA": {id:"ZTS215508WBTNA",medida:"215/50R18",referencia:"ZTS215508WBTNA",marca:"Bridgestone",tipo:"Verano",indice:"W",ubicacion:"2U2",stock:2,stockMin:2,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
-  "ZTS235458WCE60": {id:"ZTS235458WCE60",medida:"235/45R18",referencia:"ZTS235458WCE60",marca:"Continental",tipo:"Verano",indice:"W",ubicacion:"2U2",stock:2,stockMin:2,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
-  "ZTS226508WCZ00": {id:"ZTS226508WCZ00",medida:"225/50R18",referencia:"ZTS226508WCZ00",marca:"Continental",tipo:"Verano",indice:"W",ubicacion:"2U4",stock:2,stockMin:2,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
-  "ZTS256401YCZ00": {id:"ZTS256401YCZ00",medida:"255/40R21",referencia:"ZTS256401YCZ00",marca:"Continental",tipo:"Verano",indice:"Y",ubicacion:"2V0",stock:4,stockMin:2,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
-  "ZTS215557VBTN0": {id:"ZTS215557VBTN0",medida:"215/55R17",referencia:"ZTS215557VBTN0",marca:"Bridgestone",tipo:"Verano",indice:"V",ubicacion:"2V4",stock:2,stockMin:2,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
-  "ZTS215557VCZ00": {id:"ZTS215557VCZ00",medida:"215/55R17",referencia:"ZTS215557VCZ00",marca:"Continental",tipo:"Verano",indice:"V",ubicacion:"2V4",stock:2,stockMin:2,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
-  "ZTS245408YCC5C": {id:"ZTS245408YCC5C",medida:"245/40R18",referencia:"ZTS245408YCC5C",marca:"Continental",tipo:"Verano",indice:"Y",ubicacion:"2W4",stock:3,stockMin:2,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
-  "ZTS185605HCZ00": {id:"ZTS185605HCZ00",medida:"185/60R15",referencia:"ZTS185605HCZ00",marca:"Continental",tipo:"Verano",indice:"H",ubicacion:"EXPO SK",stock:2,stockMin:2,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
-  "ZTS206458VCZ00": {id:"ZTS206458VCZ00",medida:"205/45R18",referencia:"ZTS206458VCZ00",marca:"Continental",tipo:"Verano",indice:"V",ubicacion:"EXPOAU",stock:2,stockMin:2,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
-  "ZTS226558YCE6C": {id:"ZTS226558YCE6C",medida:"225/55R18",referencia:"ZTS226558YCE6C",marca:"Continental",tipo:"Verano",indice:"Y",ubicacion:"MONTADOS USADOS",stock:2,stockMin:2,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS216557WCZ00": {id:"ZTS216557WCZ00",medida:"215/55R17",referencia:"ZTS216557WCZ00",marca:"Continental",tipo:"Verano",indice:"W",ubicacion:"Sin ubicación",stock:2,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS256401YCZ0C": {id:"ZTS256401YCZ0C",medida:"255/40R21",referencia:"ZTS256401YCZ0C",marca:"Continental",tipo:"Verano",indice:"Y",ubicacion:"2R0",stock:2,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS185604HCZ00": {id:"ZTS185604HCZ00",medida:"185/60R14",referencia:"ZTS185604HCZ00",marca:"Continental",tipo:"Verano",indice:"H",ubicacion:"2R2",stock:2,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS235557VCP5A": {id:"ZTS235557VCP5A",medida:"235/55R17",referencia:"ZTS235557VCP5A",marca:"Pirelli",tipo:"Verano",indice:"V",ubicacion:"2R4",stock:1,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS215508WCC5A": {id:"ZTS215508WCC5A",medida:"215/50R18",referencia:"ZTS215508WCC5A",marca:"Continental",tipo:"Verano",indice:"W",ubicacion:"2T",stock:4,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS226408YCC5C": {id:"ZTS226408YCC5C",medida:"225/40R18",referencia:"ZTS226408YCC5C",marca:"Continental",tipo:"Verano",indice:"Y",ubicacion:"2T2",stock:4,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS215557VCE6A": {id:"ZTS215557VCE6A",medida:"215/55R17",referencia:"ZTS215557VCE6A",marca:"Continental",tipo:"Verano",indice:"V",ubicacion:"2T4",stock:3,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS236608WMZ0A": {id:"ZTS236608WMZ0A",medida:"235/60R18",referencia:"ZTS236608WMZ0A",marca:"Michelin",tipo:"Verano",indice:"W",ubicacion:"2T4",stock:2,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS215508WBTNA": {id:"ZTS215508WBTNA",medida:"215/50R18",referencia:"ZTS215508WBTNA",marca:"Bridgestone",tipo:"Verano",indice:"W",ubicacion:"2U2",stock:2,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS235458WCE60": {id:"ZTS235458WCE60",medida:"235/45R18",referencia:"ZTS235458WCE60",marca:"Continental",tipo:"Verano",indice:"W",ubicacion:"2U2",stock:2,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS226508WCZ00": {id:"ZTS226508WCZ00",medida:"225/50R18",referencia:"ZTS226508WCZ00",marca:"Continental",tipo:"Verano",indice:"W",ubicacion:"2U4",stock:2,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS256401YCZ00": {id:"ZTS256401YCZ00",medida:"255/40R21",referencia:"ZTS256401YCZ00",marca:"Continental",tipo:"Verano",indice:"Y",ubicacion:"2V0",stock:4,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS215557VBTN0": {id:"ZTS215557VBTN0",medida:"215/55R17",referencia:"ZTS215557VBTN0",marca:"Bridgestone",tipo:"Verano",indice:"V",ubicacion:"2V4",stock:2,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS215557VCZ00": {id:"ZTS215557VCZ00",medida:"215/55R17",referencia:"ZTS215557VCZ00",marca:"Continental",tipo:"Verano",indice:"V",ubicacion:"2V4",stock:2,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS245408YCC5C": {id:"ZTS245408YCC5C",medida:"245/40R18",referencia:"ZTS245408YCC5C",marca:"Continental",tipo:"Verano",indice:"Y",ubicacion:"2W4",stock:3,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS185605HCZ00": {id:"ZTS185605HCZ00",medida:"185/60R15",referencia:"ZTS185605HCZ00",marca:"Continental",tipo:"Verano",indice:"H",ubicacion:"EXPO SK",stock:2,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS206458VCZ00": {id:"ZTS206458VCZ00",medida:"205/45R18",referencia:"ZTS206458VCZ00",marca:"Continental",tipo:"Verano",indice:"V",ubicacion:"EXPOAU",stock:2,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
+  "ZTS226558YCE6C": {id:"ZTS226558YCE6C",medida:"225/55R18",referencia:"ZTS226558YCE6C",marca:"Continental",tipo:"Verano",indice:"Y",ubicacion:"MONTADOS USADOS",stock:2,stockMin:0,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
   "ZTS256459YC6CA": {id:"ZTS256459YC6CA",medida:"255/45R19",referencia:"ZTS256459YC6CA",marca:"Continental",tipo:"Verano",indice:"104Y",ubicacion:"Estante A-3, Almacén",stock:2,stockMin:0,pvp:221.49,coste:110.75,fechaRecepcion:"2026-06-02",totalVendidas:0,fechaCreacion:"2026-06-02T00:00:00.000Z"}
 };
 
 function importarStockInicial() {
-  const KEY = 'motorsan_neum_import_v3';
+  const KEY = 'motorsan_neum_import_v4';
   if (localStorage.getItem(KEY)) return; // ya importado
   
   const entries = Object.values(STOCK_INICIAL);
