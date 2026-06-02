@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <title>Stock Neumáticos · MOTORSAN v1.0</title>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Source+Code+Pro:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Source+Code+Pro:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js" crossorigin="anonymous"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js" crossorigin="anonymous"></script>
 <style>
@@ -17,11 +17,11 @@
   --blue:#1a3a6e;--blue-bg:#eef3fc;
   --orange:#c47200;--orange-bg:#fff8ec;--orange-border:#f0c060;
   --primary:#1a3a6e;--primary2:#0d2a5e;
-  --mono:"Source Code Pro",monospace;--font:"Roboto",sans-serif;
+  --mono:"Source Code Pro",monospace;--font:"Inter",sans-serif;
   --r:10px;--rs:6px;
   --shadow:0 2px 8px rgba(0,0,0,.08);--shadow-lg:0 12px 40px rgba(0,0,0,.15);
 }
-body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;font-size:14px}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
 
 /* HEADER */
 .header{background:linear-gradient(135deg,#0d1b3e 0%,#1a3a6e 100%);color:#fff;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:58px;box-shadow:0 2px 12px rgba(0,0,0,.3);position:sticky;top:0;z-index:100}
@@ -43,7 +43,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
 
 /* TABS */
 .tabs{background:#fff;border-bottom:2px solid var(--border);padding:0 24px;display:flex;gap:0}
-.tab{padding:14px 20px;font-size:.82rem;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;display:flex;align-items:center;gap:7px;white-space:nowrap}
+.tab{padding:15px 22px;font-size:.88rem;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;display:flex;align-items:center;gap:7px;white-space:nowrap}
 .tab:hover{color:var(--text);background:var(--surface2)}
 .tab.active{color:var(--primary);border-bottom-color:var(--primary)}
 .tab .badge{background:var(--primary);color:#fff;border-radius:20px;padding:1px 7px;font-size:.6rem;font-weight:700}
@@ -62,8 +62,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
 /* FORM GRID */
 .form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
 .field{display:flex;flex-direction:column;gap:5px}
-.field label{font-size:.67rem;text-transform:uppercase;letter-spacing:.08em;font-weight:600;color:var(--muted)}
-.field input,.field select,.field textarea{padding:8px 11px;border-radius:var(--rs);border:1.5px solid var(--border2);font-family:var(--font);font-size:.85rem;outline:none;background:var(--surface2);transition:border-color .15s}
+.field label{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;font-weight:600;color:var(--muted)}
+.field input,.field select,.field textarea{padding:10px 13px;border-radius:var(--rs);border:1.5px solid var(--border2);font-family:var(--font);font-size:.9rem;outline:none;background:var(--surface2);transition:border-color .15s}
 .field input:focus,.field select:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(26,58,110,.08)}
 .field input.mono{font-family:var(--mono);font-size:.82rem;letter-spacing:.03em;text-transform:uppercase}
 .field-wide{grid-column:span 2}
@@ -101,18 +101,18 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
 .tbl-wrap{overflow-x:auto}
 .tbl-scroll-top{overflow-x:auto;overflow-y:hidden;height:10px;margin-bottom:2px}
 .tbl-scroll-inner{height:1px}
-table{width:100%;border-collapse:collapse;font-size:.78rem}
-th{padding:9px 10px;text-align:left;font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:rgba(255,255,255,.8);font-weight:600;white-space:nowrap;background:linear-gradient(135deg,#0d1b3e,#1a3a6e);border-right:1px solid rgba(255,255,255,.08);cursor:pointer;user-select:none}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th{padding:10px 11px;text-align:left;font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;color:rgba(255,255,255,.8);font-weight:600;white-space:nowrap;background:linear-gradient(135deg,#0d1b3e,#1a3a6e);border-right:1px solid rgba(255,255,255,.08);cursor:pointer;user-select:none}
 th:hover{background:rgba(255,255,255,.08)}
 th:last-child{border-right:none}
-td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text2)}
+td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text2)}
 tr:hover td{background:#f0f4ff}
 tr.stock-low td{background:#fff8f0}
 tr.stock-out td{background:#fff0f0}
 .empty-row{text-align:center;padding:48px;color:var(--muted2);font-size:.85rem}
 
 /* BADGES */
-.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:.65rem;font-weight:700;white-space:nowrap}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:700;white-space:nowrap}
 .badge-ok{background:var(--green-bg);color:var(--green);border:1px solid #b2dfc9}
 .badge-low{background:var(--orange-bg);color:var(--orange);border:1px solid var(--orange-border);animation:pulse-orange 2s infinite}
 .badge-out{background:#fff0f0;color:var(--red);border:1px solid #f0c0c5;animation:pulse-red 1.5s infinite}
@@ -1454,11 +1454,11 @@ const STOCK_INICIAL = {
   "ZTS185605HCZ00": {id:"ZTS185605HCZ00",medida:"185/60R15",referencia:"ZTS185605HCZ00",marca:"Continental",tipo:"Verano",indice:"H",ubicacion:"EXPO SK",stock:2,stockMin:2,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
   "ZTS206458VCZ00": {id:"ZTS206458VCZ00",medida:"205/45R18",referencia:"ZTS206458VCZ00",marca:"Continental",tipo:"Verano",indice:"V",ubicacion:"EXPOAU",stock:2,stockMin:2,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
   "ZTS226558YCE6C": {id:"ZTS226558YCE6C",medida:"225/55R18",referencia:"ZTS226558YCE6C",marca:"Continental",tipo:"Verano",indice:"Y",ubicacion:"MONTADOS USADOS",stock:2,stockMin:2,pvp:0,coste:0,fechaRecepcion:"2026-06-01",totalVendidas:0,fechaCreacion:"2026-06-01T00:00:00.000Z"},
-  "ZTS256459YC6CA": {id:"ZTS256459YC6CA",medida:"255/45R19",referencia:"ZTS256459YC6CA",marca:"Continental",tipo:"Verano",indice:"Y",ubicacion:"Estante A-3, Almacén",stock:2,stockMin:0,pvp:221.49,coste:110.75,fechaRecepcion:"2026-06-02",totalVendidas:0,fechaCreacion:"2026-06-02T00:00:00.000Z"}
+  "ZTS256459YC6CA": {id:"ZTS256459YC6CA",medida:"255/45R19",referencia:"ZTS256459YC6CA",marca:"Continental",tipo:"Verano",indice:"104Y",ubicacion:"Estante A-3, Almacén",stock:2,stockMin:0,pvp:221.49,coste:110.75,fechaRecepcion:"2026-06-02",totalVendidas:0,fechaCreacion:"2026-06-02T00:00:00.000Z"}
 };
 
 function importarStockInicial() {
-  const KEY = 'motorsan_neum_import_v2';
+  const KEY = 'motorsan_neum_import_v3';
   if (localStorage.getItem(KEY)) return; // ya importado
   
   const entries = Object.values(STOCK_INICIAL);
