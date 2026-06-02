@@ -748,8 +748,8 @@ function guardarMovimiento() {
   if (!cantidad || cantidad < 1) { toast('La cantidad debe ser mayor a 0', 'error'); return; }
 
   // Crear/actualizar referencia en stock
-  const stockKey = medida + (referencia ? '_' + referencia : '');
-  let existing = stockData.find(s => s.id === stockKey || (s.medida===medida && s.referencia===referencia));
+  // find existing stock
+  let existing = stockData.find(s => (referencia && s.referencia===referencia) || (!referencia && s.medida===medida) || (s.medida===medida && s.referencia===referencia));
 
   if (existing) {
     if (movTipo === 'compra') {
@@ -765,16 +765,18 @@ function guardarMovimiento() {
     }
     existing.stockMin = stockMin;
     saveToFirebase(DB_STOCK, existing.id, existing);
+    toast(movTipo==='compra'?'✅ Stock actualizado — '+existing.stock+' uds':'✅ Venta registrada — quedan '+existing.stock+' uds','success');
   } else {
     if (movTipo === 'venta') { toast('No existe esta referencia en stock. Registra primero una entrada.', 'error'); return; }
     const newRef = {
-      id: stockKey, medida, referencia, marca, tipo: tipoNeum, indice, ubicacion,
+      id: referencia || (medida.replace(/[/\s]/g,'_')+'_'+Date.now().toString(36)), medida, referencia, marca, tipo: tipoNeum, indice, ubicacion,
       stock: cantidad, stockMin, pvp, coste,
       fechaRecepcion: fecha, totalVendidas: 0,
       fechaCreacion: new Date().toISOString()
     };
     stockData.push(newRef);
     saveToFirebase(DB_STOCK, newRef.id, newRef);
+    toast('✅ '+medida+' añadida al stock — '+cantidad+' uds','success');
   }
 
   // Guardar movimiento
@@ -830,12 +832,12 @@ function stockBadge(s) {
 }
 
 function stockBar(s) {
-  const pct = s.stockMin > 0 ? Math.min(100, Math.round((s.stock / (s.stockMin*3))*100)) : (s.stock>0?100:0);
-  const color = s.stock<=0 ? '#f87171' : s.stock<=s.stockMin ? '#fbbf24' : '#34d399';
-  return `<div class="stock-bar-wrap">
-    <span class="stock-num" style="color:${color}">${s.stock}</span>
-    <div class="stock-bar"><div class="stock-bar-fill" style="width:${pct}%;background:${color}"></div></div>
-  </div>`;
+  const aptUds = apartados.filter(a => a.medidaRef === s.id).reduce((t,a)=>t+a.cantidad,0);
+  const libre  = Math.max(0, s.stock - aptUds);
+  const pct = s.stockMin > 0 ? Math.min(100, Math.round((libre/(s.stockMin*3))*100)) : (libre>0?100:0);
+  const color = libre<=0 ? '#f87171' : libre<=s.stockMin ? '#fbbf24' : '#34d399';
+  const title = s.stock+' total · '+aptUds+' apartadas · '+libre+' libres';
+  return '<div class="stock-bar-wrap"><span class="stock-num" style="color:'+color+'" title="'+title+'">'+libre+'<span style="font-size:.6rem;opacity:.6">/'+s.stock+'</span></span><div class="stock-bar"><div class="stock-bar-fill" style="width:'+pct+'%;background:'+color+'"></div></div></div>';
 }
 
 function renderStock() {
@@ -862,7 +864,10 @@ function renderStock() {
   }
   const st = getStockStatus;
   tbody.innerHTML = rows.map(s => `<tr class="${st(s)==='out'?'stock-out':st(s)==='low'?'stock-low':''}">
-    <td><span class="medida-tag">${esc(s.medida||'—')}</span></td>
+    <td>
+      <span class="medida-tag">${esc(s.medida||'—')}</span>
+      ${(()=>{const a=apartados.filter(x=>x.medidaRef===s.id);if(!a.length)return '';const f=[...new Set(a.map(x=>x.archivo))].join(', ');return '<div style="font-size:.62rem;color:#7c3aed;font-weight:600;margin-top:3px">📌 '+a.reduce((t,x)=>t+x.cantidad,0)+' uds apartadas · '+f+'</div>';})()}
+    </td>
     <td><span class="ref-tag">${esc(s.referencia||'—')}</span></td>
     <td style="font-weight:600">${esc(s.marca||'—')}</td>
     <td style="font-size:.72rem">${esc(s.tipo||'—')}</td>
@@ -1180,9 +1185,12 @@ function buscarAsesor() {
   const q = raw.toLowerCase();
 
   const results = stockData.filter(s => {
-    const medidaNorm = s.medida.replace(/[\s\/]/g,'').toUpperCase();
-    if (terminos.some(t => medidaNorm.includes(t.replace(/[\s\/R]/g,'')))) return true;
-    const hay = [s.medida, s.referencia, s.marca, s.tipo, s.indice].join(' ').toLowerCase();
+    const medidaClean = s.medida.replace(/[\s\/]/g,'').toUpperCase();
+    for (const t of terminos) {
+      const tc = t.replace(/[\/\sR]/g,'').toUpperCase();
+      if (tc.length >= 4 && (medidaClean.includes(tc) || tc.includes(medidaClean.slice(0,6)))) return true;
+    }
+    const hay = [s.medida, s.referencia, s.marca, s.tipo, s.indice, s.ubicacion].join(' ').toLowerCase();
     return hay.includes(q);
   });
 
