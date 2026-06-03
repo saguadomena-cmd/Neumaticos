@@ -2301,6 +2301,269 @@ function borrarDatosPrueba() {
   toast('✅ Historial y análisis limpiados', 'success');
 }
 
+// ══════════════════════════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════════════════════════
+var cfg = { mo2: 40, mo4: 70, dto_neum: 0, dto_mo: 0 };
+var CFG_KEY = 'motorsan_neum_cfg';
+function loadCfg() {
+  try { var c = JSON.parse(localStorage.getItem(CFG_KEY)); if(c) cfg = Object.assign(cfg,c); } catch {}
+  var el;
+  if((el=document.getElementById('cfg_mo2')))      el.value = cfg.mo2;
+  if((el=document.getElementById('cfg_mo4')))      el.value = cfg.mo4;
+  if((el=document.getElementById('cfg_dto_neum'))) el.value = cfg.dto_neum;
+  if((el=document.getElementById('cfg_dto_mo')))   el.value = cfg.dto_mo;
+  if((el=document.getElementById('dto_neum')))     el.value = cfg.dto_neum;
+  if((el=document.getElementById('dto_mo')))       el.value = cfg.dto_mo;
+}
+function saveCfg() {
+  cfg.mo2      = parseFloat(document.getElementById('cfg_mo2').value)||40;
+  cfg.mo4      = parseFloat(document.getElementById('cfg_mo4').value)||70;
+  cfg.dto_neum = parseFloat(document.getElementById('cfg_dto_neum').value)||0;
+  cfg.dto_mo   = parseFloat(document.getElementById('cfg_dto_mo').value)||0;
+  localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CAMPAIGN
+// ══════════════════════════════════════════════════════════════════
+function loadCampana() {
+  try { var d = localStorage.getItem(LOCAL_CAMP); if(d) campanaData = JSON.parse(d); } catch {}
+}
+function importarCampana(file) {
+  if (!file) return;
+  toast('⏳ Procesando campaña…','info',3000);
+  function procesarRows(rows) {
+    campanaData = [];
+    var dataStart = 0;
+    var colMedida=0,colRef=1,colMarca=3,colDibujo=4,colPVP=7,colNeto=8,colCamp=10;
+    for (var h=0; h<Math.min(5,rows.length); h++) {
+      var rh = rows[h].map(function(c){ return String(c||'').toLowerCase(); });
+      if (rh.some(function(c){ return c.includes('referencia')||c.includes('medida')||c.includes('neto'); })) {
+        dataStart = h+1;
+        rh.forEach(function(c,i){
+          if(c.includes('medida')) colMedida=i;
+          if(c.includes('referencia')) colRef=i;
+          if(c.includes('marca')) colMarca=i;
+          if(c.includes('modelo')||c.includes('dibujo')) colDibujo=i;
+          if(c.includes('pvp')&&!c.includes('neto')) colPVP=i;
+          if(c.includes('neto')&&!c.includes('camp')) colNeto=i;
+          if(c.includes('camp')) colCamp=i;
+        });
+        break;
+      }
+    }
+    for (var i=dataStart; i<rows.length; i++) {
+      var r = rows[i];
+      var medida = String(r[colMedida]||'').trim();
+      var ref    = String(r[colRef]||'').trim();
+      if (!medida && !ref) continue;
+      if (!medida.includes('/') && !ref.startsWith('ZTS')) continue;
+      campanaData.push({ medida:medida, referencia:ref, marca:String(r[colMarca]||'').trim(),
+        dibujo:String(r[colDibujo]||'').trim(), pvp:parseFloat(r[colPVP]||0)||0,
+        netoNormal:parseFloat(r[colNeto]||0)||0, netoCampana:parseFloat(r[colCamp]||0)||0 });
+    }
+    try { localStorage.setItem(LOCAL_CAMP, JSON.stringify(campanaData)); } catch {}
+    var matches = stockData.filter(function(s){ return campanaData.some(function(c){ return c.referencia===s.referencia; }); });
+    renderStock();
+    toast('✅ Campaña: '+campanaData.length+' productos · '+matches.length+' en tu stock 🏷️','success',6000);
+  }
+  var ext = file.name.split('.').pop().toLowerCase();
+  if (ext==='csv') {
+    var reader = new FileReader();
+    reader.onload = function(e){ procesarRows(e.target.result.split('\n').map(function(l){ return l.split(/[;,\t]/).map(function(c){ return c.trim().replace(/^"|"$/g,''); }); })); };
+    reader.readAsText(file,'utf-8');
+  } else {
+    loadSheetJS(function(){
+      var reader = new FileReader();
+      reader.onload = function(e){ var wb=XLSX.read(e.target.result,{type:'binary'}); procesarRows(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''})); };
+      reader.readAsBinaryString(file);
+    });
+  }
+}
+function loadSheetJS(cb) {
+  if (window.XLSX) { cb(); return; }
+  var s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  s.onload = cb; document.head.appendChild(s);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// STATS
+// ══════════════════════════════════════════════════════════════════
+function updateStats() {
+  document.getElementById('statRefs').textContent     = stockData.length;
+  document.getElementById('statUnidades').textContent = stockData.reduce(function(s,r){ return s+(r.stock||0); },0);
+  document.getElementById('statBajo').textContent     = stockData.filter(function(s){ return getStockStatus(s)==='low'; }).length;
+  document.getElementById('statAgotado').textContent  = stockData.filter(function(s){ return getStockStatus(s)==='out'; }).length;
+  var hoy7 = new Date(); hoy7.setHours(0,0,0,0);
+  var en7  = new Date(hoy7); en7.setDate(en7.getDate()+7);
+  var citas7 = apartados.filter(function(a){
+    if (!a.fechaLimite) return false;
+    var f = new Date(a.fechaLimite+'T00:00');
+    return f>=hoy7 && f<=en7;
+  }).length;
+  var cEl = document.getElementById('statCitas');
+  if (cEl) { cEl.textContent=citas7; cEl.style.color=citas7>0?'#fbbf24':'rgba(255,255,255,.5)'; }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// EDIT MODAL
+// ══════════════════════════════════════════════════════════════════
+function abrirEdit(id) {
+  var s = stockData.find(function(x){ return x.id===id; });
+  if (!s) return;
+  editingId = id;
+  document.getElementById('e_medida').value     = s.medida||'';
+  document.getElementById('e_referencia').value = s.referencia||'';
+  document.getElementById('e_marca').value      = s.marca||'';
+  document.getElementById('e_tipo_neum').value  = s.tipo||'Verano';
+  document.getElementById('e_indice').value     = s.indice||'';
+  document.getElementById('e_ubicacion').value  = s.ubicacion||'';
+  document.getElementById('e_stock').value      = s.stock||0;
+  document.getElementById('e_stockMin').value   = s.stockMin||0;
+  document.getElementById('e_coste').value      = s.coste||'';
+  document.getElementById('e_pvp').value        = s.pvp||'';
+  document.getElementById('editModal').classList.add('open');
+}
+function cerrarEdit() { document.getElementById('editModal').classList.remove('open'); editingId=null; }
+function guardarEdit() {
+  var idx = stockData.findIndex(function(s){ return s.id===editingId; });
+  if (idx===-1) { cerrarEdit(); return; }
+  stockData[idx] = Object.assign(stockData[idx], {
+    medida:     document.getElementById('e_medida').value.trim().toUpperCase(),
+    referencia: document.getElementById('e_referencia').value.trim().toUpperCase(),
+    marca:      document.getElementById('e_marca').value.trim(),
+    tipo:       document.getElementById('e_tipo_neum').value,
+    indice:     document.getElementById('e_indice').value.trim().toUpperCase(),
+    ubicacion:  document.getElementById('e_ubicacion').value.trim(),
+    stock:      parseInt(document.getElementById('e_stock').value)||0,
+    stockMin:   parseInt(document.getElementById('e_stockMin').value)||0,
+    coste:      parseFloat(document.getElementById('e_coste').value)||0,
+    pvp:        parseFloat(document.getElementById('e_pvp').value)||0,
+  });
+  saveToFirebase(DB_STOCK, editingId, stockData[idx]);
+  toast('✅ Referencia actualizada','success'); cerrarEdit();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ENTRADA RAPIDA / ELIMINAR
+// ══════════════════════════════════════════════════════════════════
+function entradaRapida(id) {
+  var s = stockData.find(function(x){ return x.id===id; });
+  if (!s) return;
+  abrirQuickPanel(id,'compra');
+}
+function eliminarRef(id) {
+  if (!confirm('¿Eliminar esta referencia del stock?')) return;
+  stockData = stockData.filter(function(s){ return s.id!==id; });
+  if (useFirebase && fbDb) fbDb.ref(DB_STOCK+'/'+id).remove();
+  else localStorage.setItem(LOCAL_STOCK, JSON.stringify(stockData));
+  renderStock(); updateStats();
+  toast('Referencia eliminada','info');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ANALYTICS
+// ══════════════════════════════════════════════════════════════════
+function renderAnalytics() {
+  var ventas  = movData.filter(function(m){ return m.tipo==='venta'; });
+  var compras = movData.filter(function(m){ return m.tipo==='compra'; });
+  // Top refs
+  var byRef = {};
+  ventas.forEach(function(m){ var k=m.medida||(m.referencia||'?'); if(!byRef[k]) byRef[k]={qty:0,ref:m.referencia||'',medida:m.medida||''}; byRef[k].qty+=(parseInt(m.cantidad)||1); });
+  var topRefsArr = Object.values(byRef).sort(function(a,b){ return b.qty-a.qty; }).slice(0,5);
+  var trEl = document.getElementById('topRefs');
+  if (trEl) trEl.innerHTML = topRefsArr.length ? topRefsArr.map(function(r,i){ return '<div class="top-item"><div class="top-rank r'+(i+1)+'">'+(i+1)+'</div><div class="top-info"><div class="top-ref">'+esc(r.ref||r.medida)+'</div><div class="top-medida">'+esc(r.medida)+'</div></div><div class="top-val">'+r.qty+' uds</div></div>'; }).join('') : '<div style="color:var(--muted2);font-size:.8rem">Sin ventas todavía</div>';
+  // Top medidas
+  var byMed = {};
+  ventas.forEach(function(m){ byMed[m.medida]=(byMed[m.medida]||0)+(parseInt(m.cantidad)||1); });
+  var topMedArr = Object.entries(byMed).sort(function(a,b){ return b[1]-a[1]; }).slice(0,5);
+  var tmEl = document.getElementById('topMedidas');
+  if (tmEl) tmEl.innerHTML = topMedArr.length ? topMedArr.map(function(e,i){ return '<div class="top-item"><div class="top-rank r'+(i+1)+'">'+(i+1)+'</div><div class="top-info"><div class="top-ref">'+esc(e[0])+'</div></div><div class="top-val">'+e[1]+' uds</div></div>'; }).join('') : '<div style="color:var(--muted2);font-size:.8rem">Sin ventas todavía</div>';
+  // Top marcas
+  var byMarca = {};
+  ventas.forEach(function(m){ if(m.marca) byMarca[m.marca]=(byMarca[m.marca]||0)+(parseInt(m.cantidad)||1); });
+  var topMarcaArr = Object.entries(byMarca).sort(function(a,b){ return b[1]-a[1]; }).slice(0,5);
+  var tmkEl = document.getElementById('topMarcas');
+  if (tmkEl) tmkEl.innerHTML = topMarcaArr.length ? topMarcaArr.map(function(e,i){ return '<div class="top-item"><div class="top-rank r'+(i+1)+'">'+(i+1)+'</div><div class="top-info"><div class="top-ref">'+esc(e[0])+'</div></div><div class="top-val">'+e[1]+' uds</div></div>'; }).join('') : '<div style="color:var(--muted2);font-size:.8rem">Sin ventas todavía</div>';
+  // Resumen
+  var ingresos = ventas.reduce(function(s,m){ return s+(parseFloat(m.pvp)||0)*(parseInt(m.cantidad)||1); },0);
+  var costesC  = compras.reduce(function(s,m){ return s+(parseFloat(m.coste)||0)*(parseInt(m.cantidad)||1); },0);
+  var costesV  = ventas.reduce(function(s,m){ return s+(parseFloat(m.coste)||0)*(parseInt(m.cantidad)||1); },0);
+  var margen   = ingresos - costesV;
+  var reEl = document.getElementById('resumenEcon');
+  if (reEl) reEl.innerHTML = '<div class="top-item"><div style="flex:1;font-size:.78rem;color:var(--muted)">📤 Uds vendidas</div><div class="top-val" style="color:var(--green)">'+ventas.reduce(function(s,m){ return s+(parseInt(m.cantidad)||1); },0)+'</div></div>'+
+    '<div class="top-item"><div style="flex:1;font-size:.78rem;color:var(--muted)">💶 Ingresos (PVP×cant)</div><div class="top-val" style="color:var(--green)">'+ingresos.toFixed(2)+'€</div></div>'+
+    '<div class="top-item"><div style="flex:1;font-size:.78rem;color:var(--muted)">📥 Uds compradas</div><div class="top-val">'+compras.reduce(function(s,m){ return s+(parseInt(m.cantidad)||1); },0)+'</div></div>'+
+    '<div class="top-item"><div style="flex:1;font-size:.78rem;color:var(--muted)">💸 Coste compras</div><div class="top-val" style="color:var(--red)">'+costesC.toFixed(2)+'€</div></div>'+
+    '<div class="top-item"><div style="flex:1;font-size:.78rem;color:var(--muted)">📈 Margen estimado</div><div class="top-val" style="color:'+(margen>=0?'var(--green)':'var(--red)')+'">'+margen.toFixed(2)+'€</div></div>';
+  // Ventas por mes
+  var byMes = {};
+  ventas.forEach(function(m){ if(!m.fecha) return; var mes=m.fecha.slice(0,7); if(!byMes[mes]) byMes[mes]={uds:0}; byMes[mes].uds+=(parseInt(m.cantidad)||1); });
+  var meses = Object.entries(byMes).sort(function(a,b){ return a[0].localeCompare(b[0]); });
+  var maxV = meses.length ? Math.max.apply(null,meses.map(function(m){ return m[1].uds; })) : 1;
+  var vmEl = document.getElementById('ventasMes');
+  if (vmEl) vmEl.innerHTML = meses.length ? '<div style="display:flex;align-items:flex-end;gap:8px;height:120px;padding-bottom:24px">'+
+    meses.map(function(m){ var pct=Math.round((m[1].uds/maxV)*100); var parts=m[0].split('-'); var lbl=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][parseInt(parts[1])-1]+' '+parts[0].slice(2);
+      return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><span style="font-size:.65rem;font-weight:700;color:var(--primary)">'+m[1].uds+'</span><div style="width:100%;background:var(--primary);border-radius:4px 4px 0 0;height:'+pct+'%;min-height:4px"></div><span style="font-size:.6rem;color:var(--muted);white-space:nowrap">'+lbl+'</span></div>'; }).join('')+'</div>'
+    : '<div style="color:var(--muted2);text-align:center;padding:30px">Sin ventas registradas</div>';
+}
+
+// ══════════════════════════════════════════════════════════════════
+// HISTORIAL
+// ══════════════════════════════════════════════════════════════════
+function setHistFilter(f) {
+  histFilter = f;
+  ['all','compra','venta'].forEach(function(x){ document.getElementById('hf-'+x).classList.toggle('active',x===f); });
+  renderHistorial();
+}
+function renderHistorial() {
+  var q = (document.getElementById('histSearch')?.value||'').toLowerCase().trim();
+  var rows = movData.filter(function(m){
+    if (histFilter==='compra'&&m.tipo!=='compra') return false;
+    if (histFilter==='venta'&&m.tipo!=='venta')   return false;
+    if (q) { var hay=[m.medida,m.referencia,m.marca,m.nota,m.asesor].join(' ').toLowerCase(); if(!hay.includes(q)) return false; }
+    return true;
+  });
+  var body = document.getElementById('historialBody');
+  if (!body) return;
+  if (!rows.length) { body.innerHTML='<div style="color:var(--muted2);text-align:center;padding:40px">Sin movimientos</div>'; return; }
+  body.innerHTML = rows.map(function(m){
+    var asesorBadge = m.asesor?'<span class="asesor-pill asesor-'+m.asesor+'" style="margin-left:6px">'+m.asesor+'</span>':'';
+    return '<div class="mov-item"><div class="mov-icon '+(m.tipo||'')+'">'+(m.tipo==='compra'?'📥':'📤')+'</div>'+
+      '<div class="mov-info"><div class="mov-title">'+esc(m.medida||'')+(m.referencia?' · '+esc(m.referencia):'')+(m.marca?' · '+esc(m.marca):'')+asesorBadge+'</div>'+
+      '<div class="mov-sub">'+(m.nota?esc(m.nota):'Sin nota')+'</div></div>'+
+      '<div class="mov-qty '+(m.tipo||'')+'">'+(m.tipo==='compra'?'+':'-')+(m.cantidad||0)+' uds</div>'+
+      '<div style="text-align:right;margin-left:8px"><div style="font-size:.78rem;font-weight:600">'+fmtMoney(m.pvp)+'/ud</div>'+
+      '<div class="mov-date">'+fmtDate(m.fecha)+'</div></div></div>';
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// EXPORTAR
+// ══════════════════════════════════════════════════════════════════
+function exportarStock() {
+  var BOM='\uFEFF',sep=';';
+  var qv=function(v){ return '"'+String(v||'').replace(/"/g,'""')+'"'; };
+  var headers=['Medida','Referencia','Marca','Tipo','Indice','Ubicacion','Stock','StockMin','Estado','PVP','Coste','FechaRecepcion','TotalVendidas'];
+  var rows=stockData.map(function(s){ return [s.medida,s.referencia,s.marca,s.tipo,s.indice,s.ubicacion,s.stock,s.stockMin,getStockStatus(s),s.pvp,s.coste,fmtDate(s.fechaRecepcion),s.totalVendidas||0].map(qv).join(sep); });
+  var csv=BOM+headers.map(qv).join(sep)+'\n'+rows.join('\n');
+  var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download='MOTORSAN_Stock_'+new Date().toLocaleDateString('es-ES').split('/').join('-')+'.csv'; a.click();
+  toast('📊 Stock exportado','success');
+}
+function exportarHistorial() {
+  var BOM='\uFEFF',sep=';';
+  var qv=function(v){ return '"'+String(v||'').replace(/"/g,'""')+'"'; };
+  var headers=['Tipo','Medida','Referencia','Marca','Cantidad','PVP','Coste','Fecha','Asesor','Nota'];
+  var rows=movData.map(function(m){ return [m.tipo,m.medida,m.referencia,m.marca,m.cantidad,m.pvp,m.coste,fmtDate(m.fecha),m.asesor||'',m.nota||''].map(qv).join(sep); });
+  var csv=BOM+headers.map(qv).join(sep)+'\n'+rows.join('\n');
+  var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download='MOTORSAN_Historial_'+new Date().toLocaleDateString('es-ES').split('/').join('-')+'.csv'; a.click();
+  toast('📊 Historial exportado','success');
+}
+
 // ── INIT ──
 document.addEventListener('DOMContentLoaded', function() {
   loadCfg();
