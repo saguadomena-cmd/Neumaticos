@@ -565,6 +565,7 @@ const FB_URL = 'https://accesorios-alcala-default-rtdb.europe-west1.firebasedata
 const FB_KEY = 'AIzaSyDApTnRdr3LLFowFDzbu_WfDF4teKT75Wo';
 const DB_S = 'neumaticos_stock_v2';
 const DB_M = 'neumaticos_mov_v2';
+const DB_A = 'neumaticos_apt_v2';
 const LS_S = 'ms_stock_v2';
 const LS_M = 'ms_mov_v2';
 const LS_A = 'ms_apt_v2';
@@ -718,6 +719,12 @@ function initFB(){
       if(v){ movData=Object.values(v).sort((a,b)=>b.fecha.localeCompare(a.fecha)); localStorage.setItem(LS_M,JSON.stringify(movData)); }
       renderHistorial(); renderAnalytics();
     });
+    fbDb.ref(DB_A).on('value',snap=>{
+      const v=snap.val();
+      apartados=v?Object.values(v):[];
+      localStorage.setItem(LS_A,JSON.stringify(apartados));
+      renderAptList(); updateStats(); renderStock();
+    });
   } catch(e){ loadLocal(); toast('Modo local','info'); }
 }
 function loadLocal(){
@@ -735,6 +742,14 @@ function saveToFB(path,id,obj){
 function delFromFB(path,id){
   if(useFirebase&&fbDb) fbDb.ref(path+'/'+id).remove();
   else localStorage.setItem(path===DB_S?LS_S:LS_M,JSON.stringify(path===DB_S?stockData:movData));
+}
+function fbSaveApt(ap){
+  if(useFirebase&&fbDb) fbDb.ref(DB_A+'/'+ap.id).set(ap);
+  else localStorage.setItem(LS_A,JSON.stringify(apartados));
+}
+function fbDeleteApt(id){
+  if(useFirebase&&fbDb) fbDb.ref(DB_A+'/'+id).remove();
+  else localStorage.setItem(LS_A,JSON.stringify(apartados));
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -989,7 +1004,7 @@ function confirmarPanel(){
     saveToFB(DB_S,s.id,s);
     const mov={id:uid(),tipo:'compra',medida:s.medida,referencia:s.referencia,marca:s.marca,cantidad:cant,pvp,coste,fecha,nota,archivo:arch,fechaCita:cita,asesor:'',stockKey:s.id,fechaCreacion:new Date().toISOString()};
     movData.unshift(mov); saveToFB(DB_M,mov.id,mov);
-    if(arch){ const ap={id:uid(),medida:s.medida,medidaRef:s.id,archivo:arch,cliente:'',cantidad:cant,fechaLimite:cita,asesor:'',nota:'Apartado automático',fecha:new Date().toISOString()}; apartados.unshift(ap); localStorage.setItem(LS_A,JSON.stringify(apartados)); }
+    if(arch){ const ap={id:uid(),medida:s.medida,medidaRef:s.id,archivo:arch,cliente:'',cantidad:cant,fechaLimite:cita,asesor:'',nota:'Apartado automático',fecha:new Date().toISOString()}; apartados.unshift(ap); fbSaveApt(ap); }
     toast('✅ Entrada de '+cant+' uds — stock total: '+s.stock,'success',4000);
   }
   renderStock(); updateStats(); renderHistorial(); renderAnalytics();
@@ -1542,7 +1557,7 @@ function guardarOrden(){
     estado: 'apartado'   // 'apartado' | 'cargado'
   };
   apartados.unshift(ap);
-  localStorage.setItem(LS_A, JSON.stringify(apartados));
+  fbSaveApt(ap);
   cerrarModalOrden();
   // Imprimir etiqueta PDF automáticamente
   const sRef=stockData.find(x=>x.id===ordenStockId);
@@ -1585,7 +1600,7 @@ function cargarEnOrden(aptId){
   ap.fechaCarga = new Date().toISOString();
   // Eliminar de la lista de apartados activos
   apartados = apartados.filter(a=>a.id !== aptId);
-  localStorage.setItem(LS_A, JSON.stringify(apartados));
+  fbDeleteApt(aptId);
 
   renderAptList(); updateStats(); renderStock(); renderAnalytics();
   toast('✅ Cargado en orden. Stock descontado.', 'success', 4000);
@@ -1594,8 +1609,9 @@ function cargarEnOrden(aptId){
 // ── Liberar apartado sin cargar ───────────────────────────────────────────────
 function liberarApt(id){
   if(!confirm('¿Liberar este apartado? Las unidades volverán al stock libre.')) return;
+  const delId=id;
   apartados = apartados.filter(a=>a.id!==id);
-  localStorage.setItem(LS_A, JSON.stringify(apartados));
+  fbDeleteApt(delId);
   renderAptList(); updateStats(); renderStock();
   toast('Apartado liberado','info');
 }
