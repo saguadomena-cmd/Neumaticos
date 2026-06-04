@@ -220,6 +220,7 @@ tr.out td{background:#fff5f5}
 
 @media(max-width:768px){.hstats{display:none}.main{padding:8px}.panel{width:100vw}}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -248,6 +249,7 @@ tr.out td{background:#fff5f5}
   <div class="tab"        id="tab-movimiento" onclick="setTab('movimiento')">➕ Registrar</div>
   <div class="tab g"      id="tab-analytics"  onclick="setTab('analytics')">📊 Análisis</div>
   <div class="tab"        id="tab-top10"      onclick="setTab('top10')">🏆 Top 10</div>
+  <div class="tab"        id="tab-tarifa"     onclick="setTab('tarifa')">📥 Tarifas</div>
   <div class="tab"        id="tab-historial"  onclick="setTab('historial')">📋 Historial</div>
   <div class="tab"        id="tab-asesores"   onclick="setTab('asesores')">🚗 Presupuesto</div>
   <div class="tab"        id="tab-apartados"  onclick="setTab('apartados')">📌 Apartados</div>
@@ -353,6 +355,31 @@ tr.out td{background:#fff5f5}
     <div class="card"><div class="card-hdr">👥 Ventas por Asesor</div><div class="card-body" id="topAsesores"><div style="color:var(--muted2);font-size:.8rem">Sin ventas</div></div></div>
   </div>
   <div class="card"><div class="card-hdr">📅 Ventas por Mes</div><div class="card-body" id="ventasMes" style="min-height:100px"></div></div>
+
+  <!-- GENERADOR DE PEDIDOS -->
+  <div class="card" style="grid-column:1/-1">
+    <div class="card-hdr" style="display:flex;align-items:center;justify-content:space-between">
+      <span>🛒 Generador de Pedido de Compra</span>
+      <div style="display:flex;gap:8px">
+        <button onclick="pedidoLimpiar()" style="padding:5px 12px;border-radius:6px;border:1.5px solid #d1d5db;background:#fff;cursor:pointer;font-size:.72rem;font-weight:600">🗑 Limpiar</button>
+        <button onclick="pedidoExportar()" style="padding:5px 12px;border-radius:6px;border:none;background:#059669;color:#fff;cursor:pointer;font-size:.72rem;font-weight:700">📄 Exportar PDF</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:10px">Referencias sugeridas por rotación DMS + app. Haz clic en ➕ para añadir al pedido. Edita cantidades directamente.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <div style="font-weight:700;font-size:.8rem;color:var(--primary2);margin-bottom:8px">📊 Sugeridas por rotación</div>
+          <div id="pedidoSugeridas" style="max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:4px"></div>
+        </div>
+        <div>
+          <div style="font-weight:700;font-size:.8rem;color:var(--primary2);margin-bottom:8px">🛒 Pedido actual <span id="pedidoCount" style="background:#ede9fe;color:#6d28d9;border-radius:10px;padding:0 7px;font-size:.7rem">0 refs</span></div>
+          <div id="pedidoLista" style="max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:4px"></div>
+          <div id="pedidoTotal" style="margin-top:10px;padding:8px 12px;background:#f0fdf4;border-radius:8px;font-weight:700;font-size:.82rem;color:#059669;display:none"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ═══ HISTORIAL ═══ -->
@@ -433,6 +460,23 @@ tr.out td{background:#fff5f5}
 </div>
 
 <!-- ═══ APARTADOS ═══ -->
+<div id="panelTarifa" style="display:none;padding:16px">
+  <div style="max-width:700px;margin:0 auto">
+    <div style="font-weight:800;font-size:1rem;color:var(--primary2);margin-bottom:4px">📥 Actualización de Tarifa</div>
+    <div style="font-size:.78rem;color:var(--muted);margin-bottom:16px">Sube el Excel de tarifa (formato igual al original: columnas Referencia, Medida, Marca, Dibujo, Tipo, PVP, DNP). Las referencias que no aparezcan en la nueva tarifa serán marcadas como obsoletas.</div>
+    <div id="tarifaDropZone" style="border:2.5px dashed #c4b5fd;border-radius:12px;padding:32px;text-align:center;background:#faf5ff;cursor:pointer;transition:all .2s" onclick="document.getElementById('tarifaFileInput').click()" ondragover="event.preventDefault();this.style.background='#ede9fe'" ondragleave="this.style.background='#faf5ff'" ondrop="handleTarifaDrop(event)">
+      <div style="font-size:2.5rem;margin-bottom:8px">📊</div>
+      <div style="font-weight:700;color:#6d28d9">Arrastra el Excel aquí o haz clic</div>
+      <div style="font-size:.75rem;color:var(--muted);margin-top:4px">.xlsx — mismo formato que Neumáticos_Tarifa_Enero_2026.xlsx</div>
+    </div>
+    <input type="file" id="tarifaFileInput" accept=".xlsx,.xls" style="display:none" onchange="procesarTarifaExcel(this.files[0])">
+    <div id="tarifaProgress" style="display:none;margin-top:12px">
+      <div style="background:#e0e7ff;border-radius:8px;height:10px;overflow:hidden"><div id="tarifaProgressBar" style="height:100%;background:#6d28d9;width:0%;transition:width .3s"></div></div>
+      <div id="tarifaProgressTxt" style="font-size:.75rem;color:var(--muted);margin-top:4px">Procesando...</div>
+    </div>
+    <div id="tarifaResult" style="margin-top:16px"></div>
+  </div>
+</div>
 <div id="panelApartados" style="display:none">
   <div class="card">
     <div class="card-hdr">📌 NEUMATICOS APARTADOS</div>
@@ -723,7 +767,7 @@ function importarStockInicial(){
 // TABS
 // ══════════════════════════════════════════════════════════════════
 function setTab(t){
-  ['stock','campana','movimiento','analytics','historial','asesores','apartados','top10'].forEach(x=>{
+  ['stock','campana','movimiento','analytics','historial','asesores','apartados','top10','tarifa'].forEach(x=>{
     const p=document.getElementById('panel'+x.charAt(0).toUpperCase()+x.slice(1));
     const tb=document.getElementById('tab-'+x);
     if(p) p.style.display=x===t?'block':'none';
@@ -731,6 +775,7 @@ function setTab(t){
   });
   if(t==='analytics') renderAnalytics();
   if(t==='top10') renderTop10();
+  if(t==='tarifa') renderTarifaPanel();
   if(t==='apartados') renderAptList();
   if(t==='campana')   renderCampana();
 }
@@ -1229,6 +1274,7 @@ function renderAnalytics(){
   const meses=Object.entries(byMes).sort((a,b)=>a[0].localeCompare(b[0]));
   const maxV=meses.length?Math.max(...meses.map(m=>m[1])):1;
   const vmEl=document.getElementById('ventasMes');
+  renderPedidoSugeridas();
   if(vmEl) vmEl.innerHTML=meses.length?'<div style="display:flex;align-items:flex-end;gap:8px;height:100px;padding-bottom:22px">'+meses.map(([mes,qty])=>{const[y,m]=mes.split('-');const lbl=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][parseInt(m)-1]+' '+y.slice(2);const pct=Math.round((qty/maxV)*100);return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px"><span style="font-size:.62rem;font-weight:700;color:var(--primary2)">'+qty+'</span><div style="width:100%;background:var(--primary2);border-radius:3px 3px 0 0;height:'+pct+'%;min-height:3px"></div><span style="font-size:.58rem;color:var(--muted);white-space:nowrap">'+lbl+'</span></div>';}).join('')+'</div>':'<div style="color:var(--muted2);text-align:center;padding:20px">Sin ventas</div>';
 }
 
@@ -1307,6 +1353,7 @@ function buscarAs(){
           +(camp2?'<span style="background:#fef3c7;color:#92400e;border:1px solid #f59e0b;border-radius:10px;padding:1px 7px;font-weight:700">🏷️ CAMPAÑA · '+camp2.neto_campana.toFixed(2)+'€ neto</span>':'')
           +'<span style="background:var(--green-bg);color:var(--green);border:1px solid #86efac;border-radius:10px;padding:1px 7px;font-weight:700">📦 '+libre2+' uds</span>'
           +'<span style="background:var(--s2);color:var(--muted);border:1px solid var(--border);border-radius:10px;padding:1px 7px">'+(TIPO_ICON[{Verano:'V',Invierno:'I','All Season':'A'}[s.tipo]||'V']||'')+'</span>'
+          +(VENTAS_2026[s.referencia]?'<span style="background:#fef3c7;color:#92400e;border:1px solid #f59e0b;border-radius:10px;padding:1px 7px;font-weight:700">📊 '+VENTAS_2026[s.referencia]+' uds/año</span>':'')
           +'</div></div>'
           +'<div style="text-align:right"><div style="font-weight:700;color:var(--green);font-size:.95rem">'+(s.pvp?s.pvp.toFixed(2)+'€':'—')+'</div>'
           +'<div style="font-size:.65rem;color:var(--muted)">DNP: '+(s.coste?s.coste.toFixed(2)+'€':'—')+'</div></div>'
@@ -1338,6 +1385,7 @@ function buscarAs(){
         +'<div style="display:flex;justify-content:space-between;align-items:center">'
           +'<div><div style="font-weight:700;color:var(--text);font-family:var(--mono)">'+esc(t[1])+'</div>'
           +'<div style="font-size:.7rem;color:var(--muted);margin-top:2px">'+esc(t[2])+' · '+esc(t[3])+'</div>'
+          +(VENTAS_2026[t[0]]?'<span style="background:#fef3c7;color:#92400e;border:1px solid #f59e0b;border-radius:10px;padding:1px 7px;font-size:.62rem;font-weight:700;display:inline-block;margin-top:3px">📊 '+VENTAS_2026[t[0]]+' uds/año</span>':'')
           +'<div style="font-size:.64rem;margin-top:3px;display:flex;gap:6px">'
           +'<span style="background:#f5f3ff;color:#5b21b6;border:1px solid #c4b5fd;border-radius:10px;padding:1px 7px">'+icon+' '+esc(lbl)+'</span>'
           +'<span style="background:#fff0f0;color:var(--red);border:1px solid #fca5a5;border-radius:10px;padding:1px 7px;font-weight:600">🚫 Stock 0</span>'
@@ -1628,6 +1676,256 @@ function imprimirEtiquetaApartado(ap, s){
   <div class="footer">MOTORSAN · Almacén Alcalá de Henares · Uso interno</div>
   <script>window.onload=function(){window.print();}<\/script>
   </body></html>`);
+  w.document.close();
+}
+
+
+// ══════════════════════════════════════════════════════════════════
+// TARIFA UPDATE
+// ══════════════════════════════════════════════════════════════════
+function renderTarifaPanel(){ /* panel already rendered in HTML, nothing to do */ }
+
+function handleTarifaDrop(e){
+  e.preventDefault();
+  document.getElementById('tarifaDropZone').style.background='#faf5ff';
+  const f=e.dataTransfer.files[0];
+  if(f) procesarTarifaExcel(f);
+}
+
+function procesarTarifaExcel(file){
+  if(!file){ toast('Selecciona un archivo Excel','error'); return; }
+  document.getElementById('tarifaProgress').style.display='block';
+  document.getElementById('tarifaProgressBar').style.width='10%';
+  document.getElementById('tarifaProgressTxt').textContent='Leyendo Excel...';
+
+  const reader=new FileReader();
+  reader.onload=function(e){
+    document.getElementById('tarifaProgressBar').style.width='40%';
+    try{
+      // Use SheetJS if available, otherwise parse CSV-like
+      if(typeof XLSX==='undefined'){
+        document.getElementById('tarifaResult').innerHTML='<div style="color:var(--red);padding:12px;background:#fff1f2;border-radius:8px">⚠️ Librería XLSX no cargada. Recarga la página e inténtalo de nuevo.</div>';
+        document.getElementById('tarifaProgress').style.display='none';
+        return;
+      }
+      const wb=XLSX.read(e.target.result,{type:'binary'});
+      document.getElementById('tarifaProgressBar').style.width='60%';
+      document.getElementById('tarifaProgressTxt').textContent='Procesando hojas...';
+
+      // Build new tarifa map from Excel: ref→[ref,dim,marca,dibujo,tipo,pvp,dnp]
+      const newTarifa=new Map();
+      wb.SheetNames.forEach(function(sheetName){
+        const ws=wb.Sheets[sheetName];
+        const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+        // Find header row
+        let hIdx=-1;
+        for(let i=0;i<Math.min(5,rows.length);i++){
+          const r=rows[i].map(function(c){return String(c).toLowerCase();});
+          if(r.some(function(c){return c.includes('referencia')||c.includes('ref');})){hIdx=i;break;}
+        }
+        if(hIdx===-1&&rows.length>0) hIdx=0;
+        const headers=rows[hIdx]?rows[hIdx].map(function(c){return String(c).toLowerCase().trim();}):[];
+        const iRef=headers.findIndex(function(h){return h.includes('ref');});
+        const iDim=headers.findIndex(function(h){return h.includes('medida')||h.includes('dim')||h.includes('talla');});
+        const iMarca=headers.findIndex(function(h){return h.includes('marca');});
+        const iDibujo=headers.findIndex(function(h){return h.includes('dibujo')||h.includes('artículo')||h.includes('descripcion')||h.includes('modelo');});
+        const iTipo=headers.findIndex(function(h){return h.includes('tipo')||h.includes('season')||h.includes('temp');});
+        const iPvp=headers.findIndex(function(h){return h.includes('pvp')||h.includes('precio')||h.includes('tarifa');});
+        const iDnp=headers.findIndex(function(h){return h.includes('dnp')||h.includes('neto')||h.includes('coste');});
+        const tipo=sheetName.toLowerCase().includes('winter')||sheetName.toLowerCase().includes('inv')?'I':(sheetName.toLowerCase().includes('all')||sheetName.toLowerCase().includes('season')?'A':'V');
+        for(let i=hIdx+1;i<rows.length;i++){
+          const r=rows[i];
+          const ref=String(r[iRef]||'').trim().toUpperCase();
+          if(!ref||ref.length<6) continue;
+          const dim=iDim>=0?String(r[iDim]||'').trim():'';
+          const marca=iMarca>=0?String(r[iMarca]||'').trim():'';
+          const dibujo=iDibujo>=0?String(r[iDibujo]||'').trim():'';
+          const tipoCell=iTipo>=0?String(r[iTipo]||'').trim().charAt(0).toUpperCase():tipo;
+          const pvp=iPvp>=0?parseFloat(String(r[iPvp]).replace(',','.'))||0:0;
+          const dnp=iDnp>=0?parseFloat(String(r[iDnp]).replace(',','.'))||0:0;
+          newTarifa.set(ref,[ref,dim,marca,dibujo,tipoCell,pvp,dnp]);
+        }
+      });
+
+      document.getElementById('tarifaProgressBar').style.width='80%';
+      document.getElementById('tarifaProgressTxt').textContent='Actualizando stock...';
+
+      // Cross-reference with stockData
+      let updated=0, obsoletas=[];
+      stockData.forEach(function(s){
+        const t=newTarifa.get(s.referencia);
+        if(t){
+          // Update prices if tarifa has them
+          let changed=false;
+          if(t[5]>0&&s.pvp!==t[5]){ s._tpvp=t[5]; changed=true; }
+          if(t[6]>0&&s.coste!==t[6]){ s._tdnp=t[6]; changed=true; }
+          if(changed) updated++;
+        } else {
+          obsoletas.push(s.referencia);
+        }
+      });
+
+      document.getElementById('tarifaProgressBar').style.width='100%';
+      document.getElementById('tarifaProgressTxt').textContent='¡Listo!';
+
+      const res=document.getElementById('tarifaResult');
+      res.innerHTML='<div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:16px;margin-bottom:10px">'
+        +'<div style="font-weight:800;color:#059669;margin-bottom:8px">✅ Tarifa procesada correctamente</div>'
+        +'<div style="font-size:.78rem;color:#374151;line-height:1.8">'
+        +'📦 Referencias en nueva tarifa: <strong>'+newTarifa.size+'</strong><br>'
+        +'✏️ Precios actualizados en stock: <strong>'+updated+'</strong><br>'
+        +(obsoletas.length?'⚠️ Referencias sin cobertura en nueva tarifa: <strong>'+obsoletas.length+'</strong>':'')
+        +'</div></div>'
+        +(obsoletas.length?'<div style="background:#fffbe6;border:1.5px solid #f59e0b;border-radius:10px;padding:14px">'
+          +'<div style="font-weight:700;color:#92400e;margin-bottom:8px">⚠️ Sin cobertura en nueva tarifa ('+obsoletas.length+')</div>'
+          +'<div style="font-size:.7rem;font-family:var(--mono);color:#374151;display:flex;flex-wrap:wrap;gap:5px">'
+          +obsoletas.map(function(r){return '<span style="background:#fff;border:1px solid #f59e0b;border-radius:4px;padding:2px 6px">'+r+'</span>';}).join('')
+          +'</div></div>':'');
+
+      renderStock(); // Refresh display with new prices
+      setTimeout(function(){ document.getElementById('tarifaProgress').style.display='none'; },1000);
+    } catch(err){
+      document.getElementById('tarifaResult').innerHTML='<div style="color:var(--red);padding:12px;background:#fff1f2;border-radius:8px">❌ Error: '+err.message+'</div>';
+      document.getElementById('tarifaProgress').style.display='none';
+    }
+  };
+  reader.readAsBinaryString(file);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// GENERADOR DE PEDIDO
+// ══════════════════════════════════════════════════════════════════
+let pedidoItems=[]; // [{ref,medida,marca,dibujo,pvp,coste,cant,inCampaña,rotacion}]
+
+function renderPedidoSugeridas(){
+  const el=document.getElementById('pedidoSugeridas'); if(!el) return;
+
+  // Merge DMS + app ventas
+  const rotMap={}; // ref → {uds, medida, marca, dibujo, pvp, coste, inCampaña}
+  // From DMS 2026
+  Object.entries(VENTAS_2026).forEach(function([ref,uds]){
+    const s=stockData.find(function(x){return x.referencia===ref;});
+    const t=T2026_MAP.get(ref);
+    const camp=getCampByRef(ref);
+    rotMap[ref]={uds:uds, medida:s?s.medida:(t?t[1]:''), marca:s?s.marca:(t?t[2]:''),
+      dibujo:s?s.dibujo:(t?t[3]:''), pvp:s?ePVP(s):(t?t[5]:0), coste:s?eDNP(s):(t?t[6]:0),
+      stock:s?s.stock:0, inCampaña:!!camp, campaNeto:camp?camp.neto_campana:0};
+  });
+  // From movData app
+  movData.filter(function(m){return m.tipo==='venta';}).forEach(function(m){
+    if(!rotMap[m.referencia]) rotMap[m.referencia]={uds:0,medida:m.medida||'',marca:m.marca||'',dibujo:'',pvp:m.pvp||0,coste:m.coste||0,stock:0,inCampaña:false,campaNeto:0};
+    rotMap[m.referencia].uds+=(parseInt(m.cantidad)||1);
+  });
+
+  const sorted=Object.entries(rotMap).sort(function(a,b){return b[1].uds-a[1].uds;}).slice(0,30);
+  const inPedido=new Set(pedidoItems.map(function(p){return p.ref;}));
+
+  el.innerHTML=sorted.map(function(e){
+    const [ref,d]=e;
+    const ya=inPedido.has(ref);
+    return '<div style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:#fff;border-radius:7px;border:1px solid var(--border);font-size:.72rem">'
+      +(d.inCampaña?'<span style="background:#fef3c7;color:#92400e;border-radius:4px;padding:0 5px;font-size:.6rem;font-weight:700">★</span>':'<span style="color:transparent;font-size:.6rem">★</span>')
+      +'<div style="flex:1;min-width:0">'
+        +'<div style="font-weight:700;font-family:var(--mono);font-size:.72rem">'+esc(d.medida||ref)+'</div>'
+        +'<div style="color:var(--muted);font-size:.62rem">'+esc(d.marca)+(d.dibujo?' · '+esc(d.dibujo):'')+'</div>'
+      +'</div>'
+      +'<div style="text-align:right;margin-right:4px">'
+        +'<div style="font-weight:700;color:#6d28d9;font-size:.72rem">'+d.uds+' uds/año</div>'
+        +(d.stock>0?'<div style="color:#059669;font-size:.6rem">'+d.stock+' en stk</div>':'<div style="color:#ef4444;font-size:.6rem">Sin stock</div>')
+      +'</div>'
+      +'<button onclick="pedidoAñadir(\''+ref+'\')" '+(ya?'disabled style="background:#e5e7eb;color:#9ca3af"':'style="background:#6d28d9;color:#fff"')+' style="padding:3px 9px;border-radius:5px;border:none;cursor:pointer;font-size:.75rem;font-weight:700;min-width:26px">'+(ya?'✓':'➕')+'</button>'
+    +'</div>';
+  }).join('');
+}
+
+function pedidoAñadir(ref){
+  if(pedidoItems.find(function(p){return p.ref===ref;})) return;
+  const s=stockData.find(function(x){return x.referencia===ref;});
+  const t=T2026_MAP.get(ref);
+  const camp=getCampByRef(ref);
+  const uds=VENTAS_2026[ref]||0;
+  const cantSug=Math.max(4,Math.ceil((uds/12)*3));
+  pedidoItems.push({
+    ref:ref,
+    medida:s?s.medida:(t?t[1]:''),
+    marca:s?s.marca:(t?t[2]:''),
+    dibujo:s?s.dibujo:(t?t[3]:''),
+    pvp:s?ePVP(s):(t?t[5]:0),
+    coste:s?eDNP(s):(t?t[6]:0),
+    cant:cantSug,
+    inCampaña:!!camp,
+    campaNeto:camp?camp.neto_campana:0,
+    rotacion:uds
+  });
+  renderPedidoLista();
+  renderPedidoSugeridas();
+}
+
+function pedidoLimpiar(){
+  if(!pedidoItems.length) return;
+  if(!confirm('¿Limpiar el pedido?')) return;
+  pedidoItems=[];
+  renderPedidoLista();
+  renderPedidoSugeridas();
+}
+
+function renderPedidoLista(){
+  const el=document.getElementById('pedidoLista'); if(!el) return;
+  document.getElementById('pedidoCount').textContent=pedidoItems.length+' refs';
+  if(!pedidoItems.length){
+    el.innerHTML='<div style="color:var(--muted2);font-size:.75rem;padding:20px;text-align:center">Añade referencias desde la lista izquierda</div>';
+    document.getElementById('pedidoTotal').style.display='none';
+    return;
+  }
+  el.innerHTML=pedidoItems.map(function(p,i){
+    const subtotal=(p.coste||p.campaNeto||0)*p.cant;
+    return '<div style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:#fff;border-radius:7px;border:1px solid var(--border)">'
+      +(p.inCampaña?'<span style="background:#fef3c7;color:#92400e;border-radius:4px;padding:0 5px;font-size:.6rem;font-weight:700">★</span>':'')
+      +'<div style="flex:1;min-width:0">'
+        +'<div style="font-weight:700;font-family:var(--mono);font-size:.7rem">'+esc(p.medida||p.ref)+'</div>'
+        +'<div style="color:var(--muted);font-size:.6rem">'+esc(p.marca)+(p.inCampaña?' · <span style="color:#92400e">'+p.campaNeto.toFixed(2)+'€ neto</span>':p.coste?' · '+p.coste.toFixed(2)+'€':'')+'</div>'
+      +'</div>'
+      +'<input type="number" value="'+p.cant+'" min="1" onchange="pedidoItems['+i+'].cant=parseInt(this.value)||4;renderPedidoLista()" style="width:44px;padding:3px 5px;border:1.5px solid var(--border);border-radius:5px;font-size:.75rem;text-align:center">'
+      +'<div style="font-size:.7rem;font-weight:700;color:#059669;min-width:50px;text-align:right">'+subtotal.toFixed(0)+'€</div>'
+      +'<button onclick="pedidoItems.splice('+i+',1);renderPedidoLista();renderPedidoSugeridas()" style="background:#fff1f2;border:1px solid #fca5a5;border-radius:5px;color:#dc2626;cursor:pointer;font-size:.72rem;padding:2px 6px">✕</button>'
+    +'</div>';
+  }).join('');
+
+  const totalCost=pedidoItems.reduce(function(t,p){return t+(p.coste||p.campaNeto||0)*p.cant;},0);
+  const totalUds=pedidoItems.reduce(function(t,p){return t+p.cant;},0);
+  const tot=document.getElementById('pedidoTotal');
+  tot.style.display='block';
+  tot.innerHTML='📦 '+totalUds+' uds · 💶 '+totalCost.toFixed(2)+'€ neto estimado';
+}
+
+function pedidoExportar(){
+  if(!pedidoItems.length){toast('El pedido está vacío','error');return;}
+  const w=window.open('','_blank');
+  const filas=pedidoItems.map(function(p,i){
+    const precio=p.inCampaña?p.campaNeto:(p.coste||0);
+    return '<tr style="'+(i%2?'background:#f9fafb':'')+'">'
+      +'<td style="padding:7px 12px;font-family:monospace;font-size:.8rem">'+esc(p.ref)+'</td>'
+      +'<td style="padding:7px 12px;font-weight:700">'+esc(p.medida)+'</td>'
+      +'<td style="padding:7px 12px">'+esc(p.marca)+'</td>'
+      +'<td style="padding:7px 12px;font-size:.75rem">'+esc(p.dibujo)+'</td>'
+      +(p.inCampaña?'<td style="padding:7px 12px;background:#fef3c7;color:#92400e;font-weight:700;text-align:center">★ CAMPAÑA</td>':'<td style="padding:7px 12px;text-align:center;color:#6b7280">—</td>')
+      +'<td style="padding:7px 12px;text-align:center;font-weight:700;color:#6d28d9">'+p.rotacion+' uds/año</td>'
+      +'<td style="padding:7px 12px;text-align:center;font-weight:700">'+p.cant+'</td>'
+      +'<td style="padding:7px 12px;text-align:right">'+precio.toFixed(2)+'€</td>'
+      +'<td style="padding:7px 12px;text-align:right;font-weight:700;color:#059669">'+(precio*p.cant).toFixed(2)+'€</td>'
+    +'</tr>';
+  }).join('');
+  const total=pedidoItems.reduce(function(t,p){return t+(p.inCampaña?p.campaNeto:(p.coste||0))*p.cant;},0);
+  const totalUds=pedidoItems.reduce(function(t,p){return t+p.cant;},0);
+  w.document.write('<!DOCTYPE html><html><head><title>Pedido Neumáticos MOTORSAN</title>'
+    +'<style>body{font-family:Arial,sans-serif;font-size:.85rem;color:#111;margin:24px}h2{font-size:1.1rem;margin-bottom:4px}table{border-collapse:collapse;width:100%}th{background:#1a1a2e;color:#fff;padding:8px 12px;font-size:.75rem;text-align:left}tr:nth-child(even){background:#f9fafb}@media print{body{margin:8px}}</style>'
+    +'</head><body>'
+    +'<h2>🛒 PEDIDO DE COMPRA · MOTORSAN ALCALÁ</h2>'
+    +'<div style="font-size:.75rem;color:#555;margin-bottom:16px">Generado: '+new Date().toLocaleDateString('es-ES')+' · '+pedidoItems.length+' referencias · '+totalUds+' uds · '+total.toFixed(2)+'€ estimado</div>'
+    +'<table><thead><tr><th>Referencia</th><th>Medida</th><th>Marca</th><th>Dibujo</th><th>Campaña</th><th>Rotación</th><th>Cant.</th><th>P.Coste</th><th>Subtotal</th></tr></thead><tbody>'+filas+'</tbody></table>'
+    +'<div style="text-align:right;margin-top:16px;font-size:.9rem;font-weight:700;color:#059669">TOTAL ESTIMADO: '+total.toFixed(2)+'€ ('+totalUds+' uds)</div>'
+    +'<script>window.onload=function(){window.print();}<\/script>'
+    +'</body></html>');
   w.document.close();
 }
 
