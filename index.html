@@ -1567,11 +1567,10 @@ document.getElementById('editModal').addEventListener('click',e=>{if(e.target===
 // INIT
 // ══════════════════════════════════════════════════════════════════
 
-// Close modalOrden on backdrop click
-document.getElementById('modalOrden').addEventListener('click',function(e){
-  if(e.target===this) cerrarModalOrden();
-});
 document.addEventListener('DOMContentLoaded',function(){
+  // Close modalOrden on backdrop click
+  var mo=document.getElementById('modalOrden');
+  if(mo) mo.addEventListener('click',function(e){ if(e.target===this) cerrarModalOrden(); });
   document.getElementById('mv_fecha').value=new Date().toISOString().slice(0,10);
   try{const cf=localStorage.getItem(LS_CFG);if(cf){asCfg=Object.assign(asCfg,JSON.parse(cf));document.getElementById('cfg_mo2').value=asCfg.mo2;document.getElementById('cfg_mo4').value=asCfg.mo4;}}catch{}
   try{const ca=localStorage.getItem(LS_C);if(ca)campanaData=JSON.parse(ca);}catch{}
