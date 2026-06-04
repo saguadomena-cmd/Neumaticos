@@ -106,14 +106,23 @@ tr.out td{background:#fff5f5}
 .edit-input{padding:4px 8px;border-radius:var(--rs);border:1.5px solid var(--primary2);font-family:var(--font);font-size:.82rem;outline:none;background:#fff;width:80px}
 
 /* ACT BTNS */
-.ab{width:26px;height:26px;border-radius:var(--rs);border:1px solid var(--border2);background:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:11px;transition:all .15s;color:var(--muted)}
+.ab{display:inline-flex;align-items:center;justify-content:center;gap:4px;height:30px;padding:0 10px;border-radius:6px;border:1.5px solid var(--border2);background:#f8fafc;cursor:pointer;font-size:.72rem;font-weight:700;font-family:var(--font);white-space:nowrap;transition:background .12s,color .12s,border-color .12s;color:var(--primary2);line-height:1}
+.ab:hover{background:var(--primary2);color:#fff;border-color:var(--primary2)}
+.btn-venta{display:inline-flex;align-items:center;justify-content:center;gap:4px;height:30px;padding:0 10px;border-radius:6px;border:1.5px solid #86efac;background:#f0fdf4;cursor:pointer;font-size:.72rem;font-weight:700;font-family:var(--font);white-space:nowrap;transition:background .12s,color .12s;color:#15803d;line-height:1}
+.btn-venta:hover{background:#15803d;color:#fff;border-color:#15803d}
+.btn-apartar{display:inline-flex;align-items:center;justify-content:center;gap:4px;height:30px;padding:0 10px;border-radius:6px;border:1.5px solid #c4b5fd;background:#ede9fe;cursor:pointer;font-size:.72rem;font-weight:700;font-family:var(--font);white-space:nowrap;transition:background .12s,color .12s;color:#6d28d9;line-height:1}
+.btn-apartar:hover{background:#6d28d9;color:#fff;border-color:#6d28d9}
+.btn-edit{display:inline-flex;align-items:center;justify-content:center;gap:4px;height:30px;padding:0 10px;border-radius:6px;border:1.5px solid #7dd3fc;background:#f0f9ff;cursor:pointer;font-size:.72rem;font-weight:700;font-family:var(--font);white-space:nowrap;transition:background .12s,color .12s;color:#0369a1;line-height:1}
+.btn-edit:hover{background:#0369a1;color:#fff;border-color:#0369a1}
+.btn-del{display:inline-flex;align-items:center;justify-content:center;gap:4px;height:30px;padding:0 10px;border-radius:6px;border:1.5px solid #fca5a5;background:#fff1f2;cursor:pointer;font-size:.72rem;font-weight:700;font-family:var(--font);white-space:nowrap;transition:background .12s,color .12s;color:#dc2626;line-height:1}
+.btn-del:hover{background:#dc2626;color:#fff;border-color:#dc2626}
 .ab:hover{border-color:var(--primary2);color:var(--primary2)}
 .ab.g:hover{border-color:var(--green);color:var(--green)}
 .ab.r:hover{border-color:var(--red);color:var(--red)}
-.ab-entrada{padding:5px 9px;border-radius:var(--rs);background:#f0fdf4;border:1.5px solid #86efac;color:var(--green);cursor:pointer;font-size:.75rem;font-weight:700;transition:all .15s}
-.ab-entrada:hover{background:var(--green);color:#fff}
-.ab-venta{padding:5px 9px;border-radius:var(--rs);background:#fff1f2;border:1.5px solid #fca5a5;color:var(--red);cursor:pointer;font-size:.75rem;font-weight:700;transition:all .15s}
-.ab-venta:hover{background:var(--red);color:#fff}
+
+
+
+
 
 /* PANEL LATERAL */
 .backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:3000;opacity:0;pointer-events:none;transition:opacity .3s}
@@ -323,7 +332,7 @@ tr.out td{background:#fff5f5}
         <div class="field"><label>📅 Fecha cita cliente</label><input type="date" id="mv_cita"></div>
         <div class="field" id="mv_asesor_field" style="display:none">
           <label>👤 Asesor <span style="color:var(--red);font-size:.6rem">*obligatorio</span></label>
-          <select id="mv_asesor"><option value="">— Seleccionar —</option><option value="TONI">Toni Moya</option><option value="PEREA">Perea</option><option value="ROBERTO">Roberto Carlos</option><option value="OTRO">Otro</option></select>
+          <select id="mv_asesor"><option value="">— Seleccionar —</option><option value="TONI"><span style='font-size:1.3rem'>🧑</span> Toni Moya</option><option value="PEREA"><span style='font-size:1.3rem'>👴</span> Perea</option><option value="ROBERTO"><span style='font-size:1.3rem'>🦲</span> Roberto Carlos</option><option value="OTRO">Otro</option></select>
         </div>
         <div class="field" style="grid-column:span 2"><label>📝 Nota</label><input type="text" id="mv_nota" placeholder="Proveedor, albarán, observaciones…"></div>
       </div>
@@ -434,7 +443,7 @@ tr.out td{background:#fff5f5}
         <div class="field"><label>👤 Cliente</label><input type="text" id="apt_cliente" placeholder="Nombre…"></div>
         <div class="field"><label>🔢 Cantidad</label><input type="number" id="apt_cant" value="4" min="1"></div>
         <div class="field"><label>📅 Fecha límite</label><input type="date" id="apt_fecha"></div>
-        <div class="field"><label>👤 Asesor</label><select id="apt_asesor"><option value="">—</option><option value="TONI">Toni Moya</option><option value="PEREA">Perea</option><option value="ROBERTO">Roberto Carlos</option><option value="OTRO">Otro</option></select></div>
+        <div class="field"><label>👤 Asesor</label><select id="apt_asesor"><option value="">—</option><option value="TONI"><span style='font-size:1.3rem'>🧑</span> Toni Moya</option><option value="PEREA"><span style='font-size:1.3rem'>👴</span> Perea</option><option value="ROBERTO"><span style='font-size:1.3rem'>🦲</span> Roberto Carlos</option><option value="OTRO">Otro</option></select></div>
         <div class="field"><label>📝 Nota</label><input type="text" id="apt_nota"></div>
       </div>
       <button onclick="guardarApt()" style="padding:8px 18px;border-radius:var(--rs);border:none;background:var(--primary2);color:#fff;font-family:var(--font);font-weight:600;cursor:pointer">📌 Guardar apartado</button>
@@ -783,7 +792,8 @@ function renderStock(){
       +'<div class="ref-tag" style="margin-top:3px">'+esc(s.referencia)+'</div>'
       +(VENTAS_2026[s.referencia]?'<div style="background:#fef3c7;border-radius:3px;padding:1px 5px;font-size:.58rem;font-weight:700;color:#92400e;margin-top:2px;display:inline-block">📊 '+VENTAS_2026[s.referencia]+' uds/año DMS</div>':'')
       +(apt>0?'<div style="font-size:.6rem;color:#7c3aed;margin-top:2px;font-weight:600">📌 '+apt+' uds apt.</div>':'');
-    const asesorH=aptAses.map(a=>'<span class="asesor-pill ap-'+a+'">'+a+'</span>').join(' ');
+    const ASESOR_LBL={'TONI':'🧑 Toni','PEREA':'👴 Perea','ROBERTO':'🦲 Roberto','OTRO':'👤 Otro'};
+    const asesorH=aptAses.map(a=>'<span class="asesor-pill ap-'+a+'">'+(ASESOR_LBL[a]||a)+'</span>').join(' ');
     const campCell=camp?'<div class="badge b-camp">🏷️ EN CAMPAÑA</div><div style="font-size:.62rem;color:#92400e;margin-top:2px">'+esc(camp.marca)+' '+esc(camp.dibujo)+'<br>'+camp.neto_campana.toFixed(2)+'€ neto</div>':'<span style="color:var(--muted2);font-size:.7rem">—</span>';
     return '<tr class="'+rowCls+'">'
       +'<td style="min-width:170px">'+medCell+'</td>'
@@ -795,11 +805,11 @@ function renderStock(){
       +'<td style="text-align:center"><span class="editable" data-id="'+sid+'" data-field="stockMin" style="color:var(--muted)">'+( s.stockMin||0)+'</span></td>'
       +'<td style="text-align:center"><span style="font-weight:700;color:var(--primary2);font-size:.82rem">'+(s.totalVendidas||0)+'</span>'+(VENTAS_2026[s.referencia]?'<br><span style="font-size:.58rem;color:#92400e;background:#fef3c7;border-radius:3px;padding:0 3px;font-weight:700">'+VENTAS_2026[s.referencia]+'/año</span>':'')+'</td>'
       +'<td>'+campCell+'</td>'
-      +'<td><div style="display:flex;gap:3px;flex-wrap:wrap;justify-content:center">'
-        +'<button class="ab-venta"   data-action="venta"   data-id="'+sid+'" style="font-size:.7rem;padding:4px 8px">Venta</button>'
-        +'<button class="ab" data-action="asignar" data-id="'+sid+'" style="background:#ede9fe;color:#7c3aed;font-size:.7rem;padding:4px 8px">Apartar</button>'
-        +'<button class="ab" data-action="edit"    data-id="'+sid+'" style="font-size:.7rem;padding:4px 8px">Editar</button>'
-        +'<button class="ab r" data-action="del"   data-id="'+sid+'" style="font-size:.7rem;padding:4px 8px">Eliminar</button>'
+      +'<td style="vertical-align:middle"><div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:2px">'
+        +'<button class="btn-venta"   data-action="venta"   data-id="'+sid+'">💰 Venta</button>'
+        +'<button class="btn-apartar" data-action="asignar" data-id="'+sid+'">📌 Apartar</button>'
+        +'<button class="btn-edit"    data-action="edit"    data-id="'+sid+'">✏️ Editar</button>'
+        +'<button class="btn-del"     data-action="del"     data-id="'+sid+'">🗑 Borrar</button>'
       +'</div></td>'
     +'</tr>';
   }).join('');
@@ -843,10 +853,10 @@ function openPanel(id,tipo){
   let asesorHTML=tipo==='venta'?`
     <div class="f-label">👤 Asesor <span style="color:var(--red);font-size:.6rem">*obligatorio</span></div>
     <div class="asesor-grid" id="pl_asesor_grid">
-      <button class="as-btn" data-as="TONI"    onclick="selAsPanel('TONI')">👨 Toni Moya</button>
-      <button class="as-btn" data-as="PEREA"   onclick="selAsPanel('PEREA')">👨 Perea</button>
-      <button class="as-btn" data-as="ROBERTO" onclick="selAsPanel('ROBERTO')">👨 Roberto Carlos</button>
-      <button class="as-btn" data-as="OTRO"    onclick="selAsPanel('OTRO')">👤 Otro</button>
+      <button class="as-btn" data-as="TONI"    onclick="selAsPanel('TONI')"><span style='font-size:1.3rem'>🧑</span> Toni Moya</button>
+      <button class="as-btn" data-as="PEREA"   onclick="selAsPanel('PEREA')"><span style='font-size:1.3rem'>👴</span> Perea</button>
+      <button class="as-btn" data-as="ROBERTO" onclick="selAsPanel('ROBERTO')"><span style='font-size:1.3rem'>🦲</span> Roberto Carlos</button>
+      <button class="as-btn" data-as="OTRO"    onclick="selAsPanel('OTRO')"><span style='font-size:1.3rem'>👤</span> Otro</button>
     </div>`:'';
 
   let archHTML=tipo==='compra'?`
@@ -1166,7 +1176,8 @@ function renderHistorial(){
   const b=document.getElementById('histBody');
   if(!rows.length){b.innerHTML='<div style="color:var(--muted2);text-align:center;padding:40px">Sin movimientos</div>';return;}
   b.innerHTML=rows.map(m=>{
-    const asBadge=m.asesor?'<span class="asesor-pill ap-'+m.asesor+'">'+m.asesor+'</span>':'';
+    const _AL={'TONI':'🧑 Toni','PEREA':'👴 Perea','ROBERTO':'🦲 Roberto','OTRO':'👤 Otro'};
+  const asBadge=m.asesor?'<span class="asesor-pill ap-'+m.asesor+'">'+ (_AL[m.asesor]||m.asesor) +'</span>':'';
     return '<div class="mov-item"><div class="mov-icon '+m.tipo+'">'+(m.tipo==='compra'?'📥':'📤')+'</div>'
       +'<div style="flex:1"><div style="font-size:.78rem;font-weight:600">'+esc(m.medida||'')+(m.marca?' · '+esc(m.marca):'')+' '+asBadge+'</div>'
       +'<div style="font-size:.68rem;color:var(--muted);margin-top:1px">'+(m.nota||'Sin nota')+'</div></div>'
@@ -1212,7 +1223,8 @@ function renderAnalytics(){
     +'<div class="top-item"><div style="flex:1;font-size:.75rem;color:var(--muted)">Margen estimado</div><div style="font-weight:700;color:'+(marg>=0?'var(--green)':'var(--red)')+'">'+marg.toFixed(2)+'€</div></div>';
   const byAs={};ventas.forEach(m=>{if(m.asesor){if(!byAs[m.asesor])byAs[m.asesor]={uds:0,importe:0};byAs[m.asesor].uds+=(parseInt(m.cantidad)||1);byAs[m.asesor].importe+=(parseFloat(m.pvp)||0)*(parseInt(m.cantidad)||1);}});
   const taEl=document.getElementById('topAsesores');
-  if(taEl) taEl.innerHTML=Object.entries(byAs).sort((a,b)=>b[1].uds-a[1].uds).map(([k,v])=>'<div class="top-item"><span class="asesor-pill ap-'+k+'">'+k+'</span><div style="flex:1;margin-left:8px;font-size:.78rem">'+v.uds+' uds</div><div style="font-weight:700;color:var(--green)">'+v.importe.toFixed(0)+'€</div></div>').join('')||'<div style="color:var(--muted2);font-size:.8rem">Sin ventas</div>';
+  const ASESOR_LBL={'TONI':'🧑 Toni','PEREA':'👴 Perea','ROBERTO':'🦲 Roberto','OTRO':'👤 Otro'};
+  if(taEl) taEl.innerHTML=Object.entries(byAs).sort((a,b)=>b[1].uds-a[1].uds).map(([k,v])=>'<div class="top-item"><span class="asesor-pill ap-'+k+'">'+(ASESOR_LBL[k]||k)+'</span><div style="flex:1;margin-left:8px;font-size:.78rem">'+v.uds+' uds</div><div style="font-weight:700;color:var(--green)">'+v.importe.toFixed(0)+'€</div></div>').join('')||'<div style="color:var(--muted2);font-size:.8rem">Sin ventas</div>';
   const byMes={};ventas.forEach(m=>{if(!m.fecha)return;const mes=m.fecha.slice(0,7);if(!byMes[mes])byMes[mes]=0;byMes[mes]+=(parseInt(m.cantidad)||1);});
   const meses=Object.entries(byMes).sort((a,b)=>a[0].localeCompare(b[0]));
   const maxV=meses.length?Math.max(...meses.map(m=>m[1])):1;
@@ -1627,7 +1639,8 @@ function renderAptList(){
   apartados.forEach(function(a){
     let col='#7c3aed',citaH='';
     if(a.fechaLimite){const f=new Date(a.fechaLimite+'T00:00');const d=Math.round((f-hoy)/86400000);col=d<0?'var(--red)':d<=3?'var(--orange)':'var(--green)';citaH=citaBadge(a.fechaLimite);}
-    const asB=a.asesor?'<span class="asesor-pill ap-'+a.asesor+'">'+a.asesor+'</span>':'';
+    const _AL2={'TONI':'🧑 Toni','PEREA':'👴 Perea','ROBERTO':'🦲 Roberto','OTRO':'👤 Otro'};
+    const asB=a.asesor?'<span class="asesor-pill ap-'+a.asesor+'">'+ (_AL2[a.asesor]||a.asesor) +'</span>':'';
     const tieneOrden=!!a.numOrden;
     const vtas=VENTAS_2026[a.referencia]?(' <span style="background:#fef3c7;color:#92400e;border-radius:3px;padding:1px 4px;font-size:.6rem;font-weight:700">📊 '+VENTAS_2026[a.referencia]+' uds/año</span>'):'';
     rows+='<div style="background:#fff;border:2px solid '+col+'20;border-left:4px solid '+col+';border-radius:var(--r);padding:14px 16px;margin-bottom:10px">'
@@ -1722,10 +1735,10 @@ document.addEventListener('DOMContentLoaded',function(){
       <div>
         <div style="font-size:.72rem;font-weight:700;color:#374151;margin-bottom:4px">👤 Asesor que vende *</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px" id="ord_asesor_grid">
-          <button onclick="selOrdenAsesor('TONI')"    data-as="TONI"    style="padding:8px;border-radius:7px;border:1.5px solid #d1d5db;background:#fff;cursor:pointer;font-size:.78rem;font-weight:600">👨 Toni Moya</button>
-          <button onclick="selOrdenAsesor('PEREA')"   data-as="PEREA"   style="padding:8px;border-radius:7px;border:1.5px solid #d1d5db;background:#fff;cursor:pointer;font-size:.78rem;font-weight:600">👨 Perea</button>
-          <button onclick="selOrdenAsesor('ROBERTO')" data-as="ROBERTO" style="padding:8px;border-radius:7px;border:1.5px solid #d1d5db;background:#fff;cursor:pointer;font-size:.78rem;font-weight:600">👨 Roberto Carlos</button>
-          <button onclick="selOrdenAsesor('OTRO')"    data-as="OTRO"    style="padding:8px;border-radius:7px;border:1.5px solid #d1d5db;background:#fff;cursor:pointer;font-size:.78rem;font-weight:600">👤 Otro</button>
+          <button onclick="selOrdenAsesor('TONI')"    data-as="TONI"    style="padding:8px;border-radius:7px;border:1.5px solid #d1d5db;background:#fff;cursor:pointer;font-size:.78rem;font-weight:600"><span style='font-size:1.3rem'>🧑</span> Toni Moya</button>
+          <button onclick="selOrdenAsesor('PEREA')"   data-as="PEREA"   style="padding:8px;border-radius:7px;border:1.5px solid #d1d5db;background:#fff;cursor:pointer;font-size:.78rem;font-weight:600"><span style='font-size:1.3rem'>👴</span> Perea</button>
+          <button onclick="selOrdenAsesor('ROBERTO')" data-as="ROBERTO" style="padding:8px;border-radius:7px;border:1.5px solid #d1d5db;background:#fff;cursor:pointer;font-size:.78rem;font-weight:600"><span style='font-size:1.3rem'>🦲</span> Roberto Carlos</button>
+          <button onclick="selOrdenAsesor('OTRO')"    data-as="OTRO"    style="padding:8px;border-radius:7px;border:1.5px solid #d1d5db;background:#fff;cursor:pointer;font-size:.78rem;font-weight:600"><span style='font-size:1.3rem'>👤</span> Otro</button>
         </div>
       </div>
       <div>
