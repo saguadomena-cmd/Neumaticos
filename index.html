@@ -407,7 +407,14 @@ tr.out td{background:#fff5f5}
       <div id="asResultados"></div>
       <div id="asPresupuesto" style="display:none;margin-top:16px">
         <div style="background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:2px solid #86efac;border-radius:var(--r);padding:18px">
-          <div style="font-size:.82rem;font-weight:700;color:var(--green);margin-bottom:14px">💶 Presupuesto — <span id="as_medida">—</span></div>
+          <div style="margin-bottom:12px">
+            <div style="font-size:.82rem;font-weight:700;color:var(--green)">💶 Presupuesto — <span id="as_medida">—</span></div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap">
+              <span style="font-family:var(--mono);font-size:.72rem;color:var(--muted);background:var(--s2);border-radius:4px;padding:1px 7px" id="as_referencia"></span>
+              <span style="font-size:.72rem;font-weight:700;color:#059669" id="as_dnp"></span>
+              <span id="as_camp_badge" style="display:none;background:#fef3c7;color:#92400e;border:1px solid #f59e0b;border-radius:10px;padding:1px 8px;font-size:.7rem;font-weight:700">🏷️ CAMPAÑA</span>
+            </div>
+          </div>
           <div style="display:flex;gap:8px;margin-bottom:14px">
             <button onclick="setAsCant(2)" style="flex:1;padding:9px;border-radius:7px;border:1.5px solid #86efac;background:#f0fdf4;color:var(--green);font-weight:700;cursor:pointer;font-family:var(--font)">🔧 2 neumáticos</button>
             <button onclick="setAsCant(4)" style="flex:1;padding:9px;border-radius:7px;border:1.5px solid #86efac;background:#f0fdf4;color:var(--green);font-weight:700;cursor:pointer;font-family:var(--font)">🔧🔧 4 neumáticos</button>
@@ -719,11 +726,37 @@ function initFB(){
       if(v){ movData=Object.values(v).sort((a,b)=>b.fecha.localeCompare(a.fecha)); localStorage.setItem(LS_M,JSON.stringify(movData)); }
       renderHistorial(); renderAnalytics();
     });
-    fbDb.ref(DB_A).on('value',snap=>{
+    // Migrate localStorage apartados to Firebase on first load
+    fbDb.ref(DB_A).once('value').then(snap=>{
       const v=snap.val();
-      apartados=v?Object.values(v):[];
-      localStorage.setItem(LS_A,JSON.stringify(apartados));
-      renderAptList(); updateStats(); renderStock();
+      if(!v){
+        // Firebase empty — push any local apartados up
+        try{
+          const local=JSON.parse(localStorage.getItem(LS_A)||'[]');
+          if(local.length){
+            const batch={};
+            local.forEach(a=>{ batch[a.id]=a; });
+            fbDb.ref(DB_A).update(batch).then(()=>{
+              toast('📌 '+local.length+' apartados migrados a nube','info',3000);
+            });
+          }
+        }catch(e){}
+      }
+      // Now subscribe to realtime updates
+      fbDb.ref(DB_A).on('value',snap2=>{
+        const v2=snap2.val();
+        apartados=v2?Object.values(v2):[];
+        localStorage.setItem(LS_A,JSON.stringify(apartados));
+        renderAptList(); updateStats(); renderStock();
+      });
+    }).catch(()=>{
+      // Fallback: subscribe without migration
+      fbDb.ref(DB_A).on('value',snap=>{
+        const v=snap.val();
+        apartados=v?Object.values(v):[];
+        localStorage.setItem(LS_A,JSON.stringify(apartados));
+        renderAptList(); updateStats(); renderStock();
+      });
     });
   } catch(e){ loadLocal(); toast('Modo local','info'); }
 }
@@ -1363,6 +1396,7 @@ function buscarAs(){
       return '<div class="stock-res-item" data-sid="'+esc(s.id)+'" style="background:#fff;border-radius:8px;border:1.5px solid var(--border);padding:11px 14px;margin-bottom:7px;cursor:pointer">'
         +'<div style="display:flex;justify-content:space-between;align-items:flex-start">'
           +'<div><div style="font-weight:700;color:var(--primary2);font-family:var(--mono)">'+esc(s.medida)+' <span style="font-size:.68rem;font-weight:400;color:var(--muted)">'+esc(s.indice)+'</span></div>'
+          +'<div style="font-family:var(--mono);font-size:.65rem;color:var(--muted);margin-top:1px">'+esc(s.referencia)+'</div>'
           +'<div style="font-size:.7rem;color:var(--muted);margin-top:2px">'+esc(s.marca)+' · '+esc(s.dibujo||tipoLabel)+'</div>'
           +'<div style="font-size:.64rem;margin-top:3px;display:flex;gap:6px;align-items:center">'
           +(camp2?'<span style="background:#fef3c7;color:#92400e;border:1px solid #f59e0b;border-radius:10px;padding:1px 7px;font-weight:700">🏷️ CAMPAÑA · '+camp2.neto_campana.toFixed(2)+'€ neto</span>':'')
@@ -1383,9 +1417,10 @@ function buscarAs(){
         +'<div style="display:flex;justify-content:space-between;align-items:center">'
           +'<div><div style="font-weight:700;color:#92400e;font-family:var(--mono)">'+esc(c.medida_full)+'</div>'
           +'<div style="font-size:.7rem;color:var(--muted);margin-top:2px">'+esc(c.marca)+' · '+esc(c.dibujo)+'</div>'
-          +'<div style="font-size:.64rem;margin-top:3px"><span style="background:#fef3c7;color:#92400e;border:1px solid #f59e0b;border-radius:10px;padding:1px 7px;font-weight:700">🏷️ CAMPAÑA</span> <span style="color:var(--orange);font-weight:600">Sin stock</span></div></div>'
+          +'<div style="font-size:.64rem;margin-top:3px;display:flex;gap:6px;align-items:center"><span style="background:#fef3c7;color:#92400e;border:1px solid #f59e0b;border-radius:10px;padding:1px 7px;font-weight:700">🏷️ CAMPAÑA</span><span style="color:var(--orange);font-weight:600">Sin stock</span><span style="font-family:var(--mono);font-size:.65rem;color:var(--muted)">'+esc(c.referencia)+'</span></div></div>'
           +'<div style="text-align:right"><div style="font-weight:700;color:var(--green);font-size:.95rem">'+c.neto_campana.toFixed(2)+'€ neto</div>'
-          +'<div style="font-size:.65rem;color:var(--muted);text-decoration:line-through">PVP: '+c.pvp.toFixed(2)+'€</div></div>'
+          +'<div style="font-size:.65rem;color:var(--muted);text-decoration:line-through">PVP: '+c.pvp.toFixed(2)+'€</div>'
+          +'<div style="font-size:.6rem;color:#059669;font-weight:700">Dto: '+(((c.pvp-c.neto_campana)/c.pvp)*100).toFixed(0)+'%</div></div>'
         +'</div></div>';
     }).join('');
   }
@@ -1399,6 +1434,7 @@ function buscarAs(){
       return '<div class="tarifa-res-item" data-tarifa="'+encodeURIComponent(JSON.stringify(t))+'" style="background:var(--s2);border-radius:8px;border:1.5px solid var(--border);padding:11px 14px;margin-bottom:7px;cursor:pointer;opacity:.85">'
         +'<div style="display:flex;justify-content:space-between;align-items:center">'
           +'<div><div style="font-weight:700;color:var(--text);font-family:var(--mono)">'+esc(t[1])+'</div>'
+          +'<div style="font-family:var(--mono);font-size:.65rem;color:var(--muted);margin-top:1px">'+esc(t[0])+'</div>'
           +'<div style="font-size:.7rem;color:var(--muted);margin-top:2px">'+esc(t[2])+' · '+esc(t[3])+'</div>'
           +(VENTAS_2026[t[0]]?'<span style="background:#fef3c7;color:#92400e;border:1px solid #f59e0b;border-radius:10px;padding:1px 7px;font-size:.62rem;font-weight:700;display:inline-block;margin-top:3px">📊 '+VENTAS_2026[t[0]]+' uds/año</span>':'')
           +'<div style="font-size:.64rem;margin-top:3px;display:flex;gap:6px">'
@@ -1437,14 +1473,14 @@ function buscarAs(){
 function selAsTarifa(t){
   // t: [ref,dim,marca,dibujo,tipo,pvp,dnp]
   const tipoFull={V:'Verano',A:'All Season',I:'Invierno'}[t[4]]||'Verano';
-  asRef={medida:t[1],marca:t[2],pvp:t[5],referencia:t[0],stock:0,dibujo:t[3],tipo:tipoFull,id:'tar_'+t[0]};
+  asRef={medida:t[1],marca:t[2],pvp:t[5],coste:t[6],referencia:t[0],stock:0,dibujo:t[3],tipo:tipoFull,id:'tar_'+t[0]};
   setAsCant(4);
   document.getElementById('asPresupuesto').style.display='block';
   document.getElementById('asPresupuesto').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
 function selAs(id){ const s=stockData.find(x=>x.id===id); if(!s)return; asRef=s; setAsCant(4); document.getElementById('asPresupuesto').style.display='block'; document.getElementById('asPresupuesto').scrollIntoView({behavior:'smooth',block:'nearest'}); }
-function selAsCamp(c){ asRef={medida:c.medida_full,marca:c.marca,pvp:c.pvp,referencia:c.referencia,stock:0,id:'camp_'+c.referencia}; setAsCant(4); document.getElementById('asPresupuesto').style.display='block'; }
+function selAsCamp(c){ asRef={medida:c.medida_full,marca:c.marca,pvp:c.pvp,coste:c.neto_campana,referencia:c.referencia,dibujo:c.dibujo||'',stock:0,inCampaña:true,netoCampaña:c.neto_campana,id:'camp_'+c.referencia}; setAsCant(4); document.getElementById('asPresupuesto').style.display='block'; document.getElementById('asPresupuesto').scrollIntoView({behavior:'smooth',block:'nearest'}); }
 function setAsCant(n){ asCant=n; calcAs(); }
 function calcAs(){
   if(!asRef)return;
@@ -1456,7 +1492,16 @@ function calcAs(){
   const subN=pvp*cant; const descN=subN*dtoN/100;
   const subM=mo; const descM=subM*dtoM/100;
   const total=(subN-descN)+(subM-descM);
-  document.getElementById('as_medida').textContent=asRef.medida+' · '+asRef.marca;
+  document.getElementById('as_medida').textContent=asRef.medida+' · '+asRef.marca+(asRef.dibujo?' · '+asRef.dibujo:'');
+  // Show referencia
+  const refEl=document.getElementById('as_referencia');
+  if(refEl) refEl.textContent=asRef.referencia||'';
+  // Show DNP/coste neto
+  const dnpEl=document.getElementById('as_dnp');
+  if(dnpEl){ const coste=asRef.coste||asRef.netoCampaña||0; dnpEl.textContent=coste>0?'DNP: '+coste.toFixed(2)+'€':''; }
+  // Campaña badge
+  const campBadge=document.getElementById('as_camp_badge');
+  if(campBadge) campBadge.style.display=asRef.inCampaña?'inline-flex':'none';
   document.getElementById('as_pvp_unit').textContent=pvp.toFixed(2)+'€';
   document.getElementById('as_cant_lbl').textContent=cant+' ud'+(cant>1?'s':'');
   document.getElementById('as_mo_lbl').textContent=(subM-descM).toFixed(2)+'€';
