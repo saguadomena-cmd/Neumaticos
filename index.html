@@ -226,12 +226,21 @@ tr.out td{background:#fff5f5}
 
 <!-- HEADER -->
 <div class="header">
+  <div style="display:flex;flex-direction:column;gap:0">
+    <div style="font-size:.6rem;font-weight:600;color:rgba(255,255,255,.5);letter-spacing:.08em;padding:3px 14px 0;text-align:right">Propiedad de Sergio Aguado Mena</div>
   <div class="hbrand">
-    <svg width="40" height="40" viewBox="0 0 44 44"><circle cx="22" cy="22" r="21" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="1"/><circle cx="12" cy="22" r="8" fill="none" stroke="#fff" stroke-width="2.2"/><circle cx="19" cy="22" r="8" fill="none" stroke="#fff" stroke-width="2.2"/><circle cx="26" cy="22" r="8" fill="none" stroke="#fff" stroke-width="2.2"/><circle cx="33" cy="22" r="8" fill="none" stroke="#fff" stroke-width="2.2"/></svg>
+    <!-- Audi 4 rings: equally spaced, touching but NOT overlapping -->
+    <svg width="72" height="28" viewBox="0 0 72 28" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="10" cy="14" r="9" fill="none" stroke="#fff" stroke-width="2"/>
+      <circle cx="28" cy="14" r="9" fill="none" stroke="#fff" stroke-width="2"/>
+      <circle cx="46" cy="14" r="9" fill="none" stroke="#fff" stroke-width="2"/>
+      <circle cx="64" cy="14" r="9" fill="none" stroke="#fff" stroke-width="2"/>
+    </svg>
     <div>
       <div class="htitle"><span class="conn" id="connDot"></span>Stock Neumáticos · MOTORSAN</div>
       <div class="hsub">GESTIÓN DE STOCK · VENTAS · ANÁLISIS · v2.0</div>
     </div>
+  </div>
   </div>
   <div class="hstats">
     <div class="hs" onclick="setTab('stock')"><div class="hs-val" id="statRefs">0</div><div class="hs-lbl">Refs</div></div>
@@ -250,6 +259,7 @@ tr.out td{background:#fff5f5}
   <div class="tab g"      id="tab-analytics"  onclick="setTab('analytics')">📊 Análisis</div>
   <div class="tab"        id="tab-top10"      onclick="setTab('top10')">🏆 Top 10</div>
   <div class="tab"        id="tab-tarifa"     onclick="setTab('tarifa')">📥 Tarifas</div>
+  <div class="tab"        id="tab-notif"      onclick="setTab('notif')">🔔 Notificaciones <span id="notifBadge" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:0 6px;font-size:.6rem;font-weight:700;margin-left:3px">0</span></div>
   <div class="tab"        id="tab-historial"  onclick="setTab('historial')">📋 Historial</div>
   <div class="tab"        id="tab-asesores"   onclick="setTab('asesores')">🚗 Presupuesto</div>
   <div class="tab"        id="tab-apartados"  onclick="setTab('apartados')">📌 Apartados</div>
@@ -391,6 +401,26 @@ tr.out td{background:#fff5f5}
 
 <!-- ═══ ANALYTICS ═══ -->
 <div id="panelAnalytics" style="display:none">
+
+  <!-- FILTRO MES/AÑO -->
+  <div style="background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:10px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <div style="font-size:.72rem;font-weight:700;color:var(--muted)">📅 PERÍODO</div>
+    <select id="anaFiltroMes" onchange="renderAnalytics()" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:.78rem;font-family:var(--font);background:#fff">
+      <option value="">Todos los meses</option>
+      <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option>
+      <option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option>
+      <option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option>
+      <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+    </select>
+    <select id="anaFiltroAnio" onchange="renderAnalytics()" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:.78rem;font-family:var(--font);background:#fff">
+      <option value="">Todos los años</option>
+      <option value="2025">2025</option>
+      <option value="2026">2026</option>
+      <option value="2027">2027</option>
+    </select>
+    <button onclick="document.getElementById('anaFiltroMes').value='';document.getElementById('anaFiltroAnio').value='';renderAnalytics()" style="padding:6px 12px;border-radius:7px;border:1.5px solid var(--border);background:#fff;font-size:.72rem;cursor:pointer;color:var(--muted)">✕ Todo</button>
+    <div id="anaFiltroLabel" style="font-size:.72rem;color:var(--primary2);font-weight:700;margin-left:4px"></div>
+  </div>
 
   <!-- FILA 1: Alertas inteligentes (ancho completo) -->
   <div class="card" style="margin-bottom:14px;border-left:4px solid #ef4444">
@@ -653,6 +683,83 @@ tr.out td{background:#fff5f5}
   </div>
 </div>
 
+<!-- ═══ NOTIFICACIONES ═══ -->
+<div id="panelNotif" style="display:none;padding:16px">
+  <div style="display:grid;grid-template-columns:1fr 340px;gap:16px;max-height:calc(100vh - 200px)">
+
+    <!-- IZQUIERDA: lista de mensajes -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="font-weight:800;font-size:.95rem;color:var(--primary2)">📨 Comunicaciones del equipo</div>
+
+      <!-- Filtros -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button onclick="setNotifFilter('todos')"    id="nf-todos"    style="padding:5px 12px;border-radius:20px;border:1.5px solid #1a1a2e;background:#1a1a2e;color:#fff;font-size:.72rem;font-weight:700;cursor:pointer">Todos</button>
+        <button onclick="setNotifFilter('recambios')" id="nf-recambios" style="padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);background:#fff;color:var(--muted);font-size:.72rem;font-weight:700;cursor:pointer">📦 Recambios</button>
+        <button onclick="setNotifFilter('toni')"     id="nf-toni"     style="padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);background:#fff;color:var(--muted);font-size:.72rem;font-weight:700;cursor:pointer">🧑 Toni</button>
+        <button onclick="setNotifFilter('perea')"    id="nf-perea"    style="padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);background:#fff;color:var(--muted);font-size:.72rem;font-weight:700;cursor:pointer">👴 Perea</button>
+        <button onclick="setNotifFilter('roberto')"  id="nf-roberto"  style="padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);background:#fff;color:var(--muted);font-size:.72rem;font-weight:700;cursor:pointer">🦲 Roberto</button>
+      </div>
+
+      <div id="notifLista" style="overflow-y:auto;display:flex;flex-direction:column;gap:8px;max-height:calc(100vh - 320px)">
+        <div style="text-align:center;color:var(--muted2);padding:40px;font-size:.8rem">Sin mensajes</div>
+      </div>
+    </div>
+
+    <!-- DERECHA: redactar -->
+    <div style="background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;height:fit-content;position:sticky;top:0">
+      <div style="font-weight:800;font-size:.88rem;color:var(--primary2)">✏️ Nuevo mensaje</div>
+
+      <div>
+        <div style="font-size:.68rem;font-weight:700;color:var(--muted);margin-bottom:4px">DE</div>
+        <select id="notifDe" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:var(--font);background:#fff">
+          <option value="RECAMBIOS">📦 Recambios</option>
+          <option value="TONI">🧑 Toni Moya</option>
+          <option value="PEREA">👴 Perea</option>
+          <option value="ROBERTO">🦲 Roberto Carlos</option>
+        </select>
+      </div>
+
+      <div>
+        <div style="font-size:.68rem;font-weight:700;color:var(--muted);margin-bottom:4px">PARA</div>
+        <select id="notifPara" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:var(--font);background:#fff">
+          <option value="TODOS">📢 Todos</option>
+          <option value="RECAMBIOS">📦 Recambios</option>
+          <option value="TONI">🧑 Toni Moya</option>
+          <option value="PEREA">👴 Perea</option>
+          <option value="ROBERTO">🦲 Roberto Carlos</option>
+        </select>
+      </div>
+
+      <div>
+        <div style="font-size:.68rem;font-weight:700;color:var(--muted);margin-bottom:4px">ASUNTO</div>
+        <input id="notifAsunto" type="text" placeholder="Asunto del mensaje…" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:var(--font);box-sizing:border-box">
+      </div>
+
+      <div>
+        <div style="font-size:.68rem;font-weight:700;color:var(--muted);margin-bottom:4px">MENSAJE</div>
+        <textarea id="notifTexto" rows="5" placeholder="Escribe tu mensaje…" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:var(--font);resize:vertical;box-sizing:border-box"></textarea>
+      </div>
+
+      <!-- Adjunto rápido: archivo/medida -->
+      <div>
+        <div style="font-size:.68rem;font-weight:700;color:var(--muted);margin-bottom:4px">ADJUNTAR (opcional)</div>
+        <input id="notifAdjunto" type="text" placeholder="Nº archivo, medida, referencia…" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:var(--font);box-sizing:border-box">
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <select id="notifTipo" style="padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:.78rem;font-family:var(--font);background:#fff">
+          <option value="info">💬 Info</option>
+          <option value="urgente">🚨 Urgente</option>
+          <option value="consulta">❓ Consulta</option>
+          <option value="aviso">⚠️ Aviso</option>
+          <option value="ok">✅ Confirmado</option>
+        </select>
+        <button onclick="enviarNotif()" style="padding:8px;border-radius:8px;border:none;background:#1a1a2e;color:#fff;font-weight:700;font-size:.8rem;cursor:pointer">📤 Enviar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 </div><!-- /main -->
 
 <!-- PANEL LATERAL -->
@@ -793,12 +900,32 @@ function toast(msg, type='info', dur=3500){
 // ── PARSE MEDIDA INTUITIVA ──
 function parseMedida(raw){
   if(!raw) return '';
-  const s = raw.replace(/[\s]/g,'').toUpperCase();
-  // Already formatted: 205/55R16
-  if(/\d{3}\/\d{2}R\d{2}/.test(s)) return s;
-  // 2055516 → 205/55R16
-  const m = s.replace(/[^0-9]/g,'');
-  if(m.length===7) return m.slice(0,3)+'/'+m.slice(3,5)+'R'+m.slice(5,7);
+  const s = raw.replace(/\s/g,'').toUpperCase();
+
+  // Ya formateada: 205/55R16 o 205/55 R16
+  if(/\d{3}\/\d{2,3}[\s]?R\d{2}/.test(s)) return s.replace(/\s/g,'').replace(/R(\d{2})$/,'R$1');
+
+  // Solo dígitos — detectar longitud
+  const digits = s.replace(/[^0-9]/g,'');
+
+  // 7 dígitos: 2055516 → 205/55R16
+  if(digits.length===7) return digits.slice(0,3)+'/'+digits.slice(3,5)+'R'+digits.slice(5,7);
+
+  // 8 dígitos con perfil 3 cifras: 20555R16 → no, pero 20555016 → 205/550R16 (raros)
+  // 205/55R016 no existe; tratar como 205/50R16 si dígito 6=0
+  if(digits.length===8) return digits.slice(0,3)+'/'+digits.slice(3,5)+'R'+digits.slice(5,7);
+
+  // Formato compacto sin slash ni R: 20555016 o con letra suelta: 205R5516 → normalizar
+  // Intentar regex flexible: anchura(3) + perfil(2) + llanta(2) con cualquier separador
+  const m2 = s.match(/^(\d{3})[^0-9]?(\d{2,3})[^0-9]?[Rr]?(\d{2})$/);
+  if(m2) return m2[1]+'/'+m2[2]+'R'+m2[3];
+
+  // Parcial: solo anchura+perfil sin llanta (p.e. "20555") → buscar por prefijo
+  if(digits.length===5) return digits.slice(0,3)+'/'+digits.slice(3,5);
+
+  // Parcial: solo anchura (p.e. "205") → devolver tal cual para filtrado
+  if(digits.length===3) return digits;
+
   return s;
 }
 
@@ -863,6 +990,7 @@ function initFB(){
       renderHistorial(); renderAnalytics();
     });
     // Migrate localStorage apartados to Firebase on first load
+    initNotif();
     fbDb.ref(DB_A).once('value').then(snap=>{
       const v=snap.val();
       if(!v){
@@ -951,7 +1079,7 @@ function importarStockInicial(){
 // TABS
 // ══════════════════════════════════════════════════════════════════
 function setTab(t){
-  ['stock','campana','movimiento','analytics','historial','asesores','apartados','top10','tarifa'].forEach(x=>{
+  ['stock','campana','movimiento','analytics','historial','asesores','apartados','top10','tarifa','notif'].forEach(x=>{
     const p=document.getElementById('panel'+x.charAt(0).toUpperCase()+x.slice(1));
     const tb=document.getElementById('tab-'+x);
     if(p) p.style.display=x===t?'block':'none';
@@ -961,6 +1089,7 @@ function setTab(t){
   if(t==='asesores') initAsFilters();
   if(t==='top10') renderTop10();
   if(t==='tarifa') renderTarifaPanel();
+  if(t==='notif'){ renderNotif(); }
   if(t==='apartados') renderAptList();
   if(t==='campana')   renderCampana();
 }
@@ -1244,21 +1373,73 @@ function renderCampana(){
   const el=document.getElementById('campBody');
   if(!rows.length){el.innerHTML='<div style="color:var(--muted2);text-align:center;padding:30px">Sin resultados</div>';return;}
   const inStock=id=>stockData.find(s=>s.referencia===id);
-  el.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px">'+
-    rows.map(c=>{
+
+  // Ventas por medida (sin marca): DMS 2026 + ventas registradas en app
+  const vtasMedida={};
+  function normMed(m){ return (m||'').replace(/\s+/g,' ').trim(); }
+  Object.entries(VENTAS_2026).forEach(function([ref,uds]){
+    const s=stockData.find(x=>x.referencia===ref);
+    const t=T2026_MAP.get(ref);
+    const med=normMed(s?s.medida:(t?t[1]:''));
+    if(med) vtasMedida[med]=(vtasMedida[med]||0)+uds;
+  });
+  movData.filter(m=>m.tipo==='venta').forEach(function(m){
+    const med=normMed(m.medida);
+    if(med) vtasMedida[med]=(vtasMedida[med]||0)+(parseInt(m.cantidad)||1);
+  });
+
+  // Group campaign refs by medida, sort by neto asc (cheapest first)
+  const byMedida={};
+  rows.forEach(function(c){
+    const med=normMed(c.medida_full);
+    if(!byMedida[med]) byMedida[med]=[];
+    byMedida[med].push(c);
+  });
+  Object.values(byMedida).forEach(function(arr){ arr.sort(function(a,b){return a.neto_campana-b.neto_campana;}); });
+
+  // Sort medida groups by annual sales descending
+  const medGroups=Object.entries(byMedida).sort(function(a,b){
+    return ((vtasMedida[b[0]]||0)-(vtasMedida[a[0]]||0));
+  });
+
+  let out='';
+  medGroups.forEach(function([med,arr]){
+    const vtas=vtasMedida[med]||0;
+    const ritmoMes=vtas/12;
+    const recStock=Math.max(4,Math.ceil(ritmoMes*3));
+    const stockActual=arr.reduce(function(t,c){const s=inStock(c.referencia);return t+(s?s.stock:0);},0);
+    const colorV=vtas>=20?'#dc2626':vtas>=10?'#f59e0b':vtas>=4?'#059669':'#94a3b8';
+    const stockOk=stockActual>=recStock;
+
+    out+='<div style="margin-bottom:14px">'
+      +'<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#1a1a2e;border-radius:8px 8px 0 0;flex-wrap:wrap">'
+        +'<div style="font-weight:800;color:#fff;font-family:var(--mono);font-size:.88rem">'+esc(med)+'</div>'
+        +(vtas>0?'<span style="background:'+colorV+';color:#fff;border-radius:10px;padding:1px 8px;font-size:.65rem;font-weight:700">📊 '+vtas+' uds/año</span>':'<span style="background:#475569;color:#94a3b8;border-radius:10px;padding:1px 8px;font-size:.65rem">Sin datos ventas</span>')
+        +'<span style="background:#334155;color:'+(stockOk?'#86efac':'#fca5a5')+';border-radius:10px;padding:1px 8px;font-size:.65rem;font-weight:600">Stock: '+stockActual+' uds</span>'
+        +(vtas>0?'<span style="background:'+(stockOk?'#059669':'#dc2626')+';color:#fff;border-radius:10px;padding:1px 8px;font-size:.65rem;font-weight:700">💡 '+recStock+' uds recomendadas</span>':'')
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));border:1.5px solid #1a1a2e;border-top:none;border-radius:0 0 8px 8px;overflow:hidden">';
+
+    arr.forEach(function(c,idx){
       const s=inStock(c.referencia);
-      const stk=s?'<div style="font-size:.68rem;color:var(--green);margin-top:4px;font-weight:600">✓ En tu stock ('+s.stock+' uds) · '+esc(s.ubicacion||'')+'</div>':'';
-      return '<div class="camp-card">'
-        +'<div style="font-weight:700;font-size:.88rem;color:var(--primary2)">'+esc(c.medida_full)+'</div>'
-        +'<div class="camp-marca">'+esc(c.marca)+' · '+esc(c.dibujo)+'</div>'
-        +stk
-        +'<div style="display:flex;align-items:baseline;gap:8px;margin-top:8px">'
-          +'<div class="camp-neto">'+c.neto_campana.toFixed(2)+'€ neto</div>'
-          +'<div class="camp-pvp">PVP: '+c.pvp.toFixed(2)+'€</div>'
+      const esCheap=idx===0;
+      const dto=((c.pvp-c.neto_campana)/c.pvp*100).toFixed(0);
+      out+='<div style="padding:10px 12px;background:'+(esCheap?'#f0fdf4':'#fff')+';border-right:'+(idx<arr.length-1?'1px solid #e5e7eb':'none')+';border-bottom:1px solid #e5e7eb">'
+        +(esCheap?'<div style="font-size:.58rem;font-weight:700;color:#059669;margin-bottom:2px">⭐ MÁS ECONÓMICO</div>':'')
+        +'<div style="font-weight:700;font-size:.78rem;color:var(--primary2)">'+esc(c.marca)+'</div>'
+        +'<div style="font-size:.68rem;color:var(--muted);margin-bottom:5px">'+esc(c.dibujo)+'</div>'
+        +'<div style="display:flex;align-items:baseline;gap:5px;flex-wrap:wrap">'
+          +'<span style="font-weight:800;color:#059669;font-size:.92rem">'+c.neto_campana.toFixed(2)+'€</span>'
+          +'<span style="font-size:.63rem;color:var(--muted);text-decoration:line-through">'+c.pvp.toFixed(2)+'€</span>'
+          +'<span style="font-size:.6rem;color:#92400e;font-weight:700">-'+dto+'%</span>'
         +'</div>'
-        +(c.referencia?'<div style="font-size:.62rem;color:var(--muted);font-family:var(--mono);margin-top:4px">'+esc(c.referencia)+'</div>':'')
+        +(s?'<div style="font-size:.6rem;color:#059669;font-weight:700;margin-top:3px">✓ '+s.stock+' uds'+(s.ubicacion?' · '+esc(s.ubicacion):'')+' </div>':'<div style="font-size:.6rem;color:var(--muted);margin-top:3px">Sin stock</div>')
+        +'<div style="font-family:var(--mono);font-size:.57rem;color:var(--muted);margin-top:2px">'+esc(c.referencia)+'</div>'
       +'</div>';
-    }).join('')+'</div>';
+    });
+    out+='</div></div>';
+  });
+  el.innerHTML=out;
 }
 function importCampana(file){
   if(!file) return;
@@ -1489,10 +1670,24 @@ function exportStock(){
 // ANALYTICS
 // ══════════════════════════════════════════════════════════════════
 function renderAnalytics(){
-  const ventas = movData.filter(m=>m.tipo==='venta');
   const now = new Date();
   const mesActual = now.getFullYear()+'-'+(String(now.getMonth()+1).padStart(2,'0'));
   const mesAnterior = (()=>{const d=new Date(now);d.setMonth(d.getMonth()-1);return d.getFullYear()+'-'+(String(d.getMonth()+1).padStart(2,'0'));})();
+
+  // Read filter
+  const fMes  = (document.getElementById('anaFiltroMes')?.value  ||'').trim();
+  const fAnio = (document.getElementById('anaFiltroAnio')?.value ||'').trim();
+  const NM2=['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const labelEl=document.getElementById('anaFiltroLabel');
+  if(labelEl) labelEl.textContent = (fMes||fAnio) ? '📊 '+(fMes?NM2[parseInt(fMes)]+' ':'')+fAnio : '';
+
+  const ventasTodas = movData.filter(m=>m.tipo==='venta');
+  const ventas = ventasTodas.filter(m=>{
+    if(!m.fecha) return !fMes&&!fAnio;
+    if(fAnio && !m.fecha.startsWith(fAnio)) return false;
+    if(fMes  && m.fecha.slice(5,7)!==fMes)  return false;
+    return true;
+  });
   const AL={'TONI':'🧑 Toni','PEREA':'👴 Perea','ROBERTO':'🦲 Roberto','OTRO':'👤 Otro'};
 
   // ── HELPERS ────────────────────────────────────────────────────────────────
@@ -1735,22 +1930,14 @@ function renderAnalytics(){
                 <div style="font-size:.6rem;color:var(--muted)">margen bruto</div>
               </div>
             </div>
-            <div style="background:${d.inc200mes>0?'#fef3c7':'#f1f5f9'};border:1.5px solid ${d.inc200mes>0?'#f59e0b':'var(--border)'};border-radius:8px;padding:8px 10px">
-              <div style="font-size:.65rem;font-weight:700;color:${d.inc200mes>0?'#92400e':'var(--muted)'};margin-bottom:3px">⭐ INCENTIVO ESPECIAL (PVP ≥ 200€)</div>
+            <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:8px;padding:8px 10px">
+              <div style="font-size:.65rem;font-weight:700;color:#059669;margin-bottom:4px">🏷️ PVP ≥ 200€ · Este mes</div>
               <div style="display:flex;justify-content:space-between;align-items:center">
-                <div>
-                  <div style="font-size:.7rem;color:var(--muted)">Este mes</div>
-                  <div style="font-size:1.4rem;font-weight:800;color:${d.inc200mes>0?'#f59e0b':'var(--muted2)'}">${d.inc200mes} <span style="font-size:.7rem;font-weight:400">uds</span></div>
+                <div style="font-size:1.6rem;font-weight:800;color:${d.inc200mes>0?'#059669':'var(--muted2)'}">
+                  ${d.inc200mes} <span style="font-size:.75rem;font-weight:400;color:var(--muted)">uds</span>
                 </div>
-                <div style="text-align:right">
-                  <div style="font-size:.7rem;color:var(--muted)">Total historial</div>
-                  <div style="font-size:1rem;font-weight:700;color:var(--muted)">${d.inc200} uds</div>
-                </div>
+                ${d.udsVO>0?`<div style="background:#fee2e2;border-radius:5px;padding:3px 8px;font-size:.65rem;font-weight:700;color:#dc2626">🚗 ${d.udsVO} V.O.</div>`:''}
               </div>
-              ${d.udsVO>0?`<div style="margin-top:6px;padding:5px 8px;background:#fee2e2;border-radius:6px;display:flex;justify-content:space-between;align-items:center">
-                <span style="font-size:.65rem;color:#991b1b;font-weight:700">🚗 V.O. (excluido incentivo)</span>
-                <span style="font-size:.8rem;font-weight:700;color:#dc2626">${d.udsVO} uds</span>
-              </div>`:''}
             </div>
           </div>`;
         }).join('')}
@@ -2644,6 +2831,254 @@ function pedidoExportar(){
     +'</body></html>');
   w.document.close();
 }
+
+// ══════════════════════════════════════════════════════════════════
+// SISTEMA DE NOTIFICACIONES / COMUNICACIONES
+// ══════════════════════════════════════════════════════════════════
+const DB_NOTIF = 'motorsan_notif_v1';
+let notifData = [];
+let notifFilter = 'todos';
+let notifLastSeen = parseInt(localStorage.getItem('notifLastSeen')||'0');
+
+const NOTIF_USERS = {
+  RECAMBIOS: {label:'Recambios', icon:'📦', color:'#1a1a2e'},
+  TONI:      {label:'Toni Moya', icon:'🧑', color:'#0ea5e9'},
+  PEREA:     {label:'Perea',     icon:'👴', color:'#8b5cf6'},
+  ROBERTO:   {label:'Roberto',   icon:'🦲', color:'#059669'},
+  TODOS:     {label:'Todos',     icon:'📢', color:'#f59e0b'},
+};
+const NOTIF_TIPOS = {
+  info:     {icon:'💬', color:'#e0f2fe', border:'#7dd3fc'},
+  urgente:  {icon:'🚨', color:'#fef2f2', border:'#fca5a5'},
+  consulta: {icon:'❓', color:'#f0fdf4', border:'#86efac'},
+  aviso:    {icon:'⚠️', color:'#fffbeb', border:'#fcd34d'},
+  ok:       {icon:'✅', color:'#f0fdf4', border:'#6ee7b7'},
+};
+
+// ══════════════════════════════════════════════════════════════════
+// POPUP DE NOTIFICACIÓN NUEVA
+// ══════════════════════════════════════════════════════════════════
+let notifPopupQueue = [];
+let notifPopupShowing = false;
+let notifShownIds = new Set(JSON.parse(localStorage.getItem('notifShownPopups')||'[]'));
+
+function checkNewNotifs(prevIds){
+  // Called when Firebase delivers new data
+  const leidos = JSON.parse(localStorage.getItem('notifLeidos')||'{}');
+  const nuevos = notifData.filter(n => !leidos[n.id] && !notifShownIds.has(n.id));
+  nuevos.forEach(n => {
+    notifShownIds.add(n.id);
+    notifPopupQueue.push(n);
+  });
+  // Persist shown IDs (keep last 200)
+  const arr = [...notifShownIds].slice(-200);
+  localStorage.setItem('notifShownPopups', JSON.stringify(arr));
+  if(!notifPopupShowing && notifPopupQueue.length) showNextPopup();
+}
+
+function showNextPopup(){
+  if(!notifPopupQueue.length){ notifPopupShowing=false; return; }
+  notifPopupShowing = true;
+  const n = notifPopupQueue.shift();
+  const de = NOTIF_USERS[n.de]||{label:n.de,icon:'👤',color:'#1a1a2e'};
+  const para = NOTIF_USERS[n.para]||{label:n.para,icon:'📢',color:'#6b7280'};
+  const tipo = NOTIF_TIPOS[n.tipo]||NOTIF_TIPOS.info;
+  const fecha = new Date(n.ts).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+
+  // Build popup
+  const popup = document.createElement('div');
+  popup.id = 'notifPopup';
+  popup.style.cssText = `
+    position:fixed;top:20px;right:20px;z-index:9999;
+    width:min(380px,90vw);
+    background:#fff;
+    border:2px solid ${de.color};
+    border-radius:14px;
+    box-shadow:0 8px 40px rgba(0,0,0,.25);
+    overflow:hidden;
+    animation:notifSlideIn .35s cubic-bezier(.175,.885,.32,1.275);
+  `;
+  popup.innerHTML = `
+    <div style="background:${de.color};padding:10px 14px;display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:1.4rem">${de.icon}</span>
+        <div>
+          <div style="font-weight:700;color:#fff;font-size:.82rem">${esc(de.label)} → ${para.icon} ${esc(para.label)}</div>
+          <div style="font-size:.65rem;color:rgba(255,255,255,.7)">${tipo.icon} ${fecha}</div>
+        </div>
+      </div>
+      <button onclick="closeNotifPopup()" style="background:rgba(255,255,255,.2);border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;color:#fff;font-size:.9rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">✕</button>
+    </div>
+    <div style="padding:14px 16px;background:${tipo.color}">
+      ${n.asunto?`<div style="font-weight:700;font-size:.85rem;color:var(--primary2);margin-bottom:6px">${esc(n.asunto)}</div>`:''}
+      <div style="font-size:.8rem;color:#1f2937;line-height:1.5;max-height:80px;overflow:hidden">${esc(n.texto)}</div>
+      ${n.adjunto?`<div style="margin-top:6px;background:rgba(255,255,255,.7);border-radius:5px;padding:3px 8px;font-size:.68rem;font-family:monospace;color:var(--primary2)">📎 ${esc(n.adjunto)}</div>`:''}
+    </div>
+    <div style="padding:10px 14px;display:flex;gap:8px;background:#f8fafc;border-top:1px solid #e5e7eb">
+      <button onclick="marcarLeidoUno('${n.id}')" style="flex:1;padding:8px;border-radius:8px;border:none;background:#059669;color:#fff;font-weight:700;font-size:.78rem;cursor:pointer">✓ Marcar leído</button>
+      <button onclick="closeNotifPopup();setTab('notif')" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-size:.78rem;cursor:pointer;font-weight:600">Ver todos</button>
+    </div>
+  `;
+  document.body.appendChild(popup);
+
+  // Play soft notification sound
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const osc=ctx.createOscillator(); const gain=ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.setValueAtTime(880,ctx.currentTime);
+    osc.frequency.setValueAtTime(1100,ctx.currentTime+0.1);
+    gain.gain.setValueAtTime(0.15,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.4);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime+0.4);
+  }catch(e){}
+}
+
+function closeNotifPopup(){
+  const el = document.getElementById('notifPopup');
+  if(el){
+    el.style.animation='notifSlideOut .25s ease-in forwards';
+    setTimeout(()=>{ el.remove(); showNextPopup(); },250);
+  } else {
+    notifPopupShowing=false;
+  }
+}
+
+// CSS animations for popup
+(function(){
+  const style=document.createElement('style');
+  style.textContent=`
+    @keyframes notifSlideIn{from{opacity:0;transform:translateX(120%)}to{opacity:1;transform:translateX(0)}}
+    @keyframes notifSlideOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(120%)}}
+  `;
+  document.head.appendChild(style);
+})();
+
+
+function initNotif(){
+  if(!useFirebase||!fbDb) return;
+  let notifPrevIds = new Set();
+  fbDb.ref(DB_NOTIF).orderByChild('ts').limitToLast(100).on('value', snap=>{
+    const v=snap.val();
+    notifData = v ? Object.values(v).sort((a,b)=>b.ts-a.ts) : [];
+    updateNotifBadge();
+    if(document.getElementById('panelNotif')?.style.display!=='none') renderNotif();
+    checkNewNotifs(notifPrevIds);
+    notifPrevIds = new Set(notifData.map(n=>n.id));
+  });
+}
+
+function updateNotifBadge(){
+  const leidos = JSON.parse(localStorage.getItem('notifLeidos')||'{}');
+  const unread = notifData.filter(n=>!leidos[n.id]).length;
+  const badge = document.getElementById('notifBadge');
+  if(badge){ badge.style.display = unread>0?'inline':'none'; badge.textContent=unread; }
+  return unread;
+}
+
+function markNotifRead(){
+  // Only called explicitly — does NOT auto-mark on tab open
+  notifLastSeen = Date.now();
+  localStorage.setItem('notifLastSeen', notifLastSeen);
+  updateNotifBadge();
+  renderNotif();
+}
+function marcarLeidoUno(id){
+  // Store per-message read state in localStorage
+  const leidos = JSON.parse(localStorage.getItem('notifLeidos')||'{}');
+  leidos[id] = true;
+  localStorage.setItem('notifLeidos', JSON.stringify(leidos));
+  updateNotifBadge();
+  renderNotif();
+  closeNotifPopup();
+}
+function isLeido(id){
+  const leidos = JSON.parse(localStorage.getItem('notifLeidos')||'{}');
+  return !!leidos[id];
+}
+
+function setNotifFilter(f){
+  notifFilter=f;
+  ['todos','recambios','toni','perea','roberto'].forEach(x=>{
+    const btn=document.getElementById('nf-'+x);
+    if(!btn) return;
+    const active=x===f;
+    btn.style.background=active?'#1a1a2e':'#fff';
+    btn.style.color=active?'#fff':'var(--muted)';
+    btn.style.borderColor=active?'#1a1a2e':'var(--border)';
+  });
+  renderNotif();
+}
+
+function renderNotif(){
+  const el=document.getElementById('notifLista'); if(!el) return;
+  let rows = notifData;
+  if(notifFilter!=='todos'){
+    const f=notifFilter.toUpperCase();
+    rows=rows.filter(n=>n.de===f||n.para===f||n.para==='TODOS');
+  }
+  if(!rows.length){
+    el.innerHTML='<div style="text-align:center;color:var(--muted2);padding:40px;font-size:.8rem">Sin mensajes en este filtro</div>';
+    return;
+  }
+  el.innerHTML=rows.map(n=>{
+    const de=NOTIF_USERS[n.de]||{label:n.de,icon:'👤',color:'#6b7280'};
+    const para=NOTIF_USERS[n.para]||{label:n.para,icon:'📢',color:'#6b7280'};
+    const tipo=NOTIF_TIPOS[n.tipo]||NOTIF_TIPOS.info;
+    const isNew=!isLeido(n.id);
+    const fecha=new Date(n.ts);
+    const fStr=fecha.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit'})+' '+fecha.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+    return `<div style="background:${tipo.color};border:1.5px solid ${tipo.border};border-left:4px solid ${de.color};border-radius:10px;padding:12px 14px;position:relative">
+      ${isNew?'<div style="position:absolute;top:10px;right:10px;width:8px;height:8px;background:#ef4444;border-radius:50%"></div>':''}
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+        <span style="background:${de.color};color:#fff;border-radius:20px;padding:2px 10px;font-size:.68rem;font-weight:700">${de.icon} ${de.label}</span>
+        <span style="font-size:.65rem;color:var(--muted)">→</span>
+        <span style="background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:2px 10px;font-size:.68rem;font-weight:600">${para.icon} ${para.label}</span>
+        <span style="font-size:.62rem;color:var(--muted);margin-left:auto">${tipo.icon} ${fStr}</span>
+      </div>
+      ${n.asunto?`<div style="font-weight:700;font-size:.8rem;color:var(--primary2);margin-bottom:4px">${esc(n.asunto)}</div>`:''}
+      <div style="font-size:.78rem;color:#1f2937;line-height:1.5;white-space:pre-wrap">${esc(n.texto)}</div>
+      ${n.adjunto?`<div style="margin-top:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:4px 8px;font-size:.68rem;font-family:var(--mono);color:var(--primary2)">📎 ${esc(n.adjunto)}</div>`:''}
+      <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px">
+        ${isNew?`<button onclick="marcarLeidoUno('${n.id}')" style="background:#059669;border:none;border-radius:5px;padding:3px 10px;font-size:.65rem;cursor:pointer;color:#fff;font-weight:700">✓ Marcar leído</button>`:'<span style="font-size:.62rem;color:var(--muted)">✓ Leído</span>'}
+        <button onclick="borrarNotif('${n.id}')" style="background:rgba(255,255,255,.6);border:1px solid rgba(0,0,0,.1);border-radius:5px;padding:2px 8px;font-size:.62rem;cursor:pointer;color:var(--muted)">🗑 Borrar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function enviarNotif(){
+  const de     = document.getElementById('notifDe').value;
+  const para   = document.getElementById('notifPara').value;
+  const asunto = document.getElementById('notifAsunto').value.trim();
+  const texto  = document.getElementById('notifTexto').value.trim();
+  const adjunto= document.getElementById('notifAdjunto').value.trim();
+  const tipo   = document.getElementById('notifTipo').value;
+
+  if(!texto){ toast('Escribe el mensaje','error'); return; }
+
+  const msg = { id:uid(), de, para, asunto, texto, adjunto, tipo, ts:Date.now(), leido:false };
+
+  if(useFirebase&&fbDb){
+    fbDb.ref(DB_NOTIF+'/'+msg.id).set(msg);
+  } else {
+    notifData.unshift(msg);
+    renderNotif();
+  }
+  // Clear form
+  document.getElementById('notifAsunto').value='';
+  document.getElementById('notifTexto').value='';
+  document.getElementById('notifAdjunto').value='';
+  document.getElementById('notifTipo').value='info';
+  toast('📤 Mensaje enviado a '+( NOTIF_USERS[para]?.label||para),'success',3000);
+}
+
+function borrarNotif(id){
+  if(!confirm('¿Borrar este mensaje?')) return;
+  if(useFirebase&&fbDb) fbDb.ref(DB_NOTIF+'/'+id).remove();
+  else { notifData=notifData.filter(n=>n.id!==id); renderNotif(); }
+}
+
 
 function renderAptList(){
   const cont=document.getElementById('aptList');if(!cont)return;
