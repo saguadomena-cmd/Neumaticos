@@ -402,6 +402,33 @@ tr.out td{background:#fff5f5}
 <!-- ═══ ANALYTICS ═══ -->
 <div id="panelAnalytics" style="display:none">
 
+  <!-- SELECTOR VISTA: GENERAL | ASESOR PERSONAL -->
+  <div style="display:flex;gap:8px;margin-bottom:14px">
+    <button onclick="setAnaVista('general')" id="anaVista_general"
+      style="padding:9px 20px;border-radius:8px;border:2px solid #1a1a2e;background:#1a1a2e;color:#fff;font-weight:700;font-size:.8rem;cursor:pointer">
+      📊 Análisis General
+    </button>
+    <button onclick="setAnaVista('asesor')" id="anaVista_asesor"
+      style="padding:9px 20px;border-radius:8px;border:2px solid var(--border);background:#fff;color:var(--primary2);font-weight:700;font-size:.8rem;cursor:pointer">
+      👤 Mi Panel Personal
+    </button>
+  </div>
+
+  <!-- PANEL PERSONAL ASESOR (hidden by default) -->
+  <div id="anaAsesorPanel" style="display:none">
+    <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+      <button onclick="setAnaAsesor('TONI')"    id="aas_TONI"    style="flex:1;min-width:100px;padding:10px;border-radius:8px;border:2px solid var(--border);background:#fff;cursor:pointer;font-weight:700;font-size:.8rem">🧑 Toni</button>
+      <button onclick="setAnaAsesor('PEREA')"   id="aas_PEREA"   style="flex:1;min-width:100px;padding:10px;border-radius:8px;border:2px solid var(--border);background:#fff;cursor:pointer;font-weight:700;font-size:.8rem">👴 Perea</button>
+      <button onclick="setAnaAsesor('ROBERTO')" id="aas_ROBERTO" style="flex:1;min-width:100px;padding:10px;border-radius:8px;border:2px solid var(--border);background:#fff;cursor:pointer;font-weight:700;font-size:.8rem">🦲 Roberto</button>
+    </div>
+    <div id="anaAsesorContent">
+      <div style="text-align:center;color:var(--muted2);padding:40px;font-size:.85rem">Selecciona un asesor para ver su panel personal</div>
+    </div>
+  </div>
+
+  <!-- PANEL GENERAL (visible by default) -->
+  <div id="anaGeneralPanel">
+
   <!-- FILTRO MES/AÑO -->
   <div style="background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:10px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
     <div style="font-size:.72rem;font-weight:700;color:var(--muted)">📅 PERÍODO</div>
@@ -463,6 +490,8 @@ tr.out td{background:#fff5f5}
     <div class="card-hdr">📈 Estacionalidad y Previsión (próximos 30 días)</div>
     <div class="card-body" id="anaEstacionalidad"></div>
   </div>
+
+  </div><!-- /anaGeneralPanel -->
 
   <!-- GENERADOR DE PEDIDOS -->
   <div class="card" style="grid-column:1/-1">
@@ -573,58 +602,87 @@ tr.out td{background:#fff5f5}
       <div id="asResultados"></div>
       <div id="asPresupuesto" style="display:none;margin-top:16px">
         <div style="background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:2px solid #86efac;border-radius:var(--r);padding:18px">
+
+          <!-- Cabecera: medida + referencia -->
           <div style="margin-bottom:12px">
-            <div style="font-size:.82rem;font-weight:700;color:var(--green)">💶 Presupuesto — <span id="as_medida">—</span></div>
+            <div style="font-size:.85rem;font-weight:800;color:var(--primary2)">💶 Presupuesto — <span id="as_medida">—</span></div>
             <div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap">
-              <span style="font-family:var(--mono);font-size:.72rem;color:var(--muted);background:var(--s2);border-radius:4px;padding:1px 7px" id="as_referencia"></span>
+              <span style="font-family:var(--mono);font-size:.7rem;color:var(--muted);background:var(--s2);border-radius:4px;padding:1px 7px" id="as_referencia"></span>
               <span style="font-size:.72rem;font-weight:700;color:#059669" id="as_dnp"></span>
               <span id="as_camp_badge" style="display:none;background:#fef3c7;color:#92400e;border:1px solid #f59e0b;border-radius:10px;padding:1px 8px;font-size:.7rem;font-weight:700">🏷️ CAMPAÑA</span>
             </div>
           </div>
+
+          <!-- Selector cantidad -->
           <div style="display:flex;gap:8px;margin-bottom:14px">
-            <button onclick="setAsCant(2)" style="flex:1;padding:9px;border-radius:7px;border:1.5px solid #86efac;background:#f0fdf4;color:var(--green);font-weight:700;cursor:pointer;font-family:var(--font)">🔧 2 neumáticos</button>
-            <button onclick="setAsCant(4)" style="flex:1;padding:9px;border-radius:7px;border:1.5px solid #86efac;background:#f0fdf4;color:var(--green);font-weight:700;cursor:pointer;font-family:var(--font)">🔧🔧 4 neumáticos</button>
+            <button onclick="setAsCant(1)" id="as_btn1" style="flex:1;padding:9px;border-radius:7px;border:1.5px solid #86efac;background:#f0fdf4;color:var(--green);font-weight:700;cursor:pointer;font-family:var(--font);font-size:.78rem">1 ud</button>
+            <button onclick="setAsCant(2)" id="as_btn2" style="flex:1;padding:9px;border-radius:7px;border:1.5px solid #86efac;background:#f0fdf4;color:var(--green);font-weight:700;cursor:pointer;font-family:var(--font);font-size:.78rem">🔧 2 uds</button>
+            <button onclick="setAsCant(4)" id="as_btn4" style="flex:1;padding:9px;border-radius:7px;border:2px solid #059669;background:#059669;color:#fff;font-weight:700;cursor:pointer;font-family:var(--font);font-size:.78rem">🔧🔧 4 uds</button>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-            <div style="background:#fff;border-radius:7px;padding:12px;border:1px solid #86efac">
-              <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;color:var(--green);font-weight:600;margin-bottom:4px">PVP por unidad</div>
-              <div style="font-size:1.2rem;font-weight:700" id="as_pvp_unit">—</div>
+
+          <!-- Desglose líneas -->
+          <div style="background:#fff;border-radius:8px;border:1px solid #86efac;overflow:hidden;margin-bottom:10px">
+            <div style="background:#f0fdf4;padding:7px 12px;font-size:.65rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.06em">Desglose (sin IVA)</div>
+            <table style="width:100%;border-collapse:collapse;font-size:.78rem">
+              <tr style="border-bottom:1px solid #e5e7eb">
+                <td style="padding:8px 12px;color:var(--primary2)">🛞 Neumáticos (<span id="as_cant_lbl">4</span> × <span id="as_pvp_unit">—</span>)</td>
+                <td style="padding:8px 12px;text-align:right;font-weight:700" id="as_sub_neum">—</td>
+              </tr>
+              <tr style="border-bottom:1px solid #e5e7eb">
+                <td style="padding:8px 12px;color:var(--primary2)">🔧 Mano de obra (<span id="as_mo_h_lbl">—</span>h × 109€/h)</td>
+                <td style="padding:8px 12px;text-align:right;font-weight:700" id="as_sub_mo">—</td>
+              </tr>
+              <tr style="border-bottom:1px solid #e5e7eb">
+                <td style="padding:8px 12px;color:var(--primary2)">🔩 Válvulas (<span id="as_cant_lbl2">4</span> × 1.77€)</td>
+                <td style="padding:8px 12px;text-align:right;font-weight:700" id="as_sub_valv">—</td>
+              </tr>
+              <tr style="border-bottom:1px solid #e5e7eb">
+                <td style="padding:8px 12px;color:var(--primary2)">♻️ NFU — Residuos (<span id="as_cant_lbl3">4</span> × 1.80€)</td>
+                <td style="padding:8px 12px;text-align:right;font-weight:700" id="as_sub_nfu">—</td>
+              </tr>
+              <tr style="border-bottom:1px solid #e5e7eb">
+                <td style="padding:8px 12px;color:var(--muted);font-size:.72rem">% Dto. neumáticos</td>
+                <td style="padding:6px 12px;text-align:right">
+                  <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px">
+                    <input type="number" id="as_dto_neum" value="0" min="0" max="100" style="width:52px;padding:4px 6px;border-radius:5px;border:1.5px solid #86efac;font-family:var(--font);text-align:center;font-size:.75rem" oninput="calcAs()">
+                    <span style="font-size:.72rem;color:var(--green);font-weight:700">%</span>
+                    <span style="font-size:.75rem;color:#dc2626;font-weight:700" id="as_dto_neum_lbl"></span>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:8px 12px;color:var(--muted);font-size:.72rem">% Dto. mano de obra</td>
+                <td style="padding:6px 12px;text-align:right">
+                  <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px">
+                    <input type="number" id="as_dto_mo" value="0" min="0" max="100" style="width:52px;padding:4px 6px;border-radius:5px;border:1.5px solid #86efac;font-family:var(--font);text-align:center;font-size:.75rem" oninput="calcAs()">
+                    <span style="font-size:.72rem;color:var(--green);font-weight:700">%</span>
+                    <span style="font-size:.75rem;color:#dc2626;font-weight:700" id="as_dto_mo_lbl"></span>
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- Totales sin/con IVA -->
+          <div style="background:#fff;border-radius:8px;border:1px solid #86efac;overflow:hidden;margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid #e5e7eb">
+              <span style="font-size:.78rem;color:var(--muted)">Base imponible (sin IVA)</span>
+              <span style="font-weight:700;font-size:.92rem" id="as_base">—</span>
             </div>
-            <div style="background:#fff;border-radius:7px;padding:12px;border:1px solid #86efac">
-              <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;color:var(--green);font-weight:600;margin-bottom:4px">Cantidad</div>
-              <div style="font-size:1.2rem;font-weight:700" id="as_cant_lbl">4 uds</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid #e5e7eb">
+              <span style="font-size:.78rem;color:var(--muted)">IVA 21%</span>
+              <span style="font-weight:600;font-size:.85rem;color:#6b7280" id="as_iva">—</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:linear-gradient(135deg,#059669,#047857)">
+              <span style="font-size:.82rem;font-weight:700;color:#fff">TOTAL CON IVA</span>
+              <span style="font-size:1.5rem;font-weight:800;color:#fff" id="as_total">—</span>
             </div>
           </div>
-          <div style="background:#fff;border-radius:7px;padding:12px 16px;margin-bottom:10px;border:1px solid #86efac">
-            <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;margin-bottom:6px">Descuentos</div>
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-              <span style="flex:1;font-size:.78rem">% Dto. neumáticos</span>
-              <input type="number" id="as_dto_neum" value="0" min="0" max="100" style="width:60px;padding:5px 8px;border-radius:5px;border:1.5px solid #86efac;font-family:var(--font);text-align:center" oninput="calcAs()">
-              <span style="font-size:.78rem;color:var(--green);font-weight:600">%</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:10px">
-              <span style="flex:1;font-size:.78rem">% Dto. mano de obra</span>
-              <input type="number" id="as_dto_mo" value="0" min="0" max="100" style="width:60px;padding:5px 8px;border-radius:5px;border:1.5px solid #86efac;font-family:var(--font);text-align:center" oninput="calcAs()">
-              <span style="font-size:.78rem;color:var(--green);font-weight:600">%</span>
-            </div>
-          </div>
-          <div style="background:linear-gradient(135deg,var(--green),#047857);color:#fff;border-radius:8px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center">
-            <div>
-              <div style="font-size:.72rem;font-weight:600;opacity:.85">TOTAL PRESUPUESTO</div>
-              <div style="font-size:.65rem;opacity:.6">MO: <span id="as_mo_lbl">—</span></div>
-            </div>
-            <div style="font-size:1.5rem;font-weight:700" id="as_total">—</div>
-          </div>
-          <div style="display:flex;gap:8px;margin-top:10px">
-            <button onclick="resetAs()" style="flex:1;padding:8px;border-radius:7px;border:1px solid #86efac;background:#fff;color:var(--muted);font-family:var(--font);cursor:pointer">🔄 Nuevo</button>
-            <button onclick="apartarDesdeAs()" style="flex:1;padding:8px;border-radius:7px;border:none;background:var(--green);color:#fff;font-family:var(--font);font-weight:600;cursor:pointer">📌 Apartar</button>
-          </div>
-        </div>
-        <div style="background:#fff;border-radius:var(--r);border:1px solid var(--border);padding:14px;margin-top:10px">
-          <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;margin-bottom:10px">⚙️ Tarifas M.O.</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div><div style="font-size:.7rem;color:var(--muted);margin-bottom:4px">🔧 2 neumáticos (€)</div><input type="number" id="cfg_mo2" value="40" style="width:100%;padding:7px;border-radius:6px;border:1.5px solid var(--border2);font-family:var(--font)" oninput="saveAsCfg()"></div>
-            <div><div style="font-size:.7rem;color:var(--muted);margin-bottom:4px">🔧🔧 4 neumáticos (€)</div><input type="number" id="cfg_mo4" value="70" style="width:100%;padding:7px;border-radius:6px;border:1.5px solid var(--border2);font-family:var(--font)" oninput="saveAsCfg()"></div>
+
+          <div style="display:flex;gap:8px">
+            <button onclick="resetAs()" style="flex:1;padding:9px;border-radius:7px;border:1px solid #86efac;background:#fff;color:var(--muted);font-family:var(--font);cursor:pointer;font-size:.8rem">🔄 Nuevo</button>
+            <button onclick="imprimirPresupuesto()" style="flex:1;padding:9px;border-radius:7px;border:none;background:#1a1a2e;color:#fff;font-family:var(--font);font-weight:700;cursor:pointer;font-size:.8rem">🖨️ Imprimir</button>
+            <button onclick="apartarDesdeAs()" style="flex:1;padding:9px;border-radius:7px;border:none;background:var(--green);color:#fff;font-family:var(--font);font-weight:600;cursor:pointer;font-size:.8rem">📌 Apartar</button>
           </div>
         </div>
       </div>
@@ -881,7 +939,7 @@ let stSort = 'medida', stDir = 1;
 let movTipo = 'compra';
 let asRef = null, asCant = 4;
 let panelAction = null, panelStockId = null;
-let asCfg = {mo2:40, mo4:70};
+let asCfg = {mo2:40, mo4:70}; // legacy, MO now calculated from MO_HORA * MO_UT_NEUM
 
 // ══════════════════════════════════════════════════════════════════
 // UTILS
@@ -1669,6 +1727,265 @@ function exportStock(){
 // ══════════════════════════════════════════════════════════════════
 // ANALYTICS
 // ══════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
+// PANEL PERSONAL DE ASESOR
+// ══════════════════════════════════════════════════════════════════
+let anaVista = 'general';
+let anaAsesorActual = null;
+
+function setAnaVista(v){
+  anaVista = v;
+  const isAsesor = v === 'asesor';
+  const btnG = document.getElementById('anaVista_general');
+  const btnA = document.getElementById('anaVista_asesor');
+  const panG = document.getElementById('anaGeneralPanel');
+  const panA = document.getElementById('anaAsesorPanel');
+  if(btnG){ btnG.style.background=isAsesor?'#fff':'#1a1a2e'; btnG.style.color=isAsesor?'var(--primary2)':'#fff'; btnG.style.borderColor=isAsesor?'var(--border)':'#1a1a2e'; }
+  if(btnA){ btnA.style.background=isAsesor?'#1a1a2e':'#fff'; btnA.style.color=isAsesor?'#fff':'var(--primary2)'; btnA.style.borderColor=isAsesor?'#1a1a2e':'var(--border)'; }
+  if(panG) panG.style.display = isAsesor?'none':'block';
+  if(panA) panA.style.display = isAsesor?'block':'none';
+  if(isAsesor && anaAsesorActual) renderAsesorPanel(anaAsesorActual);
+}
+
+function setAnaAsesor(key){
+  anaAsesorActual = key;
+  ['TONI','PEREA','ROBERTO'].forEach(k=>{
+    const btn=document.getElementById('aas_'+k);
+    if(!btn) return;
+    const AL2={'TONI':'🧑 Toni','PEREA':'👴 Perea','ROBERTO':'🦲 Roberto'};
+    const active=k===key;
+    btn.style.background=active?'#1a1a2e':'#fff';
+    btn.style.color=active?'#fff':'var(--primary2)';
+    btn.style.borderColor=active?'#1a1a2e':'var(--border)';
+  });
+  renderAsesorPanel(key);
+}
+
+function renderAsesorPanel(key){
+  const cont = document.getElementById('anaAsesorContent');
+  if(!cont) return;
+  const AL = {'TONI':'🧑 Toni Moya','PEREA':'👴 Perea','ROBERTO':'🦲 Roberto Carlos'};
+  const nombre = AL[key]||key;
+  const NM = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const now = new Date();
+  const mesActual = now.getFullYear()+'-'+(String(now.getMonth()+1).padStart(2,'0'));
+
+  const ventas = movData.filter(m=>m.tipo==='venta'&&m.asesor===key);
+  const ventasMes = ventas.filter(m=>m.fecha&&m.fecha.startsWith(mesActual));
+
+  if(!ventas.length){
+    cont.innerHTML=`<div style="text-align:center;color:var(--muted2);padding:40px">
+      <div style="font-size:2rem;margin-bottom:8px">${nombre}</div>
+      <div>Sin ventas registradas aún</div>
+    </div>`;
+    return;
+  }
+
+  // ── Calcular métricas ──────────────────────────────────────────
+  const totalUds  = ventas.reduce((t,m)=>t+(parseInt(m.cantidad)||1),0);
+  const totalIng  = ventas.reduce((t,m)=>t+((m.pvp||0)*(parseInt(m.cantidad)||1)),0);
+  const totalMrg  = ventas.reduce((t,m)=>t+((m.pvp-(m.coste||0))*(parseInt(m.cantidad)||1)),0);
+  const udsMes    = ventasMes.reduce((t,m)=>t+(parseInt(m.cantidad)||1),0);
+  const ingMes    = ventasMes.reduce((t,m)=>t+((m.pvp||0)*(parseInt(m.cantidad)||1)),0);
+  const ticketMed = ventas.length>0?(totalIng/ventas.length).toFixed(0):0;
+  const inc200    = ventas.filter(m=>(m.pvp||0)>=200).reduce((t,m)=>t+(parseInt(m.cantidad)||1),0);
+  const inc200mes = ventasMes.filter(m=>(m.pvp||0)>=200).reduce((t,m)=>t+(parseInt(m.cantidad)||1),0);
+
+  // Top medidas
+  const byMed={};
+  ventas.forEach(m=>{const k=m.medida||'S/M';byMed[k]=(byMed[k]||0)+(parseInt(m.cantidad)||1);});
+  const topMed=Object.entries(byMed).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+  // Top marcas
+  const byMrk={};
+  ventas.forEach(m=>{const k=m.marca||'S/M';byMrk[k]=(byMrk[k]||0)+(parseInt(m.cantidad)||1);});
+  const topMrk=Object.entries(byMrk).sort((a,b)=>b[1]-a[1]).slice(0,3);
+
+  // Mejor mes
+  const byMes={};
+  ventas.forEach(m=>{if(!m.fecha)return;const k=m.fecha.slice(0,7);byMes[k]=(byMes[k]||0)+(parseInt(m.cantidad)||1);});
+  const mesMeses=Object.entries(byMes).sort((a,b)=>b[1]-a[1]);
+  const mejorMes=mesMeses[0]?mesMeses[0]:[null,0];
+  const mejorMesLabel=mejorMes[0]?NM[parseInt(mejorMes[0].slice(5,7))]+' '+mejorMes[0].slice(2,4):'—';
+
+  // Evolución mensual (últimos 6 meses)
+  const evol=[];
+  for(let i=5;i>=0;i--){
+    const d=new Date(now); d.setMonth(d.getMonth()-i);
+    const k=d.getFullYear()+'-'+(String(d.getMonth()+1).padStart(2,'0'));
+    evol.push({mes:NM[d.getMonth()+1]+' '+String(d.getFullYear()).slice(2), uds:byMes[k]||0});
+  }
+  const maxEvol=Math.max(...evol.map(e=>e.uds),1);
+
+  cont.innerHTML=`
+  <!-- NOMBRE ASESOR -->
+  <div style="background:#1a1a2e;border-radius:12px;padding:18px 20px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+    <div>
+      <div style="font-size:1.4rem;font-weight:800;color:#fff">${nombre}</div>
+      <div style="font-size:.72rem;color:rgba(255,255,255,.6);margin-top:2px">Panel personal · ${ventas.length} operaciones registradas</div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div style="text-align:center;background:rgba(255,255,255,.1);border-radius:8px;padding:8px 14px">
+        <div style="font-size:1.4rem;font-weight:800;color:#4ade80">${totalUds}</div>
+        <div style="font-size:.6rem;color:rgba(255,255,255,.6)">uds total</div>
+      </div>
+      <div style="text-align:center;background:rgba(255,255,255,.1);border-radius:8px;padding:8px 14px">
+        <div style="font-size:1.4rem;font-weight:800;color:#60a5fa">${udsMes}</div>
+        <div style="font-size:.6rem;color:rgba(255,255,255,.6)">uds este mes</div>
+      </div>
+      <div style="text-align:center;background:rgba(255,255,255,.1);border-radius:8px;padding:8px 14px">
+        <div style="font-size:1.2rem;font-weight:800;color:#fbbf24">${totalIng.toFixed(0)}€</div>
+        <div style="font-size:.6rem;color:rgba(255,255,255,.6)">ingresos total</div>
+      </div>
+      <div style="text-align:center;background:${inc200mes>0?'rgba(245,158,11,.3)':'rgba(255,255,255,.1)'};border-radius:8px;padding:8px 14px;border:${inc200mes>0?'1px solid #f59e0b':'none'}">
+        <div style="font-size:1.4rem;font-weight:800;color:${inc200mes>0?'#fbbf24':'rgba(255,255,255,.4)'}">${inc200mes}</div>
+        <div style="font-size:.6rem;color:rgba(255,255,255,.6)">≥200€ este mes</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+
+    <!-- Top medidas -->
+    <div style="background:#fff;border-radius:10px;padding:14px;border:1.5px solid var(--border)">
+      <div style="font-weight:700;font-size:.85rem;color:var(--primary2);margin-bottom:10px">🏆 Tus medidas más vendidas</div>
+      ${topMed.map(([k,v],i)=>`
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+          <div style="font-weight:800;font-size:.78rem;color:${['#f59e0b','#94a3b8','#cd7f32','#6b7280','#6b7280'][i]};min-width:18px">${i+1}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-family:var(--mono);font-size:.72rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(k)}</div>
+            <div style="background:var(--s2);border-radius:3px;height:5px;margin-top:2px"><div style="background:#6366f1;height:100%;border-radius:3px;width:${Math.round(v/topMed[0][1]*100)}%"></div></div>
+          </div>
+          <div style="font-weight:700;font-size:.8rem;color:#6366f1">${v} uds</div>
+        </div>`).join('')}
+    </div>
+
+    <!-- Evolución mensual -->
+    <div style="background:#fff;border-radius:10px;padding:14px;border:1.5px solid var(--border)">
+      <div style="font-weight:700;font-size:.85rem;color:var(--primary2);margin-bottom:10px">📅 Evolución últimos 6 meses</div>
+      <div style="display:flex;align-items:flex-end;gap:5px;height:70px">
+        ${evol.map(e=>{
+          const h=Math.max(4,Math.round(e.uds/maxEvol*62));
+          const isNow=e.mes===NM[now.getMonth()+1]+' '+String(now.getFullYear()).slice(2);
+          return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+            <div style="font-size:.55rem;font-weight:700;color:${isNow?'#6366f1':'var(--muted)'}">${e.uds||''}</div>
+            <div style="width:100%;background:${isNow?'#6366f1':'#c7d2fe'};border-radius:3px 3px 0 0;height:${h}px"></div>
+            <div style="font-size:.52rem;color:var(--muted);white-space:nowrap">${e.mes}</div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div style="margin-top:10px;padding:7px 10px;background:#f0fdf4;border-radius:7px;font-size:.7rem">
+        🏅 Mejor mes: <strong>${mejorMesLabel}</strong> — ${mejorMes[1]} uds
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats adicionales -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:14px">
+    <div style="background:#fff;border-radius:8px;padding:11px;border:1.5px solid var(--border);text-align:center">
+      <div style="font-size:1.2rem;font-weight:800;color:#7c3aed">${ticketMed}€</div>
+      <div style="font-size:.62rem;color:var(--muted)">ticket medio</div>
+    </div>
+    <div style="background:#fff;border-radius:8px;padding:11px;border:1.5px solid var(--border);text-align:center">
+      <div style="font-size:1.2rem;font-weight:800;color:#059669">${totalMrg>0?totalMrg.toFixed(0)+'€':'S/D'}</div>
+      <div style="font-size:.62rem;color:var(--muted)">margen bruto</div>
+    </div>
+    <div style="background:#fff;border-radius:8px;padding:11px;border:1.5px solid var(--border);text-align:center">
+      <div style="font-size:1.2rem;font-weight:800;color:#0ea5e9">${ingMes.toFixed(0)}€</div>
+      <div style="font-size:.62rem;color:var(--muted)">ingresos mes</div>
+    </div>
+    <div style="background:#fff;border-radius:8px;padding:11px;border:1.5px solid var(--border);text-align:center">
+      <div style="font-size:1.2rem;font-weight:800;color:#f59e0b">${topMrk[0]?esc(topMrk[0][0]):'—'}</div>
+      <div style="font-size:.62rem;color:var(--muted)">marca favorita</div>
+    </div>
+  </div>
+
+  <!-- Consejos IA -->
+  <div style="background:#fff;border-radius:10px;border:1.5px solid #c4b5fd;padding:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-weight:700;font-size:.88rem;color:#6d28d9">🤖 Sergio, aconséjame</div>
+      <button onclick="generarConsejosIA('${key}')" id="btn_consejos_${key}"
+        style="padding:6px 14px;border-radius:7px;border:none;background:#7c3aed;color:#fff;font-weight:700;font-size:.72rem;cursor:pointer">
+        ✨ Sergio, aconséjame
+      </button>
+    </div>
+    <div id="consejos_${key}" style="font-size:.78rem;color:var(--muted);line-height:1.6">
+      Pulsa el botón para que Sergio te dé sus puticonsejos personalizados basados en tus estadísticas.
+    </div>
+  </div>`;
+}
+
+async function generarConsejosIA(key){
+  const btn = document.getElementById('btn_consejos_'+key);
+  const cont = document.getElementById('consejos_'+key);
+  if(!btn||!cont) return;
+
+  btn.disabled=true; btn.textContent='⏳ Analizando...';
+  cont.innerHTML='<div style="color:#7c3aed;font-size:.75rem">Analizando tus estadísticas...</div>';
+
+  const AL = {'TONI':'Toni Moya','PEREA':'Perea','ROBERTO':'Roberto Carlos'};
+  const nombre = AL[key]||key;
+  const ventas = movData.filter(m=>m.tipo==='venta'&&m.asesor===key);
+  const now = new Date();
+  const mesActual = now.getFullYear()+'-'+(String(now.getMonth()+1).padStart(2,'0'));
+
+  const totalUds = ventas.reduce((t,m)=>t+(parseInt(m.cantidad)||1),0);
+  const udsMes   = ventas.filter(m=>m.fecha&&m.fecha.startsWith(mesActual)).reduce((t,m)=>t+(parseInt(m.cantidad)||1),0);
+  const inc200   = ventas.filter(m=>(m.pvp||0)>=200).reduce((t,m)=>t+(parseInt(m.cantidad)||1),0);
+
+  const byMed={};
+  ventas.forEach(m=>{const k=m.medida||'S/M';byMed[k]=(byMed[k]||0)+(parseInt(m.cantidad)||1);});
+  const topMed=Object.entries(byMed).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>k+' ('+v+' uds)').join(', ');
+
+  const byMes={};
+  ventas.forEach(m=>{if(!m.fecha)return;const k=m.fecha.slice(0,7);byMes[k]=(byMrk2=byMes[k]||0)+( parseInt(m.cantidad)||1);byMes[k]=byMrk2+(parseInt(m.cantidad)||1);});
+  const NM2=['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const mejorMes=Object.entries(byMes).sort((a,b)=>b[1]-a[1])[0];
+  const mejorMesLabel=mejorMes?NM2[parseInt(mejorMes[0].slice(5,7))]+' '+mejorMes[0].slice(2,4):' sin datos';
+
+  const prompt=`Eres un coach de ventas para un asesor de neumáticos en un concesionario Volkswagen Group (Audi, Skoda, VW) en Alcalá de Henares (España). Tu tono es directo, motivador y práctico.
+
+Datos del asesor "${nombre}":
+- Total unidades vendidas: ${totalUds}
+- Unidades este mes: ${udsMes}
+- Neumáticos ≥200€ PVP (incentivo especial): ${inc200} uds
+- Top 3 medidas más vendidas: ${topMed||'sin datos'}
+- Mejor mes histórico: ${mejorMesLabel}
+- Contexto: hay una campaña activa de verano 2026 con 42 referencias hasta el 31 de julio.
+
+Genera exactamente 4 consejos personalizados y concisos para ${nombre}:
+1. Un reconocimiento o motivación basado en su mejor dato
+2. Una oportunidad de mejora concreta basada en sus estadísticas
+3. Un consejo táctico para aprovechar la campaña de verano actual
+4. Un objetivo específico y alcanzable para este mes
+
+Formato: devuelve los 4 consejos en HTML usando este formato exacto para cada uno:
+<p><strong>Puticonsejo 1:</strong> [texto del consejo con emoji relevante al inicio]</p>
+<p><strong>Puticonsejo 2:</strong> [texto]</p>
+<p><strong>Puticonsejo 3:</strong> [texto]</p>
+<p><strong>Puticonsejo 4:</strong> [texto]</p>
+Sin más texto ni explicaciones. Máximo 2 frases por consejo. Directo y sin rodeos.`;
+
+  try{
+    const resp = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:600,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    const data = await resp.json();
+    const text = data.content?.find(c=>c.type==='text')?.text||'Sin respuesta';
+    cont.innerHTML=`<div style="line-height:1.7;color:#374151">${text}</div>`;
+  }catch(e){
+    cont.innerHTML='<div style="color:#dc2626;font-size:.75rem">Error al conectar con el asistente. Inténtalo de nuevo.</div>';
+  }
+  btn.disabled=false; btn.textContent='✨ Volver a preguntar';
+}
+
+
 function renderAnalytics(){
   const now = new Date();
   const mesActual = now.getFullYear()+'-'+(String(now.getMonth()+1).padStart(2,'0'));
@@ -2322,31 +2639,123 @@ function selAsTarifa(t){
 
 function selAs(id){ const s=stockData.find(x=>x.id===id); if(!s)return; asRef=s; setAsCant(4); document.getElementById('asPresupuesto').style.display='block'; document.getElementById('asPresupuesto').scrollIntoView({behavior:'smooth',block:'nearest'}); }
 function selAsCamp(c){ asRef={medida:c.medida_full,marca:c.marca,pvp:c.pvp,coste:c.neto_campana,referencia:c.referencia,dibujo:c.dibujo||'',stock:0,inCampaña:true,netoCampaña:c.neto_campana,id:'camp_'+c.referencia}; setAsCant(4); document.getElementById('asPresupuesto').style.display='block'; document.getElementById('asPresupuesto').scrollIntoView({behavior:'smooth',block:'nearest'}); }
-function setAsCant(n){ asCant=n; calcAs(); }
+function setAsCant(n){ asCant=n; calcAs(); setAsCantBtn(n); }
+// Constantes presupuesto
+const MO_HORA     = 109.00;  // €/h sin IVA
+const MO_UT_NEUM  = 0.40;    // unidades de tiempo por neumático (0.4h cada uno)
+const VALVULA_PVP = 1.77;    // €/ud sin IVA
+const NFU_PVP     = 1.80;    // €/ud sin IVA (impuesto residuos)
+const IVA         = 0.21;
+
+function setAsCantBtn(n){
+  [1,2,4].forEach(x=>{
+    const btn=document.getElementById('as_btn'+x);
+    if(!btn) return;
+    const active=x===n;
+    btn.style.background=active?'#059669':'#f0fdf4';
+    btn.style.color=active?'#fff':'var(--green)';
+    btn.style.borderColor=active?'#059669':'#86efac';
+    btn.style.borderWidth=active?'2px':'1.5px';
+  });
+}
+
 function calcAs(){
-  if(!asRef)return;
-  const cant=asCant;
-  const pvp=parseFloat(asRef.pvp)||0;
-  const dtoN=parseFloat(document.getElementById('as_dto_neum').value)||0;
-  const dtoM=parseFloat(document.getElementById('as_dto_mo').value)||0;
-  const mo=cant===2?asCfg.mo2:asCfg.mo4;
-  const subN=pvp*cant; const descN=subN*dtoN/100;
-  const subM=mo; const descM=subM*dtoM/100;
-  const total=(subN-descN)+(subM-descM);
+  if(!asRef) return;
+  const cant  = asCant;
+  const pvp   = parseFloat(asRef.pvp)||0;
+  const dtoN  = parseFloat(document.getElementById('as_dto_neum').value)||0;
+  const dtoM  = parseFloat(document.getElementById('as_dto_mo').value)||0;
+
+  // Mano de obra: 0.4 h por neumático × 109 €/h
+  const horasMO   = cant * MO_UT_NEUM;
+  const subMO_raw = horasMO * MO_HORA;
+  const descMO    = subMO_raw * dtoM / 100;
+  const subMO     = subMO_raw - descMO;
+
+  // Neumáticos
+  const subNeum_raw = pvp * cant;
+  const descNeum    = subNeum_raw * dtoN / 100;
+  const subNeum     = subNeum_raw - descNeum;
+
+  // Válvulas y NFU
+  const subValv = VALVULA_PVP * cant;
+  const subNFU  = NFU_PVP * cant;
+
+  // Base imponible
+  const base  = subNeum + subMO + subValv + subNFU;
+  const iva   = base * IVA;
+  const total = base + iva;
+
+  // ── Update DOM ──
   document.getElementById('as_medida').textContent=asRef.medida+' · '+asRef.marca+(asRef.dibujo?' · '+asRef.dibujo:'');
-  // Show referencia
   const refEl=document.getElementById('as_referencia');
   if(refEl) refEl.textContent=asRef.referencia||'';
-  // Show DNP/coste neto
   const dnpEl=document.getElementById('as_dnp');
   if(dnpEl){ const coste=asRef.coste||asRef.netoCampaña||0; dnpEl.textContent=coste>0?'DNP: '+coste.toFixed(2)+'€':''; }
-  // Campaña badge
   const campBadge=document.getElementById('as_camp_badge');
   if(campBadge) campBadge.style.display=asRef.inCampaña?'inline-flex':'none';
-  document.getElementById('as_pvp_unit').textContent=pvp.toFixed(2)+'€';
-  document.getElementById('as_cant_lbl').textContent=cant+' ud'+(cant>1?'s':'');
-  document.getElementById('as_mo_lbl').textContent=(subM-descM).toFixed(2)+'€';
-  document.getElementById('as_total').textContent=total.toFixed(2)+'€';
+
+  document.getElementById('as_pvp_unit').textContent = pvp.toFixed(2)+'€';
+  ['as_cant_lbl','as_cant_lbl2','as_cant_lbl3'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.textContent=cant;
+  });
+  document.getElementById('as_mo_h_lbl').textContent  = horasMO.toFixed(1);
+  document.getElementById('as_sub_neum').textContent   = subNeum.toFixed(2)+'€'+(dtoN>0?' (-'+dtoN+'%)':'');
+  document.getElementById('as_sub_mo').textContent     = subMO.toFixed(2)+'€'+(dtoM>0?' (-'+dtoM+'%)':'');
+  document.getElementById('as_sub_valv').textContent   = subValv.toFixed(2)+'€';
+  document.getElementById('as_sub_nfu').textContent    = subNFU.toFixed(2)+'€';
+  if(dtoN>0) document.getElementById('as_dto_neum_lbl').textContent='-'+descNeum.toFixed(2)+'€'; else document.getElementById('as_dto_neum_lbl').textContent='';
+  if(dtoM>0) document.getElementById('as_dto_mo_lbl').textContent='-'+descMO.toFixed(2)+'€'; else document.getElementById('as_dto_mo_lbl').textContent='';
+  document.getElementById('as_base').textContent  = base.toFixed(2)+'€';
+  document.getElementById('as_iva').textContent   = iva.toFixed(2)+'€';
+  document.getElementById('as_total').textContent = total.toFixed(2)+'€';
+
+  setAsCantBtn(cant);
+}
+function imprimirPresupuesto(){
+  if(!asRef) return;
+  const cant=asCant, pvp=parseFloat(asRef.pvp)||0;
+  const dtoN=parseFloat(document.getElementById('as_dto_neum').value)||0;
+  const dtoM=parseFloat(document.getElementById('as_dto_mo').value)||0;
+  const horasMO=cant*MO_UT_NEUM;
+  const subMO=((horasMO*MO_HORA)*(1-dtoM/100));
+  const subNeum=(pvp*cant*(1-dtoN/100));
+  const subValv=VALVULA_PVP*cant;
+  const subNFU=NFU_PVP*cant;
+  const base=subNeum+subMO+subValv+subNFU;
+  const iva=base*IVA; const total=base+iva;
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><title>Presupuesto Neumáticos MOTORSAN</title>
+  <style>body{font-family:Arial,sans-serif;font-size:13px;margin:28px;color:#111}
+  h2{font-size:15px;border-bottom:2px solid #1a1a2e;padding-bottom:6px;margin-bottom:16px;color:#1a1a2e}
+  table{width:100%;border-collapse:collapse;margin-bottom:14px}
+  td,th{padding:7px 10px;text-align:left;border-bottom:1px solid #e5e7eb}
+  th{background:#f1f5f9;font-weight:700;font-size:12px}
+  .r{text-align:right}.tot{background:#1a1a2e;color:#fff;font-weight:700;font-size:14px}
+  .sub{background:#f0fdf4;font-weight:700}.grey{color:#6b7280}
+  .footer{text-align:center;font-size:10px;color:#888;margin-top:20px}
+  @media print{body{margin:10px}}</style></head><body>
+  <h2>PRESUPUESTO NEUMÁTICOS — MOTORSAN ALCALÁ DE HENARES</h2>
+  <div style="font-size:12px;margin-bottom:14px;color:#555">
+    <b>${esc(asRef.medida)}</b> · ${esc(asRef.marca)} ${esc(asRef.dibujo||'')}
+    ${asRef.referencia?'<span style="font-family:monospace;background:#f1f5f9;padding:1px 5px;border-radius:3px">'+esc(asRef.referencia)+'</span>':''}
+    ${asRef.inCampaña?'<span style="background:#fef3c7;color:#92400e;padding:1px 7px;border-radius:10px;font-weight:700">🏷️ CAMPAÑA</span>':''}
+    &nbsp;·&nbsp; Fecha: ${new Date().toLocaleDateString('es-ES')}
+  </div>
+  <table>
+    <tr><th>Concepto</th><th class="r">Precio ud</th><th class="r">Uds</th><th class="r">Importe</th></tr>
+    <tr><td>🛞 Neumáticos${dtoN>0?' (-'+dtoN+'%)':''}</td><td class="r">${pvp.toFixed(2)} €</td><td class="r">${cant}</td><td class="r">${(pvp*cant*(1-dtoN/100)).toFixed(2)} €</td></tr>
+    <tr><td>🔧 Mano de obra (${horasMO.toFixed(1)}h × ${MO_HORA}€/h)${dtoM>0?' (-'+dtoM+'%)':''}</td><td class="r">${(MO_HORA*MO_UT_NEUM).toFixed(2)} €/ud</td><td class="r">${cant}</td><td class="r">${subMO.toFixed(2)} €</td></tr>
+    <tr><td>🔩 Válvulas</td><td class="r">${VALVULA_PVP.toFixed(2)} €</td><td class="r">${cant}</td><td class="r">${subValv.toFixed(2)} €</td></tr>
+    <tr><td>♻️ NFU (Gestión residuos)</td><td class="r">${NFU_PVP.toFixed(2)} €</td><td class="r">${cant}</td><td class="r">${subNFU.toFixed(2)} €</td></tr>
+    <tr class="sub"><td colspan="3"><b>Base imponible (sin IVA)</b></td><td class="r"><b>${base.toFixed(2)} €</b></td></tr>
+    <tr class="grey"><td colspan="3">IVA 21%</td><td class="r">${iva.toFixed(2)} €</td></tr>
+    <tr class="tot"><td colspan="3">TOTAL CON IVA</td><td class="r">${total.toFixed(2)} €</td></tr>
+  </table>
+  <div class="footer">MOTORSAN · Alcalá de Henares · Propiedad de Sergio Aguado Mena · Precios sin IVA salvo indicación</div>
+  <script>window.onload=function(){window.print();}<\/script>
+  </body></html>`);
+  w.document.close();
 }
 function resetAs(){ asRef=null; document.getElementById('asPresupuesto').style.display='none'; document.getElementById('asSearch').value=''; document.getElementById('asResultados').innerHTML=''; }
 function apartarDesdeAs(){ if(!asRef)return; setTab('apartados'); document.getElementById('apt_medida').value=asRef.medida+' · '+(asRef.referencia||''); document.getElementById('apt_cant').value=asCant; }
