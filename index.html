@@ -492,6 +492,12 @@ tr.out td{background:#fff5f5}
     <div class="card-body" id="anaEstacionalidad"></div>
   </div>
 
+  <!-- FILA 8: Motivos de rechazo -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-hdr">🔍 Análisis de Motivos de Rechazo</div>
+    <div class="card-body" id="anaMotivosRechazo"></div>
+  </div>
+
   </div><!-- /anaGeneralPanel -->
 
   <!-- GENERADOR DE PEDIDOS -->
@@ -3018,50 +3024,166 @@ function renderPresupuestos(){
   let rows=presData;
   if(presFilter!=='todos') rows=rows.filter(p=>p.estado===presFilter);
   if(!rows.length){
-    cont.innerHTML='<div style="text-align:center;color:var(--muted2);padding:40px">Sin presupuestos en este estado</div>';
+    cont.innerHTML='<div style="text-align:center;color:var(--muted2);padding:40px;font-size:.82rem">Sin presupuestos en este estado</div>';
     return;
   }
   const ECOL={espera:'#f59e0b',aceptado:'#059669',rechazado:'#ef4444'};
   const EICO={espera:'⏳',aceptado:'✅',rechazado:'❌'};
-  cont.innerHTML=rows.map(p=>{
+  const ETXT={espera:'EN ESPERA',aceptado:'ACEPTADO',rechazado:'NO ACEPTADO'};
+
+  let html2='';
+  rows.forEach(function(p){
     const col=ECOL[p.estado]||'#6b7280';
     const ico=EICO[p.estado]||'•';
+    const etxt=ETXT[p.estado]||p.estado;
     const fecha=new Date(p.fecha).toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'2-digit'});
-    const id=p.id;
-    return `<div style="background:#fff;border:1.5px solid ${col}40;border-left:4px solid ${col};border-radius:10px;padding:14px 16px">
+    const pid=p.id;
+
+    html2+=`<div style="background:#fff;border:1.5px solid ${col}30;border-left:4px solid ${col};border-radius:10px;padding:14px 16px">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap">
         <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
-            <span style="background:${col};color:#fff;border-radius:20px;padding:2px 10px;font-size:.68rem;font-weight:700">${ico} ${p.estado.toUpperCase()}</span>
-            <span style="font-size:.7rem;font-weight:700;color:#1a1a2e">${AL_PRES[p.asesor]||p.asesor}</span>
+          <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px;flex-wrap:wrap">
+            <span style="background:${col};color:#fff;border-radius:20px;padding:2px 10px;font-size:.68rem;font-weight:700">${ico} ${etxt}</span>
+            <span style="font-size:.72rem;font-weight:700;color:#1a1a2e">${AL_PRES[p.asesor]||p.asesor}</span>
             <span style="font-size:.65rem;color:var(--muted)">${fecha}</span>
             ${p.inCampaña?'<span style="background:#fef3c7;color:#92400e;border-radius:10px;padding:1px 7px;font-size:.62rem;font-weight:700">🏷️ CAMPAÑA</span>':''}
             ${p.stockDisponible?'<span style="background:#dcfce7;color:#166534;border-radius:10px;padding:1px 7px;font-size:.62rem;font-weight:700">✅ STOCK</span>':'<span style="background:#fee2e2;color:#991b1b;border-radius:10px;padding:1px 7px;font-size:.62rem;font-weight:700">📦 PLATON</span>'}
           </div>
-          <div style="font-weight:700;font-size:.85rem;color:var(--primary2);font-family:var(--mono)">${esc(p.medida)} · ${esc(p.marca)}</div>
-          <div style="font-size:.7rem;color:var(--muted);margin-top:2px">
-            ${p.cant} uds · ${p.referencia?'<span style="font-family:monospace">'+esc(p.referencia)+'</span> · ':''}
-            ${p.cliente?'👤 '+esc(p.cliente)+' · ':''}
-            ${p.matricula?'🚗 '+esc(p.matricula)+' · ':''}
-            ${p.bastidor?'VIN: '+esc(p.bastidor):''}
+          <div style="font-weight:700;font-size:.88rem;color:var(--primary2);font-family:var(--mono)">${esc(p.medida||'')} · ${esc(p.marca||'')}</div>
+          <div style="font-size:.7rem;color:var(--muted);margin-top:3px;display:flex;flex-wrap:wrap;gap:6px">
+            <span>${p.cant} uds</span>
+            ${p.referencia?`<span style="font-family:monospace;background:#f1f5f9;padding:0 5px;border-radius:3px">${esc(p.referencia)}</span>`:''}
+            ${p.cliente?`<span>👤 ${esc(p.cliente)}</span>`:''}
+            ${p.matricula?`<span>🚗 ${esc(p.matricula)}</span>`:''}
+            ${p.bastidor?`<span style="font-family:monospace">VIN: ${esc(p.bastidor)}</span>`:''}
           </div>
           ${p.nota?`<div style="font-size:.68rem;color:var(--muted);font-style:italic;margin-top:3px">📝 ${esc(p.nota)}</div>`:''}
+          ${p.motivoRechazo?`<div style="margin-top:6px;background:#fef2f2;border-radius:6px;padding:5px 9px;font-size:.7rem;color:#dc2626"><strong>Motivo no aceptado:</strong> ${esc(p.motivoRechazo)}</div>`:''}
         </div>
         <div style="text-align:right;flex-shrink:0">
-          <div style="font-weight:800;font-size:1.1rem;color:#1a1a2e">${p.total.toFixed(2)}€</div>
+          <div style="font-weight:800;font-size:1.15rem;color:#1a1a2e">${(p.total||0).toFixed(2)}€</div>
           <div style="font-size:.65rem;color:var(--muted)">IVA incl.</div>
-          <div style="font-size:.68rem;color:#6b7280">${p.base.toFixed(2)}€ s/IVA</div>
+          <div style="font-size:.68rem;color:#6b7280">${(p.base||0).toFixed(2)}€ s/IVA</div>
         </div>
       </div>
       ${p.estado==='espera'?`
       <div style="display:flex;gap:7px;margin-top:10px;flex-wrap:wrap">
-        <button onclick="setPresEstado('${id}','aceptado')" style="flex:1;min-width:100px;padding:7px;border-radius:7px;border:none;background:#059669;color:#fff;font-weight:700;font-size:.74rem;cursor:pointer">✅ Aceptado</button>
-        <button onclick="setPresEstado('${id}','rechazado')" style="flex:1;min-width:100px;padding:7px;border-radius:7px;border:none;background:#ef4444;color:#fff;font-weight:700;font-size:.74rem;cursor:pointer">❌ No aceptado</button>
-        <button onclick="setPresEstado('${id}','espera')" style="padding:7px 12px;border-radius:7px;border:1.5px solid #f59e0b;background:#fff;color:#f59e0b;font-weight:700;font-size:.72rem;cursor:pointer">🔔 Recordar asesor</button>
+        <button class="pres-acept-btn" data-pid="${pid}" style="flex:1;min-width:100px;padding:8px;border-radius:7px;border:none;background:#059669;color:#fff;font-weight:700;font-size:.74rem;cursor:pointer">✅ Aceptar</button>
+        <button class="pres-rechaz-btn" data-pid="${pid}" style="flex:1;min-width:100px;padding:8px;border-radius:7px;border:none;background:#ef4444;color:#fff;font-weight:700;font-size:.74rem;cursor:pointer">❌ No aceptar</button>
+        <button class="pres-recor-btn" data-pid="${pid}" style="padding:8px 14px;border-radius:7px;border:1.5px solid #f59e0b;background:#fff;color:#f59e0b;font-weight:700;font-size:.72rem;cursor:pointer">🔔 Recordar</button>
+      </div>`:''}
+      ${p.estado==='rechazado'&&!p.motivoRechazo?`
+      <div style="margin-top:8px;display:flex;gap:7px">
+        <input type="text" class="pres-motivo-input" data-pid="${pid}" placeholder="Motivo del rechazo…" style="flex:1;padding:7px 10px;border:1.5px solid #fca5a5;border-radius:7px;font-size:.75rem;font-family:var(--font)">
+        <button class="pres-motivo-btn" data-pid="${pid}" style="padding:7px 12px;border-radius:7px;border:none;background:#ef4444;color:#fff;font-weight:700;font-size:.74rem;cursor:pointer">Guardar</button>
       </div>`:''}
     </div>`;
-  }).join('');
+  });
+  cont.innerHTML=html2;
+
+  // Event delegation
+  cont.querySelectorAll('.pres-acept-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){ setPresEstado(this.getAttribute('data-pid'),'aceptado'); });
+  });
+  cont.querySelectorAll('.pres-rechaz-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){ abrirModalRechazo(this.getAttribute('data-pid')); });
+  });
+  cont.querySelectorAll('.pres-recor-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){ setPresEstado(this.getAttribute('data-pid'),'espera'); });
+  });
+  cont.querySelectorAll('.pres-motivo-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      const pid=this.getAttribute('data-pid');
+      const input=cont.querySelector('.pres-motivo-input[data-pid="'+pid+'"]');
+      const motivo=(input?.value||'').trim();
+      if(!motivo){ toast('Escribe el motivo del rechazo','error'); return; }
+      guardarMotivoRechazo(pid, motivo);
+    });
+  });
 }
+
+// ══ MODAL RECHAZO ══════════════════════════════════════════════════
+function abrirModalRechazo(pid){
+  const existing=document.getElementById('modalRechazo');
+  if(existing) existing.remove();
+  const modal=document.createElement('div');
+  modal.id='modalRechazo';
+  modal.style.cssText='position:fixed;inset:0;z-index:1300;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center';
+  modal.innerHTML=`<div style="background:#fff;border-radius:12px;padding:24px;width:min(90vw,420px);box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="font-weight:800;font-size:1rem;color:#1a1a2e;margin-bottom:12px">❌ Motivo de no aceptación</div>
+    <div style="font-size:.75rem;color:var(--muted);margin-bottom:12px">Indica el motivo para que el sistema pueda analizarlo y ayudarte a mejorar.</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
+      ${['Precio elevado','Cliente no disponible','Ya tiene neumáticos','Compra en otro taller','Prefiere otra marca','Plazo de espera largo','Sin presupuesto ahora','Otro motivo'].map(m=>
+        `<button class="motivo-quick" style="padding:8px 12px;border-radius:7px;border:1.5px solid #e5e7eb;background:#fff;text-align:left;cursor:pointer;font-size:.78rem;font-family:var(--font)" onclick="document.getElementById('motivoTexto').value='${m}'">${m}</button>`
+      ).join('')}
+    </div>
+    <input id="motivoTexto" type="text" placeholder="O escribe el motivo…" style="width:100%;padding:9px 12px;border:1.5px solid #d1d5db;border-radius:8px;font-size:.82rem;font-family:var(--font);box-sizing:border-box;margin-bottom:12px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <button onclick="document.getElementById('modalRechazo').remove()" style="padding:10px;border-radius:8px;border:1.5px solid #d1d5db;background:#fff;cursor:pointer;font-size:.82rem">Cancelar</button>
+      <button onclick="confirmarRechazo('${pid}')" style="padding:10px;border-radius:8px;border:none;background:#ef4444;color:#fff;font-weight:700;cursor:pointer;font-size:.82rem">❌ Confirmar</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click',function(e){ if(e.target===modal) modal.remove(); });
+}
+
+function confirmarRechazo(pid){
+  const motivo=(document.getElementById('motivoTexto')?.value||'').trim();
+  if(!motivo){ toast('Indica el motivo','error'); return; }
+  document.getElementById('modalRechazo')?.remove();
+  setPresEstado(pid,'rechazado');
+  setTimeout(function(){ guardarMotivoRechazo(pid,motivo); },500);
+}
+
+function guardarMotivoRechazo(pid,motivo){
+  const p=presData.find(x=>x.id===pid); if(!p) return;
+  p.motivoRechazo=motivo;
+  if(useFirebase&&fbDb) fbDb.ref(DB_PRES+'/'+pid).update({motivoRechazo:motivo});
+  renderPresupuestos();
+  toast('Motivo guardado','info',2000);
+}
+
+// ══ ANÁLISIS DE MOTIVOS DE RECHAZO (usado en renderAnalytics) ════════════════
+function renderAnalisisMotivos(el){
+  if(!el) return;
+  const rechazados=presData.filter(p=>p.estado==='rechazado'&&p.motivoRechazo);
+  if(!rechazados.length){
+    el.innerHTML='<div style="color:var(--muted2);font-size:.78rem;padding:12px">Sin presupuestos rechazados con motivo registrado</div>';
+    return;
+  }
+  const byMotivo={};
+  rechazados.forEach(function(p){
+    const m=p.motivoRechazo.trim();
+    if(!byMotivo[m]) byMotivo[m]={count:0,asesores:{},medidas:{}};
+    byMotivo[m].count++;
+    byMotivo[m].asesores[p.asesor]=(byMotivo[m].asesores[p.asesor]||0)+1;
+    byMotivo[m].medidas[p.medida]=(byMotivo[m].medidas[p.medida]||0)+1;
+  });
+  const sorted=Object.entries(byMotivo).sort((a,b)=>b[1].count-a[1].count);
+  const max=sorted[0][1].count;
+  const colors10=['#ef4444','#f97316','#f59e0b','#eab308','#84cc16','#22c55e','#14b8a6','#06b6d4','#6366f1','#8b5cf6'];
+  el.innerHTML=`<div style="font-size:.72rem;color:var(--muted);margin-bottom:10px">Basado en ${rechazados.length} presupuestos rechazados con motivo registrado.</div>`
+    +sorted.map(function([m,d],i){
+      const col=colors10[i%10];
+      const pct=Math.round(d.count/max*100);
+      const topAs=Object.entries(d.asesores).sort((a,b)=>b[1]-a[1])[0];
+      const topMed=Object.entries(d.medidas).sort((a,b)=>b[1]-a[1])[0];
+      return `<div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:2px">
+          <span style="font-weight:700">${esc(m)}</span>
+          <span style="font-weight:700;color:${col}">${d.count} veces</span>
+        </div>
+        <div style="background:#f1f5f9;border-radius:4px;height:8px;overflow:hidden;margin-bottom:4px">
+          <div style="background:${col};height:100%;width:${pct}%;border-radius:4px"></div>
+        </div>
+        <div style="font-size:.65rem;color:var(--muted)">
+          ${topAs?`Más frecuente: ${AL_PRES[topAs[0]]||topAs[0]}`:''}
+          ${topMed?` · Medida: ${esc(topMed[0])}`:''}
+        </div>
+      </div>`;
+    }).join('');
+}
+
 
 // ── Mini historial en panel presupuestador ────────────────────────
 function renderPresHistorial(){
@@ -3442,6 +3564,7 @@ function pedidoLimpiar(){
   if(!confirm('¿Limpiar el pedido?')) return;
   pedidoItems=[];
   renderPedidoLista();
+  renderAnalisisMotivos(document.getElementById('anaMotivosRechazo'));
   renderPedidoSugeridas();
 }
 
