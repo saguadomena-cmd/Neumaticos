@@ -651,7 +651,7 @@ tr.out td{background:#fff5f5}
                 <td style="padding:8px 12px;color:var(--muted);font-size:.72rem">% Dto. neumáticos</td>
                 <td style="padding:6px 12px;text-align:right">
                   <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px">
-                    <input type="number" id="as_dto_neum" value="0" min="0" max="100" style="width:52px;padding:4px 6px;border-radius:5px;border:1.5px solid #86efac;font-family:var(--font);text-align:center;font-size:.75rem" oninput="calcAs()">
+                    <input type="number" id="as_dto_neum" value="10" min="0" max="100" style="width:52px;padding:4px 6px;border-radius:5px;border:1.5px solid #86efac;font-family:var(--font);text-align:center;font-size:.75rem" oninput="calcAs()">
                     <span style="font-size:.72rem;color:var(--green);font-weight:700">%</span>
                     <span style="font-size:.75rem;color:#dc2626;font-weight:700" id="as_dto_neum_lbl"></span>
                   </div>
@@ -661,7 +661,7 @@ tr.out td{background:#fff5f5}
                 <td style="padding:8px 12px;color:var(--muted);font-size:.72rem">% Dto. mano de obra</td>
                 <td style="padding:6px 12px;text-align:right">
                   <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px">
-                    <input type="number" id="as_dto_mo" value="0" min="0" max="100" style="width:52px;padding:4px 6px;border-radius:5px;border:1.5px solid #86efac;font-family:var(--font);text-align:center;font-size:.75rem" oninput="calcAs()">
+                    <input type="number" id="as_dto_mo" value="30" min="0" max="100" style="width:52px;padding:4px 6px;border-radius:5px;border:1.5px solid #86efac;font-family:var(--font);text-align:center;font-size:.75rem" oninput="calcAs()">
                     <span style="font-size:.72rem;color:var(--green);font-weight:700">%</span>
                     <span style="font-size:.75rem;color:#dc2626;font-weight:700" id="as_dto_mo_lbl"></span>
                   </div>
@@ -2432,6 +2432,49 @@ function resetAsFilters(){
   document.getElementById('asPresupuesto').style.display='none';
 }
 
+
+// ══ Cálculo rápido de presupuesto para tarjetas de búsqueda ══
+// Descuentos fijos: 10% neumáticos, 30% M.O. (sobre precio sin IVA)
+const DTO_NEUM_FIJO = 0.10;
+const DTO_MO_FIJO   = 0.30;
+
+function precioBloque(pvpUd){
+  if(!pvpUd||pvpUd<=0) return '';
+  function tot(n){
+    const neumBruto = pvpUd*n;
+    const neum      = neumBruto*(1-DTO_NEUM_FIJO);
+    const moBruto   = n*MO_UT_NEUM*MO_HORA;
+    const mo        = moBruto*(1-DTO_MO_FIJO);
+    const valv      = VALVULA_PVP*n;
+    const nfu       = NFU_PVP*n;
+    const base      = neum+mo+valv+nfu;
+    const dtoTotal  = (neumBruto-neum)+(moBruto-mo);
+    return {base, total:base*(1+IVA), dtoTotal,
+            neumBruto, moBruto, neum, mo, valv, nfu};
+  }
+  const t2=tot(2), t4=tot(4);
+  return `<div style="background:#f0fdf4;border-radius:7px;padding:9px 11px;margin-top:7px;border:1px solid #86efac">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:4px">
+      <div style="font-size:.6rem;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:.05em">💶 Presupuesto (dto. 10% neumáticos · 30% M.O.)</div>
+      <div style="font-size:.6rem;color:#92400e;background:#fef3c7;border-radius:4px;padding:1px 6px;font-weight:700">Dto. aplicado s/IVA</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+      <div style="background:#fff;border-radius:6px;padding:7px 9px;border:1px solid #86efac">
+        <div style="font-size:.6rem;color:var(--muted);margin-bottom:3px;font-weight:600">🔧 2 neumáticos</div>
+        <div style="font-weight:800;font-size:1rem;color:#1a1a2e">${t2.total.toFixed(2)}<span style="font-size:.6rem;font-weight:500;color:var(--muted)">€ c/IVA</span></div>
+        <div style="font-size:.68rem;color:#059669;font-weight:700">${t2.base.toFixed(2)}€ s/IVA</div>
+        <div style="font-size:.6rem;color:#dc2626;margin-top:1px">Ahorro: ${t2.dtoTotal.toFixed(2)}€</div>
+      </div>
+      <div style="background:#fff;border-radius:6px;padding:7px 9px;border:1px solid #86efac">
+        <div style="font-size:.6rem;color:var(--muted);margin-bottom:3px;font-weight:600">🔧🔧 4 neumáticos</div>
+        <div style="font-weight:800;font-size:1rem;color:#1a1a2e">${t4.total.toFixed(2)}<span style="font-size:.6rem;font-weight:500;color:var(--muted)">€ c/IVA</span></div>
+        <div style="font-size:.68rem;color:#059669;font-weight:700">${t4.base.toFixed(2)}€ s/IVA</div>
+        <div style="font-size:.6rem;color:#dc2626;margin-top:1px">Ahorro: ${t4.dtoTotal.toFixed(2)}€</div>
+      </div>
+    </div>
+  </div>`;
+}
+
 function buscarAsFilters(){
   const ancho  = (document.getElementById('asF_ancho')?.value  ||'').trim();
   const alto   = (document.getElementById('asF_alto')?.value   ||'').trim();
@@ -2500,8 +2543,9 @@ function buscarAsFilters(){
             ${vtas?`<span style="background:#fef3c7;color:#92400e;border-radius:10px;padding:1px 7px;font-size:.62rem;font-weight:700">📊 ${vtas}/año</span>`:''}
           </div>
         </div>
-        <div style="text-align:right"><div style="font-weight:800;color:var(--primary2);font-size:1.05rem">${pvpV?pvpV.toFixed(2)+'€':'—'}</div><div style="font-size:.7rem;color:var(--muted)">DNP: ${dnpV?dnpV.toFixed(2)+'€':'—'}</div></div>
-      </div>`;
+        <div style="text-align:right;min-width:80px"><div style="font-weight:800;color:var(--primary2);font-size:1.05rem">${pvpV?pvpV.toFixed(2)+'€':'—'}</div><div style="font-size:.7rem;color:var(--muted)">DNP: ${dnpV?dnpV.toFixed(2)+'€':'—'}</div></div>
+      </div>
+      ${precioBloque(pvpV)}</div>`;
     });
   }
   if(campRes.length){
@@ -2517,12 +2561,13 @@ function buscarAsFilters(){
             <span style="font-family:var(--mono);font-size:.65rem;color:var(--muted)">${esc(c.referencia)}</span>
           </div>
         </div>
-        <div style="text-align:right">
+        <div style="text-align:right;min-width:80px">
           <div style="font-weight:800;color:var(--primary2);font-size:1.05rem">${c.pvp.toFixed(2)}€</div>
           <div style="font-size:.7rem;color:#059669;font-weight:700">Neto: ${c.neto_campana.toFixed(2)}€</div>
           <div style="font-size:.62rem;color:#92400e;font-weight:600">-${(((c.pvp-c.neto_campana)/c.pvp)*100).toFixed(0)}%</div>
         </div>
-      </div>`;
+      </div>
+      ${precioBloque(c.neto_campana)}</div>`;
     });
   }
   if(tarifaRes.length){
@@ -2542,11 +2587,12 @@ function buscarAsFilters(){
             <span style="background:#fee2e2;color:#991b1b;border-radius:10px;padding:1px 7px;font-size:.62rem;font-weight:700">Stock 0</span>
           </div>
         </div>
-        <div style="text-align:right">
+        <div style="text-align:right;min-width:80px">
           <div style="font-weight:800;color:var(--primary2);font-size:1.05rem">${t[5].toFixed(2)}€</div>
           <div style="font-size:.7rem;color:var(--muted)">DNP: ${t[6].toFixed(2)}€</div>
         </div>
-      </div>`;
+      </div>
+      ${precioBloque(t[5])}</div>`;
     });
   }
   if(!out) out='<div style="text-align:center;color:var(--muted2);padding:24px;font-size:.8rem">Sin resultados con estos filtros.</div>';
@@ -2696,7 +2742,7 @@ function selAsTarifa(t){
   document.getElementById('asPresupuesto').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
-function selAs(id){ const s=stockData.find(x=>x.id===id); if(!s)return; asRef=s; setAsCant(4); document.getElementById('asPresupuesto').style.display='block'; document.getElementById('asPresupuesto').scrollIntoView({behavior:'smooth',block:'nearest'}); }
+function selAs(id){ const s=stockData.find(x=>x.id===id); if(!s)return; enrichPVP(s); asRef=s; setAsCant(4); document.getElementById('asPresupuesto').style.display='block'; document.getElementById('asPresupuesto').scrollIntoView({behavior:'smooth',block:'nearest'}); }
 function selAsCamp(c){ asRef={medida:c.medida_full,marca:c.marca,pvp:c.pvp,coste:c.neto_campana,referencia:c.referencia,dibujo:c.dibujo||'',stock:0,inCampaña:true,netoCampaña:c.neto_campana,id:'camp_'+c.referencia}; setAsCant(4); document.getElementById('asPresupuesto').style.display='block'; document.getElementById('asPresupuesto').scrollIntoView({behavior:'smooth',block:'nearest'}); }
 function setAsCant(n){ asCant=n; calcAs(); setAsCantBtn(n); }
 // Constantes presupuesto
@@ -2721,7 +2767,7 @@ function setAsCantBtn(n){
 function calcAs(){
   if(!asRef) return;
   const cant  = asCant;
-  const pvp   = parseFloat(asRef.pvp)||0;
+  const pvpFinal = (parseFloat(asRef.pvpFinal)||0) || (asRef._tpvp||0) || (asRef.netoCampaña||0);
   const dtoN  = parseFloat(document.getElementById('as_dto_neum').value)||0;
   const dtoM  = parseFloat(document.getElementById('as_dto_mo').value)||0;
 
@@ -2730,9 +2776,7 @@ function calcAs(){
   const subMO_raw = horasMO * MO_HORA;
   const descMO    = subMO_raw * dtoM / 100;
   const subMO     = subMO_raw - descMO;
-
-  // Neumáticos
-  const subNeum_raw = pvp * cant;
+  const subNeum_raw = pvpFinal * cant;
   const descNeum    = subNeum_raw * dtoN / 100;
   const subNeum     = subNeum_raw - descNeum;
 
@@ -2754,7 +2798,7 @@ function calcAs(){
   const campBadge=document.getElementById('as_camp_badge');
   if(campBadge) campBadge.style.display=asRef.inCampaña?'inline-flex':'none';
 
-  document.getElementById('as_pvp_unit').textContent = pvp.toFixed(2)+'€';
+  document.getElementById('as_pvp_unit').textContent = pvpFinal.toFixed(2)+'€';
   ['as_cant_lbl','as_cant_lbl2','as_cant_lbl3'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.textContent=cant;
   });
@@ -2773,12 +2817,13 @@ function calcAs(){
 }
 function imprimirPresupuesto(){
   if(!asRef) return;
-  const cant=asCant, pvp=parseFloat(asRef.pvp)||0;
-  const dtoN=parseFloat(document.getElementById('as_dto_neum').value)||0;
-  const dtoM=parseFloat(document.getElementById('as_dto_mo').value)||0;
+  const cant=asCant;
+  const pvpFinal2=(parseFloat(asRef.pvpFinal2)||0)||(asRef._tpvp||0)||(asRef.netoCampaña||0);
+  const dtoN=parseFloat(document.getElementById('as_dto_neum').value)||10;
+  const dtoM=parseFloat(document.getElementById('as_dto_mo').value)||30;
   const horasMO=cant*MO_UT_NEUM;
   const subMO=((horasMO*MO_HORA)*(1-dtoM/100));
-  const subNeum=(pvp*cant*(1-dtoN/100));
+  const subNeum=(pvpFinal2*cant*(1-dtoN/100));
   const subValv=VALVULA_PVP*cant;
   const subNFU=NFU_PVP*cant;
   const base=subNeum+subMO+subValv+subNFU;
@@ -2803,7 +2848,7 @@ function imprimirPresupuesto(){
   </div>
   <table>
     <tr><th>Concepto</th><th class="r">Precio ud</th><th class="r">Uds</th><th class="r">Importe</th></tr>
-    <tr><td>🛞 Neumáticos${dtoN>0?' (-'+dtoN+'%)':''}</td><td class="r">${pvp.toFixed(2)} €</td><td class="r">${cant}</td><td class="r">${(pvp*cant*(1-dtoN/100)).toFixed(2)} €</td></tr>
+    <tr><td>🛞 Neumáticos${dtoN>0?' (-'+dtoN+'%)':''}</td><td class="r">${pvpFinal2.toFixed(2)} €</td><td class="r">${cant}</td><td class="r">${(pvpFinal2*cant*(1-dtoN/100)).toFixed(2)} €</td></tr>
     <tr><td>🔧 Mano de obra (${horasMO.toFixed(1)}h × ${MO_HORA}€/h)${dtoM>0?' (-'+dtoM+'%)':''}</td><td class="r">${(MO_HORA*MO_UT_NEUM).toFixed(2)} €/ud</td><td class="r">${cant}</td><td class="r">${subMO.toFixed(2)} €</td></tr>
     <tr><td>🔩 Válvulas</td><td class="r">${VALVULA_PVP.toFixed(2)} €</td><td class="r">${cant}</td><td class="r">${subValv.toFixed(2)} €</td></tr>
     <tr><td>♻️ NFU (Gestión residuos)</td><td class="r">${NFU_PVP.toFixed(2)} €</td><td class="r">${cant}</td><td class="r">${subNFU.toFixed(2)} €</td></tr>
@@ -2910,12 +2955,12 @@ function guardarPresupuesto(){
   const nota     = (document.getElementById('as_nota_pres')?.value||'').trim();
   const asesor   = document.getElementById('as_asesor')?.value||'TONI';
   const cant     = asCant;
-  const pvp      = parseFloat(asRef.pvp)||0;
+  const pvpFinal3      = (parseFloat(asRef.pvpFinal3)||0)||(asRef._tpvp||0)||(asRef.netoCampaña||0);
   const dtoN     = parseFloat(document.getElementById('as_dto_neum')?.value)||0;
   const dtoM     = parseFloat(document.getElementById('as_dto_mo')?.value)||0;
   const horasMO  = cant*MO_UT_NEUM;
   const subMO    = horasMO*MO_HORA*(1-dtoM/100);
-  const subNeum  = pvp*cant*(1-dtoN/100);
+  const subNeum  = pvpFinal3*cant*(1-dtoN/100);
   const subValv  = VALVULA_PVP*cant;
   const subNFU   = NFU_PVP*cant;
   const base     = subNeum+subMO+subValv+subNFU;
@@ -2929,7 +2974,7 @@ function guardarPresupuesto(){
     cant, dtoN, dtoM,
     medida: asRef.medida, marca: asRef.marca,
     dibujo: asRef.dibujo||'', referencia: asRef.referencia||'',
-    pvp, inCampaña: !!asRef.inCampaña,
+    pvpFinal3, inCampaña: !!asRef.inCampaña,
     stockId: asRef.id||'',
     stockDisponible: stockData.find(s=>s.referencia===asRef.referencia&&s.stock>=cant)?true:false,
     subNeum, subMO, subValv, subNFU, base, total
