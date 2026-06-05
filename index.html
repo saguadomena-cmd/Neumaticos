@@ -262,6 +262,7 @@ tr.out td{background:#fff5f5}
   <div class="tab"        id="tab-notif"      onclick="setTab('notif')">🔔 Notificaciones <span id="notifBadge" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:0 6px;font-size:.6rem;font-weight:700;margin-left:3px">0</span></div>
   <div class="tab"        id="tab-historial"  onclick="setTab('historial')">📋 Historial</div>
   <div class="tab"        id="tab-asesores"   onclick="setTab('asesores')">🚗 Presupuesto</div>
+  <div class="tab"        id="tab-presupuestos" onclick="setTab('presupuestos')">📋 Presupuestos <span id="presBadgeEspera" style="display:none;background:#f59e0b;color:#fff;border-radius:10px;padding:0 6px;font-size:.6rem;font-weight:700;margin-left:2px">0</span></div>
   <div class="tab"        id="tab-apartados"  onclick="setTab('apartados')">📌 Apartados</div>
 </div>
 
@@ -679,14 +680,64 @@ tr.out td{background:#fff5f5}
             </div>
           </div>
 
+          <!-- Datos cliente + asesor -->
+          <div style="background:#fff;border-radius:8px;border:1px solid #86efac;padding:12px 14px;margin-bottom:10px">
+            <div style="font-size:.65rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">👤 Datos del presupuesto</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div>
+                <div style="font-size:.65rem;color:var(--muted);margin-bottom:3px">Asesor</div>
+                <select id="as_asesor" style="width:100%;padding:7px 9px;border:1.5px solid #86efac;border-radius:6px;font-size:.78rem;font-family:var(--font);background:#fff">
+                  <option value="TONI">🧑 Toni Moya</option>
+                  <option value="PEREA">👴 Perea</option>
+                  <option value="ROBERTO">🦲 Roberto Carlos</option>
+                </select>
+              </div>
+              <div>
+                <div style="font-size:.65rem;color:var(--muted);margin-bottom:3px">Cliente</div>
+                <input id="as_cliente" type="text" placeholder="Nombre del cliente…" style="width:100%;padding:7px 9px;border:1.5px solid #86efac;border-radius:6px;font-size:.78rem;font-family:var(--font);box-sizing:border-box">
+              </div>
+              <div>
+                <div style="font-size:.65rem;color:var(--muted);margin-bottom:3px">Matrícula</div>
+                <input id="as_matricula" type="text" placeholder="0000-AAA" style="width:100%;padding:7px 9px;border:1.5px solid #86efac;border-radius:6px;font-size:.78rem;font-family:var(--font);box-sizing:border-box;text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+              </div>
+              <div>
+                <div style="font-size:.65rem;color:var(--muted);margin-bottom:3px">Nº Bastidor (VIN)</div>
+                <input id="as_bastidor" type="text" placeholder="VIN…" style="width:100%;padding:7px 9px;border:1.5px solid #86efac;border-radius:6px;font-size:.78rem;font-family:var(--font);box-sizing:border-box;text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+              </div>
+              <div style="grid-column:span 2">
+                <div style="font-size:.65rem;color:var(--muted);margin-bottom:3px">Nota / observaciones</div>
+                <input id="as_nota_pres" type="text" placeholder="Observaciones adicionales…" style="width:100%;padding:7px 9px;border:1.5px solid #86efac;border-radius:6px;font-size:.78rem;font-family:var(--font);box-sizing:border-box">
+              </div>
+            </div>
+          </div>
+
           <div style="display:flex;gap:8px">
-            <button onclick="resetAs()" style="flex:1;padding:9px;border-radius:7px;border:1px solid #86efac;background:#fff;color:var(--muted);font-family:var(--font);cursor:pointer;font-size:.8rem">🔄 Nuevo</button>
-            <button onclick="imprimirPresupuesto()" style="flex:1;padding:9px;border-radius:7px;border:none;background:#1a1a2e;color:#fff;font-family:var(--font);font-weight:700;cursor:pointer;font-size:.8rem">🖨️ Imprimir</button>
-            <button onclick="apartarDesdeAs()" style="flex:1;padding:9px;border-radius:7px;border:none;background:var(--green);color:#fff;font-family:var(--font);font-weight:600;cursor:pointer;font-size:.8rem">📌 Apartar</button>
+            <button onclick="resetAs()" style="padding:9px 12px;border-radius:7px;border:1px solid #86efac;background:#fff;color:var(--muted);font-family:var(--font);cursor:pointer;font-size:.78rem">🔄 Nuevo</button>
+            <button onclick="guardarPresupuesto()" style="flex:1;padding:9px;border-radius:7px;border:none;background:#6366f1;color:#fff;font-family:var(--font);font-weight:700;cursor:pointer;font-size:.8rem">💾 Guardar</button>
+            <button onclick="imprimirPresupuesto()" style="padding:9px 12px;border-radius:7px;border:none;background:#1a1a2e;color:#fff;font-family:var(--font);font-weight:700;cursor:pointer;font-size:.8rem">🖨️</button>
           </div>
         </div>
       </div>
+
+      <!-- HISTORIAL PRESUPUESTOS -->
+      <div id="presHistorial" style="margin-top:16px"></div>
     </div>
+  </div>
+</div>
+
+<!-- ═══ PRESUPUESTOS ═══ -->
+<div id="panelPresupuestos" style="display:none;padding:16px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+    <div style="font-weight:800;font-size:1rem;color:var(--primary2)">📋 Presupuestos registrados</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <button onclick="setPresFilter('todos')"   id="pf-todos"   style="padding:5px 12px;border-radius:20px;border:2px solid #1a1a2e;background:#1a1a2e;color:#fff;font-size:.72rem;font-weight:700;cursor:pointer">Todos</button>
+      <button onclick="setPresFilter('espera')"  id="pf-espera"  style="padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);background:#fff;color:var(--muted);font-size:.72rem;font-weight:700;cursor:pointer">⏳ En espera</button>
+      <button onclick="setPresFilter('aceptado')" id="pf-aceptado" style="padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);background:#fff;color:var(--muted);font-size:.72rem;font-weight:700;cursor:pointer">✅ Aceptado</button>
+      <button onclick="setPresFilter('rechazado')" id="pf-rechazado" style="padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);background:#fff;color:var(--muted);font-size:.72rem;font-weight:700;cursor:pointer">❌ No aceptado</button>
+    </div>
+  </div>
+  <div id="presListado" style="display:flex;flex-direction:column;gap:10px">
+    <div style="text-align:center;color:var(--muted2);padding:40px">Sin presupuestos registrados</div>
   </div>
 </div>
 
@@ -1049,6 +1100,7 @@ function initFB(){
     });
     // Migrate localStorage apartados to Firebase on first load
     initNotif();
+    initPresupuestos();
     fbDb.ref(DB_A).once('value').then(snap=>{
       const v=snap.val();
       if(!v){
@@ -1137,7 +1189,7 @@ function importarStockInicial(){
 // TABS
 // ══════════════════════════════════════════════════════════════════
 function setTab(t){
-  ['stock','campana','movimiento','analytics','historial','asesores','apartados','top10','tarifa','notif'].forEach(x=>{
+  ['stock','campana','movimiento','analytics','historial','asesores','apartados','top10','tarifa','notif','presupuestos'].forEach(x=>{
     const p=document.getElementById('panel'+x.charAt(0).toUpperCase()+x.slice(1));
     const tb=document.getElementById('tab-'+x);
     if(p) p.style.display=x===t?'block':'none';
@@ -1148,6 +1200,7 @@ function setTab(t){
   if(t==='top10') renderTop10();
   if(t==='tarifa') renderTarifaPanel();
   if(t==='notif'){ renderNotif(); }
+  if(t==='presupuestos') renderPresupuestos();
   if(t==='apartados') renderAptList();
   if(t==='campana')   renderCampana();
 }
@@ -2817,6 +2870,217 @@ function selOrdenAsesor(a){
     b.style.color = sel ? '#fff' : '#374151';
   });
 }
+
+// ══════════════════════════════════════════════════════════════════
+// SISTEMA DE PRESUPUESTOS
+// ══════════════════════════════════════════════════════════════════
+const DB_PRES = 'motorsan_presupuestos_v1';
+let presData = [];
+let presFilter = 'todos';
+const AL_PRES = {TONI:'🧑 Toni Moya',PEREA:'👴 Perea',ROBERTO:'🦲 Roberto Carlos'};
+
+function initPresupuestos(){
+  if(!useFirebase||!fbDb) return;
+  fbDb.ref(DB_PRES).orderByChild('fecha').limitToLast(200).on('value', snap=>{
+    const v=snap.val();
+    presData = v ? Object.values(v).sort((a,b)=>b.fecha.localeCompare(a.fecha)) : [];
+    updatePresBadge();
+    if(document.getElementById('panelPresupuestos')?.style.display!=='none') renderPresupuestos();
+    if(document.getElementById('presHistorial')) renderPresHistorial();
+  });
+}
+
+function updatePresBadge(){
+  const n=presData.filter(p=>p.estado==='espera').length;
+  const badge=document.getElementById('presBadgeEspera');
+  if(badge){ badge.style.display=n>0?'inline':'none'; badge.textContent=n; }
+}
+
+function guardarPresupuesto(){
+  if(!asRef){ toast('Selecciona un neumático primero','error'); return; }
+  const cliente  = (document.getElementById('as_cliente')?.value||'').trim();
+  const matricula= (document.getElementById('as_matricula')?.value||'').trim();
+  const bastidor = (document.getElementById('as_bastidor')?.value||'').trim();
+  const nota     = (document.getElementById('as_nota_pres')?.value||'').trim();
+  const asesor   = document.getElementById('as_asesor')?.value||'TONI';
+  const cant     = asCant;
+  const pvp      = parseFloat(asRef.pvp)||0;
+  const dtoN     = parseFloat(document.getElementById('as_dto_neum')?.value)||0;
+  const dtoM     = parseFloat(document.getElementById('as_dto_mo')?.value)||0;
+  const horasMO  = cant*MO_UT_NEUM;
+  const subMO    = horasMO*MO_HORA*(1-dtoM/100);
+  const subNeum  = pvp*cant*(1-dtoN/100);
+  const subValv  = VALVULA_PVP*cant;
+  const subNFU   = NFU_PVP*cant;
+  const base     = subNeum+subMO+subValv+subNFU;
+  const total    = base*(1+IVA);
+
+  const pres = {
+    id: uid(),
+    fecha: new Date().toISOString(),
+    estado: 'espera',
+    asesor, cliente, matricula, bastidor, nota,
+    cant, dtoN, dtoM,
+    medida: asRef.medida, marca: asRef.marca,
+    dibujo: asRef.dibujo||'', referencia: asRef.referencia||'',
+    pvp, inCampaña: !!asRef.inCampaña,
+    stockId: asRef.id||'',
+    stockDisponible: stockData.find(s=>s.referencia===asRef.referencia&&s.stock>=cant)?true:false,
+    subNeum, subMO, subValv, subNFU, base, total
+  };
+
+  if(useFirebase&&fbDb) fbDb.ref(DB_PRES+'/'+pres.id).set(pres);
+  else { presData.unshift(pres); updatePresBadge(); renderPresupuestos(); }
+
+  toast('💾 Presupuesto guardado · '+pres.medida,'success',3000);
+  renderPresHistorial();
+}
+
+// ── Cambiar estado ────────────────────────────────────────────────
+function setPresEstado(id, estado){
+  const p = presData.find(x=>x.id===id); if(!p) return;
+
+  if(estado==='aceptado'){
+    // Felicitación
+    const nombre = AL_PRES[p.asesor]||p.asesor;
+    toast(`🎉 ¡Enhorabuena ${nombre}! Sergio te felicita por la venta.`,'success',6000);
+
+    if(p.stockDisponible){
+      // Tiene stock → crear apartado automáticamente
+      const s = stockData.find(x=>x.referencia===p.referencia&&x.stock>=p.cant);
+      if(s){
+        const ap = {
+          id:uid(), medida:p.medida, referencia:p.referencia, marca:p.marca,
+          medidaRef:s.id, archivo:p.matricula||p.cliente||'PRES-'+id.slice(-5),
+          numOrden:'', cantidad:p.cant, fechaLimite:'', asesor:p.asesor,
+          nota:'Presupuesto aceptado · '+p.cliente+(p.matricula?' · '+p.matricula:''),
+          fecha:new Date().toISOString(), estado:'apartado', esVO:false
+        };
+        apartados.unshift(ap); fbSaveApt(ap);
+        toast('📌 Stock reservado automáticamente para '+p.cliente,'info',4000);
+      }
+      // Notificación a recambios → stock en mano
+      setTimeout(()=>{
+        const msg={id:uid(),de:p.asesor,para:'RECAMBIOS',
+          asunto:'✅ Presupuesto aceptado — TENEMOS STOCK',
+          texto:`${AL_PRES[p.asesor]||p.asesor} ha cerrado presupuesto.\n\n🛞 ${p.medida} · ${p.marca} · ${p.cant} uds\n👤 ${p.cliente||'—'}  🚗 ${p.matricula||'—'}\n\n✅ HAY STOCK en almacén. Se ha creado el apartado automáticamente. Solo hay que montar cuando venga el cliente.`,
+          adjunto:p.referencia, tipo:'ok', ts:Date.now()};
+        if(useFirebase&&fbDb) fbDb.ref(DB_NOTIF+'/'+msg.id).set(msg);
+      },500);
+    } else {
+      // Sin stock → pedir por Platon
+      setTimeout(()=>{
+        const msg={id:uid(),de:p.asesor,para:'RECAMBIOS',
+          asunto:'🛒 Presupuesto aceptado — PEDIR POR PLATON',
+          texto:`${AL_PRES[p.asesor]||p.asesor} ha cerrado presupuesto.\n\n🛞 ${p.medida} · ${p.marca} (Ref: ${p.referencia}) · ${p.cant} uds\n👤 ${p.cliente||'—'}  🚗 ${p.matricula||'—'}  VIN: ${p.bastidor||'—'}\n\n⚠️ SIN STOCK en almacén. Proceder a pedir a fábrica por PLATON.`,
+          adjunto:p.referencia, tipo:'urgente', ts:Date.now()};
+        if(useFirebase&&fbDb) fbDb.ref(DB_NOTIF+'/'+msg.id).set(msg);
+      },500);
+      toast('🔔 Notificación enviada a Recambios para pedir por Platon','info',4000);
+    }
+  }
+
+  if(estado==='espera'){
+    // Recordatorio al asesor
+    const nombre = AL_PRES[p.asesor]||p.asesor;
+    const msg={id:uid(),de:'RECAMBIOS',para:p.asesor,
+      asunto:'⏳ Presupuesto pendiente — cierra la venta',
+      texto:`Tienes un presupuesto en espera pendiente de confirmar:\n\n🛞 ${p.medida} · ${p.marca} · ${p.cant} uds\n👤 Cliente: ${p.cliente||'—'}\n💶 Total: ${p.total.toFixed(2)}€ (IVA incl.)\n\nPor favor, contacta al cliente y confirma si acepta o declina el presupuesto.`,
+      tipo:'aviso', ts:Date.now()};
+    if(useFirebase&&fbDb) fbDb.ref(DB_NOTIF+'/'+msg.id).set(msg);
+    toast(`⏳ Recordatorio enviado a ${nombre}`,'info',3000);
+  }
+
+  // Update in Firebase
+  p.estado=estado;
+  if(estado==='aceptado'||estado==='rechazado') p.fechaCierre=new Date().toISOString();
+  if(useFirebase&&fbDb) fbDb.ref(DB_PRES+'/'+id).update({estado,fechaCierre:p.fechaCierre||null});
+  else { updatePresBadge(); renderPresupuestos(); }
+}
+
+// ── Filtro ────────────────────────────────────────────────────────
+function setPresFilter(f){
+  presFilter=f;
+  ['todos','espera','aceptado','rechazado'].forEach(x=>{
+    const btn=document.getElementById('pf-'+x);
+    if(!btn) return;
+    const active=x===f;
+    btn.style.background=active?'#1a1a2e':'#fff';
+    btn.style.color=active?'#fff':'var(--muted)';
+    btn.style.borderColor=active?'#1a1a2e':'var(--border)';
+  });
+  renderPresupuestos();
+}
+
+// ── Render lista ──────────────────────────────────────────────────
+function renderPresupuestos(){
+  const cont=document.getElementById('presListado'); if(!cont) return;
+  let rows=presData;
+  if(presFilter!=='todos') rows=rows.filter(p=>p.estado===presFilter);
+  if(!rows.length){
+    cont.innerHTML='<div style="text-align:center;color:var(--muted2);padding:40px">Sin presupuestos en este estado</div>';
+    return;
+  }
+  const ECOL={espera:'#f59e0b',aceptado:'#059669',rechazado:'#ef4444'};
+  const EICO={espera:'⏳',aceptado:'✅',rechazado:'❌'};
+  cont.innerHTML=rows.map(p=>{
+    const col=ECOL[p.estado]||'#6b7280';
+    const ico=EICO[p.estado]||'•';
+    const fecha=new Date(p.fecha).toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'2-digit'});
+    const id=p.id;
+    return `<div style="background:#fff;border:1.5px solid ${col}40;border-left:4px solid ${col};border-radius:10px;padding:14px 16px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+            <span style="background:${col};color:#fff;border-radius:20px;padding:2px 10px;font-size:.68rem;font-weight:700">${ico} ${p.estado.toUpperCase()}</span>
+            <span style="font-size:.7rem;font-weight:700;color:#1a1a2e">${AL_PRES[p.asesor]||p.asesor}</span>
+            <span style="font-size:.65rem;color:var(--muted)">${fecha}</span>
+            ${p.inCampaña?'<span style="background:#fef3c7;color:#92400e;border-radius:10px;padding:1px 7px;font-size:.62rem;font-weight:700">🏷️ CAMPAÑA</span>':''}
+            ${p.stockDisponible?'<span style="background:#dcfce7;color:#166534;border-radius:10px;padding:1px 7px;font-size:.62rem;font-weight:700">✅ STOCK</span>':'<span style="background:#fee2e2;color:#991b1b;border-radius:10px;padding:1px 7px;font-size:.62rem;font-weight:700">📦 PLATON</span>'}
+          </div>
+          <div style="font-weight:700;font-size:.85rem;color:var(--primary2);font-family:var(--mono)">${esc(p.medida)} · ${esc(p.marca)}</div>
+          <div style="font-size:.7rem;color:var(--muted);margin-top:2px">
+            ${p.cant} uds · ${p.referencia?'<span style="font-family:monospace">'+esc(p.referencia)+'</span> · ':''}
+            ${p.cliente?'👤 '+esc(p.cliente)+' · ':''}
+            ${p.matricula?'🚗 '+esc(p.matricula)+' · ':''}
+            ${p.bastidor?'VIN: '+esc(p.bastidor):''}
+          </div>
+          ${p.nota?`<div style="font-size:.68rem;color:var(--muted);font-style:italic;margin-top:3px">📝 ${esc(p.nota)}</div>`:''}
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-weight:800;font-size:1.1rem;color:#1a1a2e">${p.total.toFixed(2)}€</div>
+          <div style="font-size:.65rem;color:var(--muted)">IVA incl.</div>
+          <div style="font-size:.68rem;color:#6b7280">${p.base.toFixed(2)}€ s/IVA</div>
+        </div>
+      </div>
+      ${p.estado==='espera'?`
+      <div style="display:flex;gap:7px;margin-top:10px;flex-wrap:wrap">
+        <button onclick="setPresEstado('${id}','aceptado')" style="flex:1;min-width:100px;padding:7px;border-radius:7px;border:none;background:#059669;color:#fff;font-weight:700;font-size:.74rem;cursor:pointer">✅ Aceptado</button>
+        <button onclick="setPresEstado('${id}','rechazado')" style="flex:1;min-width:100px;padding:7px;border-radius:7px;border:none;background:#ef4444;color:#fff;font-weight:700;font-size:.74rem;cursor:pointer">❌ No aceptado</button>
+        <button onclick="setPresEstado('${id}','espera')" style="padding:7px 12px;border-radius:7px;border:1.5px solid #f59e0b;background:#fff;color:#f59e0b;font-weight:700;font-size:.72rem;cursor:pointer">🔔 Recordar asesor</button>
+      </div>`:''}
+    </div>`;
+  }).join('');
+}
+
+// ── Mini historial en panel presupuestador ────────────────────────
+function renderPresHistorial(){
+  const cont=document.getElementById('presHistorial'); if(!cont) return;
+  const recientes=presData.slice(0,5);
+  if(!recientes.length){ cont.innerHTML=''; return; }
+  const ECOL={espera:'#f59e0b',aceptado:'#059669',rechazado:'#ef4444'};
+  cont.innerHTML='<div style="background:#fff;border-radius:8px;border:1.5px solid var(--border);padding:12px 14px;margin-top:4px">'
+    +'<div style="font-size:.65rem;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:8px">📋 Últimos presupuestos</div>'
+    +recientes.map(p=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:.72rem" onclick="setTab('presupuestos')" style="cursor:pointer">
+      <span style="width:8px;height:8px;border-radius:50%;background:${ECOL[p.estado]||'#6b7280'};flex-shrink:0"></span>
+      <span style="flex:1;font-family:var(--mono);font-weight:600">${esc(p.medida)}</span>
+      <span style="color:var(--muted)">${p.cliente?esc(p.cliente):'—'}</span>
+      <span style="font-weight:700">${p.total.toFixed(0)}€</span>
+    </div>`).join('')
+    +'<div style="margin-top:8px;text-align:center"><button onclick="setTab(\'presupuestos\')" style="font-size:.7rem;color:#6366f1;background:none;border:none;cursor:pointer;font-weight:600">Ver todos →</button></div>'
+    +'</div>';
+}
+
 
 function guardarOrden(){
   const archivo = document.getElementById('ord_archivo').value.trim();
