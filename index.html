@@ -308,12 +308,25 @@ tr.out td{background:#fff5f5}
 <!-- ═══ MOVIMIENTO ═══ -->
 <div id="panelMovimiento" style="display:none">
   <div class="card">
-    <div class="card-hdr">➕ REGISTRAR ENTRADA / SALIDA</div>
+    <div class="card-hdr">📥 REGISTRAR ENTRADA DE STOCK</div>
     <div class="card-body">
-      <div class="tipo-sw" style="margin-bottom:16px">
-        <div class="tsw compra" id="ms-compra" onclick="setMovTipo('compra')">📥 Entrada / Compra</div>
-        <div class="tsw" id="ms-venta" onclick="setMovTipo('venta')">📤 Salida / Venta</div>
+
+      <!-- MOTIVO -->
+      <div style="margin-bottom:16px">
+        <div style="font-size:.72rem;font-weight:700;color:var(--muted);margin-bottom:8px">MOTIVO DE ENTRADA</div>
+        <div style="display:flex;gap:8px">
+          <button id="mv_mot_stock"   onclick="setMotivo('stock')"
+            style="flex:1;padding:10px;border-radius:8px;border:2px solid #1a1a2e;background:#1a1a2e;color:#fff;font-weight:700;font-size:.82rem;cursor:pointer;transition:all .15s">
+            📦 STOCK
+          </button>
+          <button id="mv_mot_archivo" onclick="setMotivo('archivo')"
+            style="flex:1;padding:10px;border-radius:8px;border:2px solid var(--border);background:#fff;color:var(--primary2);font-weight:700;font-size:.82rem;cursor:pointer;transition:all .15s">
+            🗂️ ARCHIVO
+          </button>
+        </div>
       </div>
+
+      <!-- CAMPOS COMUNES: medida, referencia, marca, tipo, índice -->
       <div class="fgrid">
         <div class="field" style="grid-column:span 2">
           <label>📏 Medida del neumático</label>
@@ -325,20 +338,50 @@ tr.out td{background:#fff5f5}
         <div class="field"><label>🔠 Tipo</label><select id="mv_tipo"><option>Verano</option><option>Invierno</option><option>All Season</option></select></div>
         <div class="field"><label>📊 Índice</label><input type="text" id="mv_indice" class="mono" placeholder="91V" oninput="this.value=this.value.toUpperCase()"></div>
         <div class="field"><label>📍 Ubicación</label><input type="text" id="mv_ubi" placeholder="2T4, Almacén…" list="mvUbiSug"><datalist id="mvUbiSug"></datalist></div>
-        <div class="field"><label>🔢 Cantidad</label><input type="number" id="mv_cant" value="4" min="1"></div>
         <div class="field"><label>💶 Coste (€/ud)</label><input type="number" id="mv_coste" placeholder="0.00" step="0.01"></div>
         <div class="field"><label>💰 PVP (€/ud)</label><input type="number" id="mv_pvp" placeholder="0.00" step="0.01"></div>
         <div class="field"><label>📅 Fecha</label><input type="date" id="mv_fecha"></div>
         <div class="field"><label>⚡ Stock mínimo</label><input type="number" id="mv_stmin" value="0" min="0"></div>
-        <div class="field"><label>🗂️ Nº Archivo (apartar)</label><input type="text" id="mv_arch" class="mono" placeholder="#119XXX" oninput="this.value=this.value.toUpperCase()"></div>
-        <div class="field"><label>📅 Fecha cita cliente</label><input type="date" id="mv_cita"></div>
-        <div class="field" id="mv_asesor_field" style="display:none">
-          <label>👤 Asesor <span style="color:var(--red);font-size:.6rem">*obligatorio</span></label>
-          <select id="mv_asesor"><option value="">— Seleccionar —</option><option value="TONI"><span style='font-size:1.3rem'>🧑</span> Toni Moya</option><option value="PEREA"><span style='font-size:1.3rem'>👴</span> Perea</option><option value="ROBERTO"><span style='font-size:1.3rem'>🦲</span> Roberto Carlos</option><option value="OTRO">Otro</option></select>
-        </div>
-        <div class="field" style="grid-column:span 2"><label>📝 Nota</label><input type="text" id="mv_nota" placeholder="Proveedor, albarán, observaciones…"></div>
+        <div class="field" style="grid-column:span 2"><label>📝 Nota / Albarán</label><input type="text" id="mv_nota" placeholder="Proveedor, albarán, observaciones…"></div>
       </div>
-      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
+
+      <!-- CAMPO CANTIDAD STOCK (visible en modo STOCK) -->
+      <div id="mv_bloque_stock" style="margin-top:12px">
+        <div class="fgrid" style="grid-template-columns:1fr">
+          <div class="field"><label>🔢 Cantidad a añadir al stock</label><input type="number" id="mv_cant" value="4" min="1"></div>
+        </div>
+      </div>
+
+      <!-- BLOQUE ARCHIVO (visible solo en modo ARCHIVO) -->
+      <div id="mv_bloque_archivo" style="display:none;margin-top:4px;padding:14px 16px;background:#f5f3ff;border:2px solid #c4b5fd;border-radius:10px">
+        <div style="font-size:.75rem;font-weight:700;color:#6d28d9;margin-bottom:10px">🗂️ Datos del archivo / cita</div>
+        <div class="fgrid">
+          <div class="field"><label>🔢 Cantidad</label><input type="number" id="mv_arch_cant" value="4" min="1"></div>
+          <div class="field"><label>🗂️ Nº Archivo</label><input type="text" id="mv_arch" class="mono" placeholder="#119XXX" oninput="this.value=this.value.toUpperCase()"></div>
+          <div class="field">
+            <label>👤 Asesor <span style="color:var(--red);font-size:.6rem">*obligatorio</span></label>
+            <select id="mv_asesor">
+              <option value="">— Seleccionar —</option>
+              <option value="TONI">🧑 Toni Moya</option>
+              <option value="PEREA">👴 Perea</option>
+              <option value="ROBERTO">🦲 Roberto Carlos</option>
+              <option value="OTRO">👤 Otro</option>
+            </select>
+          </div>
+          <div class="field"><label>📅 Fecha de cita</label><input type="date" id="mv_cita"></div>
+          <div class="field" style="grid-column:span 2">
+            <label>🚗 Tipo de vehículo</label>
+            <div style="display:flex;gap:8px;margin-top:4px">
+              <button id="mv_vo_no"  onclick="setVO(false)" style="flex:1;padding:9px;border-radius:7px;border:2px solid #059669;background:#059669;color:#fff;font-weight:700;font-size:.8rem;cursor:pointer">👤 Cliente particular</button>
+              <button id="mv_vo_si"  onclick="setVO(true)"  style="flex:1;padding:9px;border-radius:7px;border:2px solid var(--border);background:#fff;color:var(--muted);font-weight:700;font-size:.8rem;cursor:pointer">🚗 V.O. (uso interno)</button>
+            </div>
+            <div id="mv_vo_aviso" style="display:none;margin-top:6px;background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;padding:6px 10px;font-size:.7rem;color:#92400e;font-weight:600">⚠️ V.O. — No computa para incentivos. Cargo interno.</div>
+          </div>
+        </div>
+        <div style="font-size:.7rem;color:#7c3aed;margin-top:4px">⚠️ Se creará un apartado automáticamente vinculado al archivo.</div>
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;padding-top:12px;border-top:1px solid var(--border)">
         <button class="fbtn" onclick="limpiarMov()">Limpiar</button>
         <button id="mv_btn" class="export-btn" onclick="guardarMov()" style="background:var(--green)">📥 Guardar entrada</button>
       </div>
@@ -348,13 +391,48 @@ tr.out td{background:#fff5f5}
 
 <!-- ═══ ANALYTICS ═══ -->
 <div id="panelAnalytics" style="display:none">
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:16px">
-    <div class="card"><div class="card-hdr">🏆 Top Medidas Vendidas</div><div class="card-body" id="topMedidas"><div style="color:var(--muted2);font-size:.8rem">Sin ventas</div></div></div>
-    <div class="card"><div class="card-hdr">🏷️ Ventas por Marca</div><div class="card-body" id="topMarcas"><div style="color:var(--muted2);font-size:.8rem">Sin ventas</div></div></div>
-    <div class="card"><div class="card-hdr">💶 Resumen Económico</div><div class="card-body" id="resumenEcon"><div style="color:var(--muted2);font-size:.8rem">Sin datos</div></div></div>
-    <div class="card"><div class="card-hdr">👥 Ventas por Asesor</div><div class="card-body" id="topAsesores"><div style="color:var(--muted2);font-size:.8rem">Sin ventas</div></div></div>
+
+  <!-- FILA 1: Alertas inteligentes (ancho completo) -->
+  <div class="card" style="margin-bottom:14px;border-left:4px solid #ef4444">
+    <div class="card-hdr" style="display:flex;align-items:center;justify-content:space-between">
+      <span>🚨 Alertas Inteligentes</span>
+      <button onclick="renderAnalytics()" style="padding:3px 10px;border-radius:5px;border:1px solid var(--border);background:#fff;font-size:.7rem;cursor:pointer">↻ Actualizar</button>
+    </div>
+    <div class="card-body" id="anaAlertas" style="min-height:40px"></div>
   </div>
-  <div class="card"><div class="card-hdr">📅 Ventas por Mes</div><div class="card-body" id="ventasMes" style="min-height:100px"></div></div>
+
+  <!-- FILA 2: KPIs rápidos -->
+  <div id="anaKpis" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:14px"></div>
+
+  <!-- FILA 3: Top medidas + Rotación stock -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+    <div class="card"><div class="card-hdr">🏆 Top Medidas Vendidas</div><div class="card-body" id="topMedidas"></div></div>
+    <div class="card"><div class="card-hdr" style="display:flex;align-items:center;justify-content:space-between"><span>⏱️ Velocidad Rotación Stock</span><span style="font-size:.65rem;color:var(--muted)">días cobertura</span></div><div class="card-body" id="anaRotacion"></div></div>
+  </div>
+
+  <!-- FILA 4: Rentabilidad + Campaña -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+    <div class="card"><div class="card-hdr">💰 Rentabilidad por Referencia</div><div class="card-body" id="anaRentabilidad"></div></div>
+    <div class="card"><div class="card-hdr">🏷️ Conversión Campaña Activa</div><div class="card-body" id="anaCampana"></div></div>
+  </div>
+
+  <!-- FILA 5: Ventas por mes + Marca -->
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px">
+    <div class="card"><div class="card-hdr">📅 Ventas por Mes</div><div class="card-body" id="ventasMes" style="min-height:100px"></div></div>
+    <div class="card"><div class="card-hdr">🏷️ Ventas por Marca</div><div class="card-body" id="topMarcas"></div></div>
+  </div>
+
+  <!-- FILA 6: Asesores (ancho completo) -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-hdr">👥 Rendimiento por Asesor</div>
+    <div class="card-body" id="topAsesores"></div>
+  </div>
+
+  <!-- FILA 7: Estacionalidad predictiva -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-hdr">📈 Estacionalidad y Previsión (próximos 30 días)</div>
+    <div class="card-body" id="anaEstacionalidad"></div>
+  </div>
 
   <!-- GENERADOR DE PEDIDOS -->
   <div class="card" style="grid-column:1/-1">
@@ -399,11 +477,69 @@ tr.out td{background:#fff5f5}
   <div class="card">
     <div class="card-hdr">🚗 PRESUPUESTO RÁPIDO — ASESORES</div>
     <div class="card-body">
-      <div style="display:flex;gap:10px;margin-bottom:12px">
-        <div class="search-wrap" style="flex:1"><span class="search-ico">🔍</span><input type="text" id="asSearch" placeholder="2055516 · 205/55R16 · Continental…" oninput="buscarAs()" style="width:100%"></div>
-        <button class="export-btn" onclick="buscarAs()">🔍 Buscar</button>
+      <!-- FILTROS ESTILO ETKA -->
+      <div style="background:#f8fafc;border:1.5px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px">
+        <!-- Fila 1: dimensiones + estacion + fabricante -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-bottom:8px">
+          <div>
+            <div style="font-size:.65rem;font-weight:700;color:var(--muted);margin-bottom:3px">ANCHURA</div>
+            <select id="asF_ancho" onchange="buscarAsFilters()" style="width:100%;padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;font-size:.78rem;background:#fff;font-family:var(--font)">
+              <option value="">Todas</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:.65rem;font-weight:700;color:var(--muted);margin-bottom:3px">ALTURA</div>
+            <select id="asF_alto" onchange="buscarAsFilters()" style="width:100%;padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;font-size:.78rem;background:#fff;font-family:var(--font)">
+              <option value="">Todas</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:.65rem;font-weight:700;color:var(--muted);margin-bottom:3px">LLANTA (R)</div>
+            <select id="asF_llanta" onchange="buscarAsFilters()" style="width:100%;padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;font-size:.78rem;background:#fff;font-family:var(--font)">
+              <option value="">Todas</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:.65rem;font-weight:700;color:var(--muted);margin-bottom:3px">ESTACIÓN</div>
+            <select id="asF_tipo" onchange="buscarAsFilters()" style="width:100%;padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;font-size:.78rem;background:#fff;font-family:var(--font)">
+              <option value="">Todas</option>
+              <option value="V">☀️ Verano</option>
+              <option value="A">🔄 All Season</option>
+              <option value="I">❄️ Invierno</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:.65rem;font-weight:700;color:var(--muted);margin-bottom:3px">FABRICANTE</div>
+            <select id="asF_marca" onchange="buscarAsFilters()" style="width:100%;padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;font-size:.78rem;background:#fff;font-family:var(--font)">
+              <option value="">Todas</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:.65rem;font-weight:700;color:var(--muted);margin-bottom:3px">Í. VELOCIDAD</div>
+            <select id="asF_vel" onchange="buscarAsFilters()" style="width:100%;padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;font-size:.78rem;background:#fff;font-family:var(--font)">
+              <option value="">Todas</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:.65rem;font-weight:700;color:var(--muted);margin-bottom:3px">ESPECIF.</div>
+            <select id="asF_spec" onchange="buscarAsFilters()" style="width:100%;padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;font-size:.78rem;background:#fff;font-family:var(--font)">
+              <option value="">Todas</option>
+              <option value="AO">AO (Audi OE)</option>
+              <option value="MO">MO (Mercedes)</option>
+              <option value="SSR">SSR (Runflat)</option>
+            </select>
+          </div>
+        </div>
+        <!-- Fila 2: texto libre + botones -->
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <div class="search-wrap" style="flex:1;min-width:180px">
+            <span class="search-ico">🔍</span>
+            <input type="text" id="asSearch" placeholder="Texto libre: medida, marca, referencia…" oninput="buscarAsFilters()" style="width:100%">
+          </div>
+          <button onclick="buscarAsFilters()" style="padding:8px 16px;border-radius:7px;border:none;background:#1a1a2e;color:#fff;font-weight:700;font-size:.78rem;cursor:pointer;white-space:nowrap">🔍 Buscar</button>
+          <button onclick="resetAsFilters()" style="padding:8px 14px;border-radius:7px;border:1.5px solid var(--border);background:#fff;font-size:.78rem;cursor:pointer;white-space:nowrap;color:var(--muted)">✕ Limpiar</button>
+        </div>
       </div>
-      <div style="font-size:.72rem;color:var(--muted);margin-bottom:12px">Busca por medida con cualquier formato: "2055516", "205/55R16", nombre de marca o referencia</div>
       <div id="asResultados"></div>
       <div id="asPresupuesto" style="display:none;margin-top:16px">
         <div style="background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:2px solid #86efac;border-radius:var(--r);padding:18px">
@@ -822,6 +958,7 @@ function setTab(t){
     if(tb) tb.classList.toggle('active',x===t);
   });
   if(t==='analytics') renderAnalytics();
+  if(t==='asesores') initAsFilters();
   if(t==='top10') renderTop10();
   if(t==='tarifa') renderTarifaPanel();
   if(t==='apartados') renderAptList();
@@ -1154,11 +1291,7 @@ function importCampana(file){
 // ══════════════════════════════════════════════════════════════════
 function setMovTipo(t){
   movTipo=t;
-  document.getElementById('ms-compra').className='tsw'+(t==='compra'?' compra':'');
-  document.getElementById('ms-venta').className='tsw'+(t==='venta'?' venta':'');
-  document.getElementById('mv_btn').textContent=t==='compra'?'📥 Guardar entrada':'📤 Guardar venta';
-  document.getElementById('mv_btn').style.background=t==='compra'?'var(--green)':'var(--red)';
-  document.getElementById('mv_asesor_field').style.display='flex';
+  document.getElementById('ms-compra')?.classList.toggle('compra',t==='compra');
 }
 function movBuscarRef(){
   const raw=document.getElementById('mv_medida').value.trim();
@@ -1199,6 +1332,38 @@ function limpiarMov(){
   document.getElementById('mv_asesor').value='';
   document.getElementById('mv_fecha').value=new Date().toISOString().slice(0,10);
 }
+
+// ══ MOTIVO: STOCK / ARCHIVO ═══════════════════════════════════════
+let movMotivo = 'stock';
+
+let movEsVO = false;
+function setVO(esVO){
+  movEsVO = esVO;
+  const btnNo = document.getElementById('mv_vo_no');
+  const btnSi = document.getElementById('mv_vo_si');
+  const aviso = document.getElementById('mv_vo_aviso');
+  if(btnNo){ btnNo.style.background=esVO?'#fff':'#059669'; btnNo.style.color=esVO?'var(--muted)':'#fff'; btnNo.style.borderColor=esVO?'var(--border)':'#059669'; }
+  if(btnSi){ btnSi.style.background=esVO?'#f59e0b':'#fff'; btnSi.style.color=esVO?'#fff':'var(--muted)'; btnSi.style.borderColor=esVO?'#f59e0b':'var(--border)'; }
+  if(aviso) aviso.style.display=esVO?'block':'none';
+}
+function setMotivo(m){
+  movMotivo = m;
+  const isArch = m === 'archivo';
+  // Button styles
+  const btnS = document.getElementById('mv_mot_stock');
+  const btnA = document.getElementById('mv_mot_archivo');
+  if(btnS){ btnS.style.background = isArch?'#fff':'#1a1a2e'; btnS.style.color = isArch?'var(--primary2)':'#fff'; btnS.style.borderColor = isArch?'var(--border)':'#1a1a2e'; }
+  if(btnA){ btnA.style.background = isArch?'#6d28d9':'#fff'; btnA.style.color = isArch?'#fff':'var(--primary2)'; btnA.style.borderColor = isArch?'#6d28d9':'var(--border)'; }
+  // Show/hide blocks
+  const bS = document.getElementById('mv_bloque_stock');
+  const bA = document.getElementById('mv_bloque_archivo');
+  if(bS) bS.style.display = isArch ? 'none' : 'block';
+  if(bA) bA.style.display = isArch ? 'block' : 'none';
+  // Button label
+  const btn = document.getElementById('mv_btn');
+  if(btn) btn.textContent = isArch ? '🗂️ Guardar y apartar' : '📥 Guardar entrada';
+}
+
 function guardarMov(){
   const raw=document.getElementById('mv_medida').value.trim();
   const medida=parseMedida(raw)||raw.toUpperCase();
@@ -1207,7 +1372,13 @@ function guardarMov(){
   const tipo=document.getElementById('mv_tipo').value;
   const indice=document.getElementById('mv_indice').value.trim().toUpperCase();
   const ubicacion=document.getElementById('mv_ubi').value.trim();
-  const cant=parseInt(document.getElementById('mv_cant').value)||1;
+  const esArchivo=movMotivo==='archivo';
+  if(esArchivo){
+    if(!document.getElementById('mv_arch').value.trim()){ toast('Introduce el nº de archivo','error'); return; }
+    if(!document.getElementById('mv_asesor').value){ toast('Selecciona el asesor','error'); return; }
+    if(!document.getElementById('mv_cita').value){ toast('Indica la fecha de cita','error'); return; }
+  }
+  const cant=parseInt(document.getElementById(esArchivo?'mv_arch_cant':'mv_cant').value)||1;
   const pvp=parseFloat(document.getElementById('mv_pvp').value)||0;
   const coste=parseFloat(document.getElementById('mv_coste').value)||0;
   const fecha=document.getElementById('mv_fecha').value||new Date().toISOString().slice(0,10);
@@ -1238,7 +1409,27 @@ function guardarMov(){
   const mov={id:uid(),tipo:movTipo,medida,referencia,marca,cantidad:cant,pvp,coste,fecha,nota,archivo:arch,fechaCita:cita,asesor,stockKey:s?.id||'',fechaCreacion:new Date().toISOString()};
   movData.unshift(mov);saveToFB(DB_M,mov.id,mov);
   if(movTipo==='compra'&&arch){const ap={id:uid(),medida,medidaRef:s?.id||'',archivo:arch,cliente:'',cantidad:cant,fechaLimite:cita,asesor:'',nota:'Auto-apartado',fecha:new Date().toISOString()};apartados.unshift(ap);localStorage.setItem(LS_A,JSON.stringify(apartados));}
+  // Auto-create apartado if motivo=archivo
+  if(movMotivo==='archivo'){
+    const arch=document.getElementById('mv_arch').value.trim();
+    const ases=document.getElementById('mv_asesor').value;
+    const cita=document.getElementById('mv_cita').value;
+    const aptCant=parseInt(document.getElementById('mv_arch_cant').value)||cant;
+    const apNew={
+      id:uid(), medida:medida, referencia:ref, marca:marca,
+      medidaRef: rec?rec.id:'',
+      archivo:arch, numOrden:'', cantidad:aptCant,
+      fechaLimite:cita, asesor:ases, nota:'Entrada desde Registrar',
+      fecha:new Date().toISOString(), estado:'apartado',
+      esVO: movEsVO
+    };
+    apartados.unshift(apNew);
+    fbSaveApt(apNew);
+    setTimeout(function(){ imprimirEtiquetaApartado(apNew,rec||{}); },400);
+    toast('🗂️ Apartado creado · Archivo '+arch,'success',4000);
+  }
   renderStock();updateStats();renderHistorial();renderAnalytics();limpiarMov();
+  movMotivo='stock'; setMotivo('stock'); movEsVO=false; setVO(false);
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -1298,32 +1489,316 @@ function exportStock(){
 // ANALYTICS
 // ══════════════════════════════════════════════════════════════════
 function renderAnalytics(){
-  const ventas=movData.filter(m=>m.tipo==='venta');
-  const compras=movData.filter(m=>m.tipo==='compra');
-  const byMed={};ventas.forEach(m=>{byMed[m.medida]=(byMed[m.medida]||0)+(parseInt(m.cantidad)||1);});
+  const ventas = movData.filter(m=>m.tipo==='venta');
+  const now = new Date();
+  const mesActual = now.getFullYear()+'-'+(String(now.getMonth()+1).padStart(2,'0'));
+  const mesAnterior = (()=>{const d=new Date(now);d.setMonth(d.getMonth()-1);return d.getFullYear()+'-'+(String(d.getMonth()+1).padStart(2,'0'));})();
+  const AL={'TONI':'🧑 Toni','PEREA':'👴 Perea','ROBERTO':'🦲 Roberto','OTRO':'👤 Otro'};
+
+  // ── HELPERS ────────────────────────────────────────────────────────────────
+  function kpiCard(icon,label,val,sub,color){
+    return `<div style="background:#fff;border-radius:10px;padding:12px 14px;border:1.5px solid var(--border);border-top:3px solid ${color||'var(--primary2)'}">
+      <div style="font-size:1.4rem;font-weight:800;color:${color||'var(--primary2)'}">${val}</div>
+      <div style="font-size:.7rem;font-weight:700;color:var(--primary2);margin-top:2px">${icon} ${label}</div>
+      ${sub?`<div style="font-size:.63rem;color:var(--muted);margin-top:2px">${sub}</div>`:''}
+    </div>`;
+  }
+  function barRow(label,val,max,color,extra){
+    const pct=max>0?Math.round(val/max*100):0;
+    return `<div style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;font-size:.72rem;margin-bottom:2px">
+        <span style="font-weight:600">${label}</span><span style="font-weight:700;color:${color||'var(--primary2)'}">${val}${extra||''}</span>
+      </div>
+      <div style="background:var(--s2);border-radius:4px;height:7px"><div style="background:${color||'var(--primary2)'};height:100%;border-radius:4px;width:${pct}%"></div></div>
+    </div>`;
+  }
+  function empty(msg){ return `<div style="color:var(--muted2);font-size:.78rem;padding:12px">${msg}</div>`; }
+
+  // ── KPIs GLOBALES ──────────────────────────────────────────────────────────
+  const totalUds  = ventas.reduce((t,m)=>t+(parseInt(m.cantidad)||1),0);
+  const totalIng  = ventas.reduce((t,m)=>t+((m.pvp||0)*(parseInt(m.cantidad)||1)),0);
+  const totalCoste= ventas.reduce((t,m)=>t+((m.coste||0)*(parseInt(m.cantidad)||1)),0);
+  const totalMrg  = totalIng - totalCoste;
+  const ventasMes = ventas.filter(m=>m.fecha&&m.fecha.startsWith(mesActual));
+  const udsMes    = ventasMes.reduce((t,m)=>t+(parseInt(m.cantidad)||1),0);
+  const ingMes    = ventasMes.reduce((t,m)=>t+((m.pvp||0)*(parseInt(m.cantidad)||1)),0);
+
+  const kpiEl = document.getElementById('anaKpis');
+  if(kpiEl) kpiEl.innerHTML =
+    kpiCard('📦','Uds vendidas total', totalUds,'Historial completo','#6366f1')+
+    kpiCard('📅','Uds este mes', udsMes,'Mes en curso','#0ea5e9')+
+    kpiCard('💶','Ingresos totales', totalIng.toFixed(0)+'€','PVP acumulado','#059669')+
+    kpiCard('💰','Margen bruto', totalMrg>0?totalMrg.toFixed(0)+'€':'S/D',totalIng>0&&totalCoste>0?`${((totalMrg/totalIng)*100).toFixed(1)}% s/venta`:'Sin coste registrado','#7c3aed')+
+    kpiCard('🏷️','Ingresos mes', ingMes.toFixed(0)+'€','Mes en curso','#f59e0b')+
+    kpiCard('📊','Refs en stock', stockData.length,'Referencias activas','#14b8a6');
+
+  // ── ALERTAS INTELIGENTES ───────────────────────────────────────────────────
+  const alertas=[];
+  // Stock agotado con ventas recientes
+  stockData.filter(s=>s.stock<=0).forEach(s=>{
+    const hayVenta=ventas.find(m=>m.referencia===s.referencia);
+    if(hayVenta) alertas.push({tipo:'danger',msg:`<b>${esc(s.medida)}</b> · ${esc(s.referencia)} — Stock 0 pero tiene ventas recientes. <span style="color:#dc2626;font-weight:700">PEDIR</span>`});
+  });
+  // Stock bajo con alta rotación DMS
+  stockData.filter(s=>s.stock>0&&s.stock<=(s.stockMin||2)).forEach(s=>{
+    const dms=VENTAS_2026[s.referencia]||0;
+    if(dms>=6) alertas.push({tipo:'warn',msg:`<b>${esc(s.medida)}</b> — Stock bajo (${s.stock} uds) · ${dms} uds/año DMS`});
+  });
+  // Apartados con cita en ≤3 días
+  const hoy=new Date(); hoy.setHours(0,0,0,0);
+  apartados.forEach(a=>{
+    if(!a.fechaLimite) return;
+    const d=Math.round((new Date(a.fechaLimite+'T00:00')-hoy)/86400000);
+    if(d<=3&&d>=0) alertas.push({tipo:'warn',msg:`📌 Cita en <b>${d===0?'HOY':d+' días'}</b> · ${esc(a.medida)} · Archivo ${esc(a.archivo||'')} · ${AL[a.asesor]||a.asesor||''}`});
+    if(d<0) alertas.push({tipo:'danger',msg:`⚠️ Cita VENCIDA · ${esc(a.medida)} · Archivo ${esc(a.archivo||'')} — ${Math.abs(d)} días de retraso`});
+  });
+  // Refs campaña sin ninguna venta
+  const refsCampVendidas=new Set(ventas.map(m=>m.referencia));
+  const campSinVenta=campanaData.filter(c=>!refsCampVendidas.has(c.referencia));
+  if(campSinVenta.length>0) alertas.push({tipo:'info',msg:`🏷️ <b>${campSinVenta.length} referencias</b> en campaña sin ninguna venta registrada — revisar precio o visibilidad`});
+
+  const alertaEl=document.getElementById('anaAlertas');
+  if(alertaEl){
+    if(!alertas.length){ alertaEl.innerHTML='<div style="color:#059669;font-weight:600;font-size:.78rem;padding:6px 0">✅ Sin alertas activas</div>'; }
+    else{
+      const col={danger:'#fef2f2',warn:'#fffbeb',info:'#eff6ff'};
+      const bc ={danger:'#fca5a5',warn:'#fcd34d',info:'#93c5fd'};
+      alertaEl.innerHTML=alertas.map(a=>`
+        <div style="background:${col[a.tipo]};border-left:3px solid ${bc[a.tipo]};padding:7px 12px;border-radius:0 7px 7px 0;margin-bottom:6px;font-size:.75rem;color:#1f2937">${a.msg}</div>
+      `).join('');
+    }
+  }
+
+  // ── VELOCIDAD DE ROTACIÓN ──────────────────────────────────────────────────
+  const rotEl=document.getElementById('anaRotacion');
+  if(rotEl){
+    const conStock=stockData.filter(s=>s.stock>0);
+    const rotRows=conStock.map(s=>{
+      const dms=VENTAS_2026[s.referencia]||0;
+      const appV=ventas.filter(m=>m.referencia===s.referencia).reduce((t,m)=>t+(parseInt(m.cantidad)||1),0);
+      const ritmoMes=Math.max(dms/12, appV/Math.max(1,movData.length>0?3:1));
+      const diasCob=ritmoMes>0?Math.round(s.stock/ritmoMes*30):999;
+      return {s,diasCob,ritmoMes};
+    }).sort((a,b)=>a.diasCob-b.diasCob).slice(0,10);
+
+    if(!rotRows.length){ rotEl.innerHTML=empty('Sin stock'); }
+    else rotEl.innerHTML=rotRows.map(({s,diasCob})=>{
+      const col=diasCob<=15?'#ef4444':diasCob<=30?'#f59e0b':'#059669';
+      const lbl=diasCob>=999?'Sin rotación':diasCob+'d';
+      return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:.72rem;font-weight:700;font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(s.medida)}</div>
+          <div style="font-size:.62rem;color:var(--muted)">${esc(s.marca)} · ${s.stock} uds</div>
+        </div>
+        <div style="background:${col}20;color:${col};border:1.5px solid ${col};border-radius:20px;padding:2px 10px;font-size:.72rem;font-weight:700;white-space:nowrap">${lbl}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── RENTABILIDAD ──────────────────────────────────────────────────────────
+  const rentEl=document.getElementById('anaRentabilidad');
+  if(rentEl){
+    const byRef={};
+    ventas.forEach(m=>{
+      if(!m.pvp||!m.coste) return;
+      const k=m.referencia||m.medida||'S/R';
+      if(!byRef[k]) byRef[k]={med:m.medida||'',ref:k,ing:0,coste:0,uds:0};
+      const c=parseInt(m.cantidad)||1;
+      byRef[k].ing  +=m.pvp*c;
+      byRef[k].coste+=m.coste*c;
+      byRef[k].uds  +=c;
+    });
+    const sorted=Object.values(byRef).map(r=>({...r,mrg:r.ing-r.coste,pct:r.ing>0?((r.ing-r.coste)/r.ing*100):0})).sort((a,b)=>b.mrg-a.mrg).slice(0,8);
+    if(!sorted.length){ rentEl.innerHTML=empty('Sin datos de PVP y coste registrados'); }
+    else{
+      const maxMrg=sorted[0].mrg;
+      rentEl.innerHTML=sorted.map(r=>
+        barRow(r.med||r.ref, r.mrg.toFixed(0)+'€', maxMrg, r.pct>=25?'#059669':r.pct>=15?'#f59e0b':'#ef4444', ` · ${r.pct.toFixed(0)}%`)
+      ).join('');
+    }
+  }
+
+  // ── CONVERSIÓN CAMPAÑA ────────────────────────────────────────────────────
+  const campEl=document.getElementById('anaCampana');
+  if(campEl){
+    const totalCamp=campanaData.length;
+    const vendidas=campanaData.filter(c=>refsCampVendidas.has(c.referencia)).length;
+    const pctConv=totalCamp>0?Math.round(vendidas/totalCamp*100):0;
+    const ingCamp=ventas.filter(m=>campanaData.find(c=>c.referencia===m.referencia)).reduce((t,m)=>t+((m.pvp||0)*(parseInt(m.cantidad)||1)),0);
+    campEl.innerHTML=`
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px">
+        <div style="text-align:center">
+          <div style="font-size:2rem;font-weight:800;color:${pctConv>=50?'#059669':'#f59e0b'}">${pctConv}%</div>
+          <div style="font-size:.65rem;color:var(--muted)">conversión</div>
+        </div>
+        <div style="flex:1">
+          <div style="background:var(--s2);border-radius:6px;height:12px;overflow:hidden">
+            <div style="background:${pctConv>=50?'#059669':'#f59e0b'};height:100%;width:${pctConv}%;border-radius:6px;transition:width .5s"></div>
+          </div>
+          <div style="font-size:.68rem;color:var(--muted);margin-top:4px">${vendidas} de ${totalCamp} refs vendidas · ${ingCamp.toFixed(0)}€ ingresado</div>
+        </div>
+      </div>
+      <div style="font-size:.7rem;font-weight:700;color:var(--muted);margin-bottom:6px">TOP CAMPAÑA MÁS VENDIDAS</div>
+      ${campanaData.filter(c=>refsCampVendidas.has(c.referencia)).slice(0,5).map(c=>{
+        const udsC=ventas.filter(m=>m.referencia===c.referencia).reduce((t,m)=>t+(parseInt(m.cantidad)||1),0);
+        return `<div style="display:flex;justify-content:space-between;font-size:.72rem;padding:4px 0;border-bottom:1px solid var(--border)">
+          <span style="font-family:var(--mono)">${esc(c.medida_full)}</span>
+          <span style="font-weight:700;color:#059669">${udsC} uds</span>
+        </div>`;
+      }).join('')}`;
+  }
+
+  // ── TOP MEDIDAS ───────────────────────────────────────────────────────────
   const tmEl=document.getElementById('topMedidas');
-  if(tmEl) tmEl.innerHTML=Object.entries(byMed).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v],i)=>'<div class="top-item"><div class="top-rank r'+(i+1)+'">'+(i+1)+'</div><div style="flex:1;font-family:var(--mono);font-size:.78rem;color:var(--primary2)">'+esc(k)+'</div><div style="font-weight:700">'+v+' uds</div></div>').join('')||'<div style="color:var(--muted2);font-size:.8rem">Sin ventas</div>';
-  const byM={};ventas.forEach(m=>{if(m.marca)byM[m.marca]=(byM[m.marca]||0)+(parseInt(m.cantidad)||1);});
-  const tmkEl=document.getElementById('topMarcas');
-  if(tmkEl) tmkEl.innerHTML=Object.entries(byM).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v],i)=>'<div class="top-item"><div class="top-rank r'+(i+1)+'">'+(i+1)+'</div><div style="flex:1;font-size:.78rem">'+esc(k)+'</div><div style="font-weight:700">'+v+' uds</div></div>').join('')||'<div style="color:var(--muted2);font-size:.8rem">Sin ventas</div>';
-  const ing=ventas.reduce((t,m)=>t+(parseFloat(m.pvp)||0)*(parseInt(m.cantidad)||1),0);
-  const cost=compras.reduce((t,m)=>t+(parseFloat(m.coste)||0)*(parseInt(m.cantidad)||1),0);
-  const marg=ing-ventas.reduce((t,m)=>t+(parseFloat(m.coste)||0)*(parseInt(m.cantidad)||1),0);
-  const reEl=document.getElementById('resumenEcon');
-  if(reEl) reEl.innerHTML='<div class="top-item"><div style="flex:1;font-size:.75rem;color:var(--muted)">Uds vendidas</div><div style="font-weight:700;color:var(--green)">'+ventas.reduce((t,m)=>t+(parseInt(m.cantidad)||1),0)+'</div></div>'
-    +'<div class="top-item"><div style="flex:1;font-size:.75rem;color:var(--muted)">Ingresos (PVP×cant)</div><div style="font-weight:700;color:var(--green)">'+ing.toFixed(2)+'€</div></div>'
-    +'<div class="top-item"><div style="flex:1;font-size:.75rem;color:var(--muted)">Coste compras</div><div style="font-weight:700;color:var(--red)">'+cost.toFixed(2)+'€</div></div>'
-    +'<div class="top-item"><div style="flex:1;font-size:.75rem;color:var(--muted)">Margen estimado</div><div style="font-weight:700;color:'+(marg>=0?'var(--green)':'var(--red)')+'">'+marg.toFixed(2)+'€</div></div>';
-  const byAs={};ventas.forEach(m=>{if(m.asesor){if(!byAs[m.asesor])byAs[m.asesor]={uds:0,importe:0};byAs[m.asesor].uds+=(parseInt(m.cantidad)||1);byAs[m.asesor].importe+=(parseFloat(m.pvp)||0)*(parseInt(m.cantidad)||1);}});
-  const taEl=document.getElementById('topAsesores');
-  const ASESOR_LBL={'TONI':'🧑 Toni','PEREA':'👴 Perea','ROBERTO':'🦲 Roberto','OTRO':'👤 Otro'};
-  if(taEl) taEl.innerHTML=Object.entries(byAs).sort((a,b)=>b[1].uds-a[1].uds).map(([k,v])=>'<div class="top-item"><span class="asesor-pill ap-'+k+'">'+(ASESOR_LBL[k]||k)+'</span><div style="flex:1;margin-left:8px;font-size:.78rem">'+v.uds+' uds</div><div style="font-weight:700;color:var(--green)">'+v.importe.toFixed(0)+'€</div></div>').join('')||'<div style="color:var(--muted2);font-size:.8rem">Sin ventas</div>';
-  const byMes={};ventas.forEach(m=>{if(!m.fecha)return;const mes=m.fecha.slice(0,7);if(!byMes[mes])byMes[mes]=0;byMes[mes]+=(parseInt(m.cantidad)||1);});
-  const meses=Object.entries(byMes).sort((a,b)=>a[0].localeCompare(b[0]));
-  const maxV=meses.length?Math.max(...meses.map(m=>m[1])):1;
+  if(tmEl){
+    const byMed={};
+    ventas.forEach(m=>{const k=m.medida||'S/M';byMed[k]=(byMed[k]||0)+(parseInt(m.cantidad)||1);});
+    const s=Object.entries(byMed).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    tmEl.innerHTML=s.length?s.map(([k,v],i)=>barRow(`${i+1}. ${k}`,v,s[0][1],'#6366f1',' uds')).join(''):empty('Sin ventas');
+  }
+
+  // ── TOP MARCAS ─────────────────────────────────────────────────────────────
+  const tmrEl=document.getElementById('topMarcas');
+  if(tmrEl){
+    const byMrk={};
+    ventas.forEach(m=>{const k=m.marca||'S/M';byMrk[k]=(byMrk[k]||0)+(parseInt(m.cantidad)||1);});
+    const s=Object.entries(byMrk).sort((a,b)=>b[1]-a[1]);
+    tmrEl.innerHTML=s.length?s.map(([k,v])=>barRow(k,v,s[0][1],'#0ea5e9',' uds')).join(''):empty('Sin ventas');
+  }
+
+  // ── VENTAS POR MES ─────────────────────────────────────────────────────────
   const vmEl=document.getElementById('ventasMes');
+  if(vmEl){
+    const byMes={};
+    ventas.forEach(m=>{if(!m.fecha)return;const k=m.fecha.slice(0,7);byMes[k]=(byMes[k]||0)+(parseInt(m.cantidad)||1);});
+    const meses=Object.entries(byMes).sort((a,b)=>a[0].localeCompare(b[0]));
+    if(!meses.length){vmEl.innerHTML=empty('Sin ventas registradas');}
+    else{
+      const maxV=Math.max(...meses.map(m=>m[1]));
+      const NM=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+      vmEl.innerHTML=`<div style="display:flex;align-items:flex-end;gap:6px;height:80px;padding:4px 0">
+        ${meses.map(([mes,v])=>{
+          const h=Math.max(8,Math.round(v/maxV*70));
+          const isNow=mes===mesActual;
+          const nm=NM[parseInt(mes.slice(5,7))-1]+' '+mes.slice(2,4);
+          return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+            <div style="font-size:.6rem;font-weight:700;color:${isNow?'#6366f1':'var(--muted)'}">${v}</div>
+            <div style="width:100%;background:${isNow?'#6366f1':'#93c5fd'};border-radius:3px 3px 0 0;height:${h}px;min-height:6px"></div>
+            <div style="font-size:.55rem;color:var(--muted);white-space:nowrap">${nm}</div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    }
+  }
+
+  // ── RENDIMIENTO ASESORES (con incentivo +200€) ─────────────────────────────
+  const asEl=document.getElementById('topAsesores');
+  if(asEl){
+    const byAs={};
+    ventas.forEach(m=>{
+      const a=m.asesor||'Sin asignar';
+      if(!byAs[a]) byAs[a]={uds:0,ing:0,mrg:0,tick:0,cnt:0,inc200:0,inc200mes:0,udsVO:0};
+      const c=parseInt(m.cantidad)||1;
+      const pvp=(m.pvp||0)*c;
+      byAs[a].uds+=c; byAs[a].ing+=pvp;
+      byAs[a].mrg+=(m.pvp-m.coste||0)*c;
+      byAs[a].cnt++; byAs[a].tick+=pvp;
+      if((m.pvp||0)>=200&&!m.esVO){ byAs[a].inc200+=c; if(m.fecha&&m.fecha.startsWith(mesActual)) byAs[a].inc200mes+=c; }
+      if(m.esVO) byAs[a].udsVO+=c;
+    });
+
+    const asArr=Object.entries(byAs).sort((a,b)=>b[1].uds-a[1].uds);
+    if(!asArr.length){ asEl.innerHTML=empty('Sin ventas registradas'); }
+    else{
+      asEl.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">
+        ${asArr.map(([k,d])=>{
+          const nombre=AL[k]||k;
+          const tick=d.cnt>0?(d.tick/d.cnt).toFixed(0):'0';
+          const mrg=d.mrg>0?d.mrg.toFixed(0)+'€':'S/D';
+          return `<div style="background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:14px;border-top:4px solid #6366f1">
+            <div style="font-size:.95rem;font-weight:800;color:var(--primary2);margin-bottom:10px">${nombre}</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
+              <div style="text-align:center;background:var(--s2);border-radius:7px;padding:7px">
+                <div style="font-size:1.3rem;font-weight:800;color:#6366f1">${d.uds}</div>
+                <div style="font-size:.6rem;color:var(--muted)">uds vendidas</div>
+              </div>
+              <div style="text-align:center;background:var(--s2);border-radius:7px;padding:7px">
+                <div style="font-size:1.1rem;font-weight:800;color:#059669">${d.ing.toFixed(0)}€</div>
+                <div style="font-size:.6rem;color:var(--muted)">ingresos</div>
+              </div>
+              <div style="text-align:center;background:var(--s2);border-radius:7px;padding:7px">
+                <div style="font-size:1rem;font-weight:800;color:#7c3aed">${tick}€</div>
+                <div style="font-size:.6rem;color:var(--muted)">ticket medio</div>
+              </div>
+              <div style="text-align:center;background:var(--s2);border-radius:7px;padding:7px">
+                <div style="font-size:1rem;font-weight:800;color:#0ea5e9">${mrg}</div>
+                <div style="font-size:.6rem;color:var(--muted)">margen bruto</div>
+              </div>
+            </div>
+            <div style="background:${d.inc200mes>0?'#fef3c7':'#f1f5f9'};border:1.5px solid ${d.inc200mes>0?'#f59e0b':'var(--border)'};border-radius:8px;padding:8px 10px">
+              <div style="font-size:.65rem;font-weight:700;color:${d.inc200mes>0?'#92400e':'var(--muted)'};margin-bottom:3px">⭐ INCENTIVO ESPECIAL (PVP ≥ 200€)</div>
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <div>
+                  <div style="font-size:.7rem;color:var(--muted)">Este mes</div>
+                  <div style="font-size:1.4rem;font-weight:800;color:${d.inc200mes>0?'#f59e0b':'var(--muted2)'}">${d.inc200mes} <span style="font-size:.7rem;font-weight:400">uds</span></div>
+                </div>
+                <div style="text-align:right">
+                  <div style="font-size:.7rem;color:var(--muted)">Total historial</div>
+                  <div style="font-size:1rem;font-weight:700;color:var(--muted)">${d.inc200} uds</div>
+                </div>
+              </div>
+              ${d.udsVO>0?`<div style="margin-top:6px;padding:5px 8px;background:#fee2e2;border-radius:6px;display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:.65rem;color:#991b1b;font-weight:700">🚗 V.O. (excluido incentivo)</span>
+                <span style="font-size:.8rem;font-weight:700;color:#dc2626">${d.udsVO} uds</span>
+              </div>`:''}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    }
+  }
+
+  // ── ESTACIONALIDAD PREDICTIVA ──────────────────────────────────────────────
+  const estEl=document.getElementById('anaEstacionalidad');
+  if(estEl){
+    // Merge DMS + app ventas by ref
+    const prev={};
+    Object.entries(VENTAS_2026).forEach(([ref,uds])=>{
+      const s=stockData.find(x=>x.referencia===ref);
+      const t=T2026_MAP.get(ref);
+      prev[ref]={uds,med:s?s.medida:(t?t[1]:''),marca:s?s.marca:(t?t[2]:''),stock:s?s.stock:0,inCamp:!!getCampByRef(ref)};
+    });
+    ventas.forEach(m=>{
+      if(!prev[m.referencia]) prev[m.referencia]={uds:0,med:m.medida||'',marca:m.marca||'',stock:0,inCamp:false};
+      prev[m.referencia].uds+=(parseInt(m.cantidad)||1);
+    });
+    // Top 8 por rotación anual, calcular necesidad próx 30 días
+    const top8=Object.entries(prev).sort((a,b)=>b[1].uds-a[1].uds).slice(0,8);
+    if(!top8.length){ estEl.innerHTML=empty('Sin datos históricos'); }
+    else{
+      estEl.innerHTML=`<div style="font-size:.72rem;color:var(--muted);margin-bottom:10px">Basado en ventas DMS + app. Previsión estimada para los próximos 30 días.</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px">
+        ${top8.map(([ref,d])=>{
+          const prev30=Math.ceil(d.uds/12);
+          const cubDias=prev30>0?Math.round(d.stock/prev30*30):999;
+          const alerta=d.stock<prev30;
+          const camp=getCampByRef(ref);
+          return `<div style="background:#fff;border:1.5px solid ${alerta?'#fca5a5':'var(--border)'};border-radius:8px;padding:10px 12px">
+            <div style="font-size:.72rem;font-weight:700;font-family:var(--mono)">${esc(d.med||ref)}</div>
+            <div style="font-size:.62rem;color:var(--muted)">${esc(d.marca)}${camp?' · 🏷️':''}</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+              <div><div style="font-size:.6rem;color:var(--muted)">Previsión 30d</div><div style="font-weight:700;color:#6366f1">${prev30} uds</div></div>
+              <div style="text-align:center"><div style="font-size:.6rem;color:var(--muted)">Stock</div><div style="font-weight:700;color:${alerta?'#ef4444':'#059669'}">${d.stock}</div></div>
+              <div style="text-align:right"><div style="font-size:.6rem;color:var(--muted)">Cobertura</div><div style="font-weight:700;color:${cubDias<=15?'#ef4444':cubDias<=30?'#f59e0b':'#059669'}">${cubDias>=999?'—':cubDias+'d'}</div></div>
+            </div>
+            ${alerta?'<div style="font-size:.6rem;color:#dc2626;font-weight:700;margin-top:4px">⚠️ Stock insuficiente</div>':''}
+          </div>`;
+        }).join('')}
+      </div>`;
+    }
+  }
+
   renderPedidoSugeridas();
-  if(vmEl) vmEl.innerHTML=meses.length?'<div style="display:flex;align-items:flex-end;gap:8px;height:100px;padding-bottom:22px">'+meses.map(([mes,qty])=>{const[y,m]=mes.split('-');const lbl=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][parseInt(m)-1]+' '+y.slice(2);const pct=Math.round((qty/maxV)*100);return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px"><span style="font-size:.62rem;font-weight:700;color:var(--primary2)">'+qty+'</span><div style="width:100%;background:var(--primary2);border-radius:3px 3px 0 0;height:'+pct+'%;min-height:3px"></div><span style="font-size:.58rem;color:var(--muted);white-space:nowrap">'+lbl+'</span></div>';}).join('')+'</div>':'<div style="color:var(--muted2);text-align:center;padding:20px">Sin ventas</div>';
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -1335,6 +1810,185 @@ function saveAsCfg(){ try{asCfg={mo2:parseFloat(document.getElementById('cfg_mo2
 const TIPO_LBL={V:'Verano',A:'All Season',I:'Invierno'};
 const TIPO_ICON={V:'☀️',A:'🔄',I:'❄️'};
 function getCampByRef(ref){ return campanaData.find(c=>c.referencia===ref); }
+
+
+// ══════════════════════════════════════════════════════════════════
+// FILTROS ETKA-STYLE PRESUPUESTADOR
+// ══════════════════════════════════════════════════════════════════
+function initAsFilters(){
+  // Parse medida string: "205/55 R16 91V AO" → {ancho,alto,llanta,vel,spec}
+  function parseDim(m){
+    if(!m) return {};
+    const r=/^(\d{3})[\/\s]?(\d{2,3})\s*[Rr](\d{2})\s*(\d{2,3})?([A-Z]+)?/.exec(m.replace(/\s+/g,' ').trim());
+    if(!r) return {};
+    return {ancho:r[1],alto:r[2],llanta:r[3],carga:r[4]||'',vel:r[5]||''};
+  }
+
+  // Collect all unique values from TARIFA2026
+  const anchos=new Set(), altos=new Set(), llantas=new Set(), marcas=new Set(), vels=new Set();
+  TARIFA2026.forEach(function(t){
+    const d=parseDim(t[1]);
+    if(d.ancho) anchos.add(d.ancho);
+    if(d.alto)  altos.add(d.alto);
+    if(d.llanta) llantas.add(d.llanta);
+    if(t[2]) marcas.add(t[2]);
+    // velocity index from medida last chars after llanta
+    const vm=/R\d{2}\s*\d{2,3}([A-Z]+)/.exec(t[1]);
+    if(vm&&vm[1]) vm[1].split('').forEach(function(c){ if(/[A-Z]/.test(c)&&c!=='R') vels.add(c); });
+  });
+  // Also from campanaData and stock
+  stockData.forEach(function(s){
+    const d=parseDim(s.medida);
+    if(d.ancho) anchos.add(d.ancho);
+    if(d.alto)  altos.add(d.alto);
+    if(d.llanta) llantas.add(d.llanta);
+    if(s.marca) marcas.add(s.marca);
+  });
+
+  function fill(id, vals, sorted){
+    const el=document.getElementById(id); if(!el) return;
+    const arr=sorted?[...vals].sort((a,b)=>Number(a)-Number(b)||a.localeCompare(b)):[...vals].sort();
+    const first=el.options[0];
+    el.innerHTML='';
+    el.appendChild(first.cloneNode(true));
+    arr.forEach(function(v){ const o=document.createElement('option');o.value=v;o.textContent=v;el.appendChild(o); });
+  }
+  fill('asF_ancho', anchos, true);
+  fill('asF_alto',  altos,  true);
+  fill('asF_llanta',llantas,true);
+  fill('asF_marca', marcas, false);
+  fill('asF_vel',   ['H','T','V','W','Y','Z'].filter(function(v){ return vels.has(v)||true; }), false);
+}
+
+function resetAsFilters(){
+  ['asF_ancho','asF_alto','asF_llanta','asF_tipo','asF_marca','asF_vel','asF_spec'].forEach(function(id){
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('asSearch').value='';
+  document.getElementById('asResultados').innerHTML='';
+  document.getElementById('asPresupuesto').style.display='none';
+}
+
+function buscarAsFilters(){
+  const ancho  = (document.getElementById('asF_ancho')?.value  ||'').trim();
+  const alto   = (document.getElementById('asF_alto')?.value   ||'').trim();
+  const llanta = (document.getElementById('asF_llanta')?.value ||'').trim();
+  const tipo   = (document.getElementById('asF_tipo')?.value   ||'').trim();
+  const marca  = (document.getElementById('asF_marca')?.value  ||'').trim().toLowerCase();
+  const vel    = (document.getElementById('asF_vel')?.value    ||'').trim().toUpperCase();
+  const spec   = (document.getElementById('asF_spec')?.value   ||'').trim().toLowerCase();
+  const raw    = (document.getElementById('asSearch')?.value   ||'').trim().toLowerCase();
+  const hayFiltro = ancho||alto||llanta||tipo||marca||vel||spec||raw;
+  if(!hayFiltro){ document.getElementById('asResultados').innerHTML=''; return; }
+
+  const cont = document.getElementById('asResultados');
+
+  function matchMedida(med){
+    if(!med) return false;
+    const mu = med.toUpperCase();
+    const mc = mu.replace(/[\s\/R]/g,'');
+    if(ancho  && !mc.startsWith(ancho))                              return false;
+    if(alto   && !mc.startsWith(ancho+alto))                         return false;
+    if(llanta && !mu.replace(/\s/g,'').includes('R'+llanta))         return false;
+    if(vel    && !mu.match(new RegExp('[RZ]\\d{2}\\s*\\d{2,3}'+vel))) return false;
+    if(raw    && !med.toLowerCase().includes(raw))                   return false;
+    return true;
+  }
+  // spec checked separately against full item text (medida+marca+dibujo+ref)
+  function matchSpec(medida, marcaS, dibujo, ref){
+    if(!spec) return true;
+    const full=(medida+' '+(marcaS||'')+' '+(dibujo||'')+' '+(ref||'')).toLowerCase();
+    return full.includes(spec);
+  }
+  function matchMarca(m){ return !marca||(m||'').toLowerCase().includes(marca); }
+  function matchTipo(t){  return !tipo ||(t||'').charAt(0).toUpperCase()===tipo; }
+
+  const stockRes=stockData.filter(s=>matchMedida(s.medida)&&matchMarca(s.marca)&&matchTipo(s.tipo)&&matchSpec(s.medida,s.marca,s.dibujo||'',s.referencia));
+  const stockRefs=new Set(stockRes.map(s=>s.referencia));
+  const campRes=campanaData.filter(c=>{
+    if(stockRefs.has(c.referencia)) return false;
+    return matchMedida(c.medida_full)&&matchMarca(c.marca)&&matchSpec(c.medida_full,c.marca,c.dibujo,c.referencia);
+  });
+  const campRefs=new Set(campRes.map(c=>c.referencia));
+  const tarifaRes=[];
+  for(let i=0;i<TARIFA2026.length&&tarifaRes.length<20;i++){
+    const t=TARIFA2026[i];
+    if(stockRefs.has(t[0])||campRefs.has(t[0])) continue;
+    if(!matchMedida(t[1])||!matchMarca(t[2])||!matchTipo(t[4])||!matchSpec(t[1],t[2],t[3],t[0])) continue;
+    tarifaRes.push(t);
+  }
+
+  let out='';
+  if(stockRes.length){
+    out+=`<div style="font-size:.7rem;font-weight:700;color:var(--green);margin:6px 0 6px">✅ EN STOCK (${stockRes.length})</div>`;
+    stockRes.forEach(s=>{
+      const apt=apartados.filter(a=>a.medidaRef===s.id).reduce((t,a)=>t+a.cantidad,0);
+      const camp=getCampByRef(s.referencia);
+      const pvpV=ePVP(s),dnpV=eDNP(s);
+      const vtas=VENTAS_2026[s.referencia];
+      out+=`<div class="stock-res-item" data-id="${s.id}" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border:1.5px solid #86efac;border-radius:9px;margin-bottom:6px;cursor:pointer" onclick="selAs('${s.id}')">
+        <div style="flex:1">
+          <div style="font-weight:700;color:var(--primary2);font-family:var(--mono)">${esc(s.medida)} <span style="font-size:.68rem;font-weight:400;color:var(--muted)">${esc(s.indice||'')}</span></div>
+          <div style="font-family:var(--mono);font-size:.65rem;color:var(--muted)">${esc(s.referencia)}</div>
+          <div style="font-size:.72rem;color:var(--muted);margin-top:2px">${esc(s.marca)} · <span style="font-weight:700;color:var(--green)">${s.stock-apt} uds libres</span>${apt>0?` <span style="color:#7c3aed">(${apt} apt.)</span>`:''}</div>
+          <div style="display:flex;gap:5px;margin-top:4px;flex-wrap:wrap">
+            <span style="background:#dcfce7;color:#166534;border-radius:10px;padding:1px 7px;font-size:.62rem;font-weight:700">✅ STOCK</span>
+            ${camp?`<span style="background:#fef3c7;color:#92400e;border-radius:10px;padding:1px 7px;font-size:.62rem;font-weight:700">🏷️ CAMPAÑA · ${camp.neto_campana.toFixed(2)}€</span>`:''}
+            ${vtas?`<span style="background:#fef3c7;color:#92400e;border-radius:10px;padding:1px 7px;font-size:.62rem;font-weight:700">📊 ${vtas}/año</span>`:''}
+          </div>
+        </div>
+        <div style="text-align:right"><div style="font-weight:800;color:var(--primary2);font-size:1.05rem">${pvpV?pvpV.toFixed(2)+'€':'—'}</div><div style="font-size:.7rem;color:var(--muted)">DNP: ${dnpV?dnpV.toFixed(2)+'€':'—'}</div></div>
+      </div>`;
+    });
+  }
+  if(campRes.length){
+    out+=`<div style="font-size:.7rem;font-weight:700;color:#92400e;margin:10px 0 6px">🏷️ EN CAMPAÑA · SIN STOCK (${campRes.length})</div>`;
+    campRes.forEach(c=>{
+      const enc=JSON.stringify(c).replace(/"/g,'&quot;');
+      out+=`<div class="camp-res-item" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fffbeb;border:1.5px solid #f59e0b;border-radius:9px;margin-bottom:6px;cursor:pointer" onclick="selAsCamp(${enc})">
+        <div style="flex:1">
+          <div style="font-weight:700;color:var(--primary2);font-family:var(--mono)">${esc(c.medida_full)}</div>
+          <div style="font-size:.72rem;color:var(--muted)">${esc(c.marca)} · ${esc(c.dibujo)}</div>
+          <div style="font-size:.64rem;margin-top:3px;display:flex;gap:6px">
+            <span style="background:#fef3c7;color:#92400e;border-radius:10px;padding:1px 7px;font-weight:700">🏷️ CAMPAÑA</span>
+            <span style="font-family:var(--mono);font-size:.65rem;color:var(--muted)">${esc(c.referencia)}</span>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-weight:800;color:var(--primary2);font-size:1.05rem">${c.pvp.toFixed(2)}€</div>
+          <div style="font-size:.7rem;color:#059669;font-weight:700">Neto: ${c.neto_campana.toFixed(2)}€</div>
+          <div style="font-size:.62rem;color:#92400e;font-weight:600">-${(((c.pvp-c.neto_campana)/c.pvp)*100).toFixed(0)}%</div>
+        </div>
+      </div>`;
+    });
+  }
+  if(tarifaRes.length){
+    out+=`<div style="font-size:.7rem;font-weight:700;color:var(--muted);margin:10px 0 6px">📋 TARIFA 2026 · SIN STOCK (${tarifaRes.length<20?tarifaRes.length:'20+'})</div>`;
+    tarifaRes.forEach(t=>{
+      const enc=JSON.stringify(t).replace(/"/g,'&quot;');
+      const tipoFull={V:'Verano',A:'All Season',I:'Invierno'}[t[4]]||'Verano';
+      const vtas=VENTAS_2026[t[0]];
+      out+=`<div class="tarifa-res-item" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border:1.5px solid var(--border);border-radius:9px;margin-bottom:6px;cursor:pointer" onclick="selAsTarifa(${enc})">
+        <div style="flex:1">
+          <div style="font-weight:700;font-family:var(--mono)">${esc(t[1])}</div>
+          <div style="font-family:var(--mono);font-size:.65rem;color:var(--muted)">${esc(t[0])}</div>
+          <div style="font-size:.7rem;color:var(--muted)">${esc(t[2])} · ${esc(t[3])}</div>
+          ${vtas?`<span style="background:#fef3c7;color:#92400e;border-radius:10px;padding:1px 7px;font-size:.6rem;font-weight:700;display:inline-block;margin-top:2px">📊 ${vtas}/año</span>`:''}
+          <div style="display:flex;gap:5px;margin-top:3px">
+            <span style="background:var(--s2);border-radius:10px;padding:1px 7px;font-size:.62rem">${TIPO_ICON[t[4]]||''} ${tipoFull}</span>
+            <span style="background:#fee2e2;color:#991b1b;border-radius:10px;padding:1px 7px;font-size:.62rem;font-weight:700">Stock 0</span>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-weight:800;color:var(--primary2);font-size:1.05rem">${t[5].toFixed(2)}€</div>
+          <div style="font-size:.7rem;color:var(--muted)">DNP: ${t[6].toFixed(2)}€</div>
+        </div>
+      </div>`;
+    });
+  }
+  if(!out) out='<div style="text-align:center;color:var(--muted2);padding:24px;font-size:.8rem">Sin resultados con estos filtros.</div>';
+  cont.innerHTML=out;
+}
 
 function buscarAs(){
   const raw=(document.getElementById('asSearch').value||'').trim();
@@ -1404,8 +2058,8 @@ function buscarAs(){
           +'<span style="background:var(--s2);color:var(--muted);border:1px solid var(--border);border-radius:10px;padding:1px 7px">'+(TIPO_ICON[{Verano:'V',Invierno:'I','All Season':'A'}[s.tipo]||'V']||'')+'</span>'
           +(VENTAS_2026[s.referencia]?'<span style="background:#fef3c7;color:#92400e;border:1px solid #f59e0b;border-radius:10px;padding:1px 7px;font-weight:700">📊 '+VENTAS_2026[s.referencia]+' uds/año</span>':'')
           +'</div></div>'
-          +'<div style="text-align:right"><div style="font-weight:700;color:var(--green);font-size:.95rem">'+(s.pvp?s.pvp.toFixed(2)+'€':'—')+'</div>'
-          +'<div style="font-size:.65rem;color:var(--muted)">DNP: '+(s.coste?s.coste.toFixed(2)+'€':'—')+'</div></div>'
+          +'<div style="text-align:right"><div style="font-weight:800;color:var(--primary2);font-size:1.05rem">'+(ePVP(s)?ePVP(s).toFixed(2)+'€':'—')+'</div>'
+          +'<div style="font-size:.7rem;color:var(--muted)">DNP: '+(eDNP(s)?eDNP(s).toFixed(2)+'€':'—')+'</div></div>'
         +'</div></div>';
     }).join('');
   }
@@ -1418,9 +2072,9 @@ function buscarAs(){
           +'<div><div style="font-weight:700;color:#92400e;font-family:var(--mono)">'+esc(c.medida_full)+'</div>'
           +'<div style="font-size:.7rem;color:var(--muted);margin-top:2px">'+esc(c.marca)+' · '+esc(c.dibujo)+'</div>'
           +'<div style="font-size:.64rem;margin-top:3px;display:flex;gap:6px;align-items:center"><span style="background:#fef3c7;color:#92400e;border:1px solid #f59e0b;border-radius:10px;padding:1px 7px;font-weight:700">🏷️ CAMPAÑA</span><span style="color:var(--orange);font-weight:600">Sin stock</span><span style="font-family:var(--mono);font-size:.65rem;color:var(--muted)">'+esc(c.referencia)+'</span></div></div>'
-          +'<div style="text-align:right"><div style="font-weight:700;color:var(--green);font-size:.95rem">'+c.neto_campana.toFixed(2)+'€ neto</div>'
-          +'<div style="font-size:.65rem;color:var(--muted);text-decoration:line-through">PVP: '+c.pvp.toFixed(2)+'€</div>'
-          +'<div style="font-size:.6rem;color:#059669;font-weight:700">Dto: '+(((c.pvp-c.neto_campana)/c.pvp)*100).toFixed(0)+'%</div></div>'
+          +'<div style="text-align:right"><div style="font-weight:800;color:var(--primary2);font-size:1.05rem">'+c.pvp.toFixed(2)+'€</div>'
+          +'<div style="font-size:.7rem;color:#059669;font-weight:700">Neto: '+c.neto_campana.toFixed(2)+'€</div>'
+          +'<div style="font-size:.62rem;color:#92400e;font-weight:600">Dto: '+(((c.pvp-c.neto_campana)/c.pvp)*100).toFixed(0)+'%</div></div>'
         +'</div></div>';
     }).join('');
   }
@@ -1442,8 +2096,8 @@ function buscarAs(){
           +'<span style="background:#fff0f0;color:var(--red);border:1px solid #fca5a5;border-radius:10px;padding:1px 7px;font-weight:600">🚫 Stock 0</span>'
           +'<span style="font-family:var(--mono);font-size:.62rem;color:var(--muted2)">'+esc(t[0])+'</span>'
           +'</div></div>'
-          +'<div style="text-align:right"><div style="font-weight:700;color:var(--text2);font-size:.92rem">'+t[5].toFixed(2)+'€</div>'
-          +'<div style="font-size:.63rem;color:var(--muted)">DNP: '+t[6].toFixed(2)+'€</div></div>'
+          +'<div style="text-align:right"><div style="font-weight:800;color:var(--primary2);font-size:1.05rem">'+t[5].toFixed(2)+'€</div>'
+          +'<div style="font-size:.7rem;color:var(--muted)">DNP: '+t[6].toFixed(2)+'€</div></div>'
         +'</div></div>';
     }).join('');
   }
@@ -1599,7 +2253,8 @@ function guardarOrden(){
     asesor: ordenAsesorSel,
     nota: nota,
     fecha: new Date().toISOString(),
-    estado: 'apartado'   // 'apartado' | 'cargado'
+    estado: 'apartado',   // 'apartado' | 'cargado'
+    esVO: false
   };
   apartados.unshift(ap);
   fbSaveApt(ap);
@@ -2002,13 +2657,14 @@ function renderAptList(){
     const asB=a.asesor?'<span class="asesor-pill ap-'+a.asesor+'">'+ (_AL2[a.asesor]||a.asesor) +'</span>':'';
     const tieneOrden=!!a.numOrden;
     const vtas=VENTAS_2026[a.referencia]?(' <span style="background:#fef3c7;color:#92400e;border-radius:3px;padding:1px 4px;font-size:.6rem;font-weight:700">📊 '+VENTAS_2026[a.referencia]+' uds/año</span>'):'';
+    const voBadge=a.esVO?'<span style="background:#fee2e2;color:#991b1b;border-radius:3px;padding:0 5px;font-size:.6rem;font-weight:700;margin-left:4px">🚗 V.O.</span>':''
     rows+='<div style="background:#fff;border:2px solid '+col+'20;border-left:4px solid '+col+';border-radius:var(--r);padding:14px 16px;margin-bottom:10px">'
       +'<div style="display:flex;align-items:flex-start;gap:10px">'
         +'<div style="font-size:1.2rem">📌</div>'
         +'<div style="flex:1;min-width:0">'
           +'<div style="font-weight:700;color:var(--primary2);font-family:var(--mono);font-size:.88rem">'+esc(a.medida||'')
             +(a.referencia?' <span style="font-weight:400;font-size:.65rem;color:var(--muted)">'+esc(a.referencia)+'</span>':'')
-            +vtas+'</div>'
+            +vtas+voBadge+'</div>'
           +'<div style="font-size:.72rem;color:#7c3aed;font-weight:600;margin-top:3px">🗂️ '+esc(a.archivo||'')
             +(tieneOrden?' &nbsp;&nbsp;🔢 Orden: <strong>'+esc(a.numOrden)+'</strong>':'')+'</div>'
           +'<div style="font-size:.7rem;color:var(--muted);margin-top:2px">'+a.cantidad+' uds · '+fmtDate(a.fecha.slice(0,10))+' '+asB+'</div>'
@@ -2065,6 +2721,7 @@ document.addEventListener('DOMContentLoaded',function(){
   // Close modalOrden on backdrop click
   var mo=document.getElementById('modalOrden');
   if(mo) mo.addEventListener('click',function(e){ if(e.target===this) cerrarModalOrden(); });
+  setTimeout(initAsFilters, 2000); // Init filters after Firebase loads
   document.getElementById('mv_fecha').value=new Date().toISOString().slice(0,10);
   try{const cf=localStorage.getItem(LS_CFG);if(cf){asCfg=Object.assign(asCfg,JSON.parse(cf));document.getElementById('cfg_mo2').value=asCfg.mo2;document.getElementById('cfg_mo4').value=asCfg.mo4;}}catch{}
   try{const ca=localStorage.getItem(LS_C);if(ca)campanaData=JSON.parse(ca);}catch{}
