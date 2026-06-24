@@ -1096,7 +1096,21 @@ function initFB(){
     });
     fbDb.ref(DB_S).on('value',snap=>{
       const v=snap.val();
-      if(v){ stockData=Object.values(v); localStorage.setItem(LS_S,JSON.stringify(stockData)); }
+      if(v){
+        stockData=Object.values(v);
+        // Enriquecer pvp desde tarifa en TODOS los items al cargar
+        stockData.forEach(function(s){
+          if((!s.pvp||s.pvp===0)&&T2026_MAP){
+            const t=T2026_MAP.get(s.referencia);
+            if(t&&t[5]>0){ s._tpvp=t[5]; }
+          }
+          if((!s.coste||s.coste===0)&&T2026_MAP){
+            const t=T2026_MAP.get(s.referencia);
+            if(t&&t[6]>0){ s._tdnp=t[6]; }
+          }
+        });
+        localStorage.setItem(LS_S,JSON.stringify(stockData));
+      }
       renderStock(); updateStats(); updateSuggestions();
     });
     fbDb.ref(DB_M).on('value',snap=>{
@@ -1218,6 +1232,7 @@ function setSF(f){ stFilter=f; ['all','ok','low','out','camp'].forEach(x=>docume
 function sortSt(f){ if(stSort===f) stDir*=-1; else{stSort=f;stDir=1;} renderStock(); }
 
 function renderStock(){
+  stockData.forEach(enrichPVP);
   const raw=(document.getElementById('stockSearch').value||'').trim();
   const q=raw.toLowerCase();
   const pm=parseMedida(raw);
@@ -2509,6 +2524,7 @@ function buscarAsFilters(){
   function matchMarca(m){ return !marca||(m||'').toLowerCase().includes(marca); }
   function matchTipo(t){  return !tipo ||(t||'').charAt(0).toUpperCase()===tipo; }
 
+  stockData.forEach(enrichPVP);
   const stockRes=stockData.filter(s=>matchMedida(s.medida)&&matchMarca(s.marca)&&matchTipo(s.tipo)&&matchSpec(s.medida,s.marca,s.dibujo||'',s.referencia));
   const stockRefs=new Set(stockRes.map(s=>s.referencia));
   const campRes=campanaData.filter(c=>{
@@ -2767,7 +2783,7 @@ function setAsCantBtn(n){
 function calcAs(){
   if(!asRef) return;
   const cant  = asCant;
-  const pvpFinal = (parseFloat(asRef.pvpFinal)||0) || (asRef._tpvp||0) || (asRef.netoCampaña||0);
+  const pvpFinal = (()=>{ const m=parseFloat(asRef.pvp)||0; const t=asRef._tpvp||0; const mp=(T2026_MAP&&asRef.referencia)?((T2026_MAP.get(asRef.referencia)||[])[5]||0):0; return m||t||mp||(asRef.netoCampaña||0); })();
   const dtoN  = parseFloat(document.getElementById('as_dto_neum').value)||0;
   const dtoM  = parseFloat(document.getElementById('as_dto_mo').value)||0;
 
@@ -2818,7 +2834,7 @@ function calcAs(){
 function imprimirPresupuesto(){
   if(!asRef) return;
   const cant=asCant;
-  const pvpFinal2=(parseFloat(asRef.pvpFinal2)||0)||(asRef._tpvp||0)||(asRef.netoCampaña||0);
+  const pvpFinal2=(()=>{ const m=parseFloat(asRef.pvp)||0; const t=asRef._tpvp||0; const mp=(T2026_MAP&&asRef.referencia)?((T2026_MAP.get(asRef.referencia)||[])[5]||0):0; const camp=asRef.netoCampaña||0; const dnp=parseFloat(asRef.coste)||asRef._tdnp||0; return m||t||mp||camp||(dnp>0?dnp/0.85:0); })();
   const dtoN=parseFloat(document.getElementById('as_dto_neum').value)||10;
   const dtoM=parseFloat(document.getElementById('as_dto_mo').value)||30;
   const horasMO=cant*MO_UT_NEUM;
@@ -2955,7 +2971,7 @@ function guardarPresupuesto(){
   const nota     = (document.getElementById('as_nota_pres')?.value||'').trim();
   const asesor   = document.getElementById('as_asesor')?.value||'TONI';
   const cant     = asCant;
-  const pvpFinal3      = (parseFloat(asRef.pvpFinal3)||0)||(asRef._tpvp||0)||(asRef.netoCampaña||0);
+  const pvpFinal3=(()=>{ const m=parseFloat(asRef.pvp)||0; const t=asRef._tpvp||0; const mp=(T2026_MAP&&asRef.referencia)?((T2026_MAP.get(asRef.referencia)||[])[5]||0):0; const camp=asRef.netoCampaña||0; const dnp=parseFloat(asRef.coste)||asRef._tdnp||0; return m||t||mp||camp||(dnp>0?dnp/0.85:0); })();
   const dtoN     = parseFloat(document.getElementById('as_dto_neum')?.value)||0;
   const dtoM     = parseFloat(document.getElementById('as_dto_mo')?.value)||0;
   const horasMO  = cant*MO_UT_NEUM;
