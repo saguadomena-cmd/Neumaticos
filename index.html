@@ -1989,7 +1989,7 @@ function renderAsesorPanel(key){
   </div>`;
 }
 
-async function generarConsejosIA(key){
+function generarConsejosIA(key){
   const btn = document.getElementById('btn_consejos_'+key);
   const cont = document.getElementById('consejos_'+key);
   if(!btn||!cont) return;
@@ -1997,66 +1997,87 @@ async function generarConsejosIA(key){
   btn.disabled=true; btn.textContent='⏳ Analizando...';
   cont.innerHTML='<div style="color:#7c3aed;font-size:.75rem">Analizando tus estadísticas...</div>';
 
-  const AL = {'TONI':'Toni Moya','PEREA':'Perea','ROBERTO':'Roberto Carlos'};
+  const AL = {'TONI':'Toni','PEREA':'Perea','ROBERTO':'Roberto'};
   const nombre = AL[key]||key;
   const ventas = movData.filter(m=>m.tipo==='venta'&&m.asesor===key);
   const now = new Date();
   const mesActual = now.getFullYear()+'-'+(String(now.getMonth()+1).padStart(2,'0'));
+  const mesAnteriorD = new Date(now); mesAnteriorD.setMonth(mesAnteriorD.getMonth()-1);
+  const mesAnterior = mesAnteriorD.getFullYear()+'-'+(String(mesAnteriorD.getMonth()+1).padStart(2,'0'));
 
   const totalUds = ventas.reduce((t,m)=>t+(parseInt(m.cantidad)||1),0);
   const udsMes   = ventas.filter(m=>m.fecha&&m.fecha.startsWith(mesActual)).reduce((t,m)=>t+(parseInt(m.cantidad)||1),0);
+  const udsMesAnt= ventas.filter(m=>m.fecha&&m.fecha.startsWith(mesAnterior)).reduce((t,m)=>t+(parseInt(m.cantidad)||1),0);
   const inc200   = ventas.filter(m=>(m.pvp||0)>=200).reduce((t,m)=>t+(parseInt(m.cantidad)||1),0);
+  const inc200Mes= ventas.filter(m=>(m.pvp||0)>=200&&m.fecha&&m.fecha.startsWith(mesActual)).reduce((t,m)=>t+(parseInt(m.cantidad)||1),0);
 
+  // Top medidas
   const byMed={};
   ventas.forEach(m=>{const k=m.medida||'S/M';byMed[k]=(byMed[k]||0)+(parseInt(m.cantidad)||1);});
-  const topMed=Object.entries(byMed).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>k+' ('+v+' uds)').join(', ');
+  const topMedArr=Object.entries(byMed).sort((a,b)=>b[1]-a[1]);
+  const topMed1=topMedArr[0];
 
+  // Mejor mes
   const byMes={};
-  ventas.forEach(m=>{if(!m.fecha)return;const k=m.fecha.slice(0,7);byMes[k]=(byMrk2=byMes[k]||0)+( parseInt(m.cantidad)||1);byMes[k]=byMrk2+(parseInt(m.cantidad)||1);});
+  ventas.forEach(m=>{
+    if(!m.fecha) return;
+    const k=m.fecha.slice(0,7);
+    byMes[k]=(byMes[k]||0)+(parseInt(m.cantidad)||1);
+  });
   const NM2=['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-  const mejorMes=Object.entries(byMes).sort((a,b)=>b[1]-a[1])[0];
-  const mejorMesLabel=mejorMes?NM2[parseInt(mejorMes[0].slice(5,7))]+' '+mejorMes[0].slice(2,4):' sin datos';
+  const mejorMesArr=Object.entries(byMes).sort((a,b)=>b[1]-a[1]);
+  const mejorMes=mejorMesArr[0];
+  const mejorMesLabel=mejorMes?NM2[parseInt(mejorMes[0].slice(5,7))]+' '+mejorMes[0].slice(2,4):null;
+  const esMejorMesActual = mejorMes && mejorMes[0]===mesActual;
 
-  const prompt=`Eres un coach de ventas para un asesor de neumáticos en un concesionario Volkswagen Group (Audi, Skoda, VW) en Alcalá de Henares (España). Tu tono es directo, motivador y práctico.
+  // Refs en campaña no vendidas por este asesor
+  const refsVendidasAsesor=new Set(ventas.map(m=>m.referencia));
+  const campNoVendidas=(typeof campanaData!=='undefined'?campanaData:[]).filter(c=>!refsVendidasAsesor.has(c.referencia));
 
-Datos del asesor "${nombre}":
-- Total unidades vendidas: ${totalUds}
-- Unidades este mes: ${udsMes}
-- Neumáticos ≥200€ PVP (incentivo especial): ${inc200} uds
-- Top 3 medidas más vendidas: ${topMed||'sin datos'}
-- Mejor mes histórico: ${mejorMesLabel}
-- Contexto: hay una campaña activa de verano 2026 con 42 referencias hasta el 31 de julio.
+  // ── Generar los 4 consejos con lógica local ──────────────────────
+  const consejos=[];
 
-Genera exactamente 4 consejos personalizados y concisos para ${nombre}:
-1. Un reconocimiento o motivación basado en su mejor dato
-2. Una oportunidad de mejora concreta basada en sus estadísticas
-3. Un consejo táctico para aprovechar la campaña de verano actual
-4. Un objetivo específico y alcanzable para este mes
-
-Formato: devuelve los 4 consejos en HTML usando este formato exacto para cada uno:
-<p><strong>Puticonsejo 1:</strong> [texto del consejo con emoji relevante al inicio]</p>
-<p><strong>Puticonsejo 2:</strong> [texto]</p>
-<p><strong>Puticonsejo 3:</strong> [texto]</p>
-<p><strong>Puticonsejo 4:</strong> [texto]</p>
-Sin más texto ni explicaciones. Máximo 2 frases por consejo. Directo y sin rodeos.`;
-
-  try{
-    const resp = await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:600,
-        messages:[{role:'user',content:prompt}]
-      })
-    });
-    const data = await resp.json();
-    const text = data.content?.find(c=>c.type==='text')?.text||'Sin respuesta';
-    cont.innerHTML=`<div style="line-height:1.7;color:#374151">${text}</div>`;
-  }catch(e){
-    cont.innerHTML='<div style="color:#dc2626;font-size:.75rem">Error al conectar con el asistente. Inténtalo de nuevo.</div>';
+  // 1. Reconocimiento / motivación
+  if(totalUds===0){
+    consejos.push('🌱 Aún no tienes ventas registradas — es el momento perfecto para empezar a sumar. ¡El primer neumático siempre marca el inicio!');
+  } else if(esMejorMesActual){
+    consejos.push(`🔥 ¡Este mes está siendo tu mejor mes con ${udsMes} uds! Estás superando tu propio récord, sigue así.`);
+  } else if(topMed1){
+    consejos.push(`🏆 Tu medida más vendida es ${topMed1[0]} con ${topMed1[1]} unidades. Domina bien esa talla — aprovecha para ofrecerla activamente a quien tenga un coche compatible.`);
+  } else {
+    consejos.push(`💪 Llevas ${totalUds} unidades vendidas en total. Cada venta cuenta para construir una base sólida de clientes recurrentes.`);
   }
-  btn.disabled=false; btn.textContent='✨ Volver a preguntar';
+
+  // 2. Oportunidad de mejora
+  if(udsMesAnt>0 && udsMes < udsMesAnt){
+    const diff=udsMesAnt-udsMes;
+    consejos.push(`📉 Este mes vas ${diff} uds por debajo del mes pasado (${udsMesAnt} uds). Revisa si hay presupuestos pendientes en espera que puedas cerrar antes de fin de mes.`);
+  } else if(inc200Mes===0 && udsMes>0){
+    consejos.push('💡 Este mes no has vendido ningún neumático de gama alta (≥200€). Prueba a ofrecer la opción premium antes de la económica — muchos clientes la aceptan si se la presentas primero.');
+  } else if(ventas.length>0 && ventas.length<5){
+    consejos.push('📊 Tienes pocas operaciones registradas todavía. Asegúrate de anotar cada venta en el sistema para que tus estadísticas reflejen tu trabajo real.');
+  } else {
+    consejos.push('🎯 Buen ritmo general. Para seguir creciendo, prueba a diversificar un poco las medidas que ofreces — hay margen en tallas que vendes menos.');
+  }
+
+  // 3. Táctica campaña
+  if(campNoVendidas.length>0){
+    const ejemplo=campNoVendidas[0];
+    consejos.push(`🏷️ Hay ${campNoVendidas.length} referencias en campaña que aún no has vendido — por ejemplo ${ejemplo.medida_full||ejemplo.medida||''} de ${ejemplo.marca||''}. Revísalas en la pestaña Campaña, tienen buen margen de descuento para cerrar rápido.`);
+  } else {
+    consejos.push('🏷️ Estás aprovechando bien la campaña activa. Sigue consultando la pestaña de Campaña antes de dar cualquier presupuesto — siempre puede haber una opción más competitiva.');
+  }
+
+  // 4. Objetivo del mes
+  const objetivo = udsMes>0 ? Math.max(udsMes+2, Math.ceil(udsMes*1.15)) : 4;
+  consejos.push(`🎯 Objetivo para este mes: llegar a ${objetivo} unidades vendidas (llevas ${udsMes}). Un empujón más y lo consigues.`);
+
+  // Render
+  const html2 = consejos.map((c,i)=>`<p><strong>Puticonsejo ${i+1}:</strong> ${c}</p>`).join('');
+  setTimeout(()=>{
+    cont.innerHTML=`<div style="line-height:1.7;color:#374151">${html2}</div>`;
+    btn.disabled=false; btn.textContent='✨ Volver a preguntar';
+  }, 600);
 }
 
 
