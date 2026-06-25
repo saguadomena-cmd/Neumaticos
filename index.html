@@ -2669,7 +2669,7 @@ async function abrirCamaraMedida(){
     setCamStatus('🔍 Buscando medida… mantén el encuadre', '#6d28d9', '#f5f3ff');
     // Iniciar escaneo continuo cada 1.3s
     if(camScanInterval) clearInterval(camScanInterval);
-    camScanInterval = setInterval(escanearFrame, 1300);
+    camScanInterval = setInterval(escanearFrame, 600); // el guard camOcrBusy evita solapes
   }catch(e){
     console.warn('Cámara no disponible:', e.message);
     setCamStatus('⚠️ Sin acceso a la cámara. Usa "Usar foto en su lugar".', '#dc2626', '#fef2f2');
@@ -2695,44 +2695,91 @@ async function escanearFrame(){
   const video = document.getElementById('camVideo');
   if(!video || video.readyState < 2) return; // vídeo no listo aún
 
+  if(typeof Tesseract === 'undefined'){
+    setCamStatus('⚠️ OCR no disponible (sin conexión)', '#dc2626', '#fef2f2');
+    return;
+  }
+
   camOcrBusy = true;
   try{
     const canvas = document.getElementById('camCanvas');
     canvas.width  = video.videoWidth;
     canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0);
+    canvas.getContext('2d').drawImage(video, 0, 0);
 
-    // Recortar solo la zona central (donde está el marco guía) para acelerar y mejorar precisión
+    // Recortar la zona central (donde está el marco guía)
     const cw = canvas.width, ch = canvas.height;
-    const cropW = cw*0.8, cropH = ch*0.34;
+    const cropW = cw*0.85, cropH = ch*0.45;
     const cropX = (cw-cropW)/2, cropY = (ch-cropH)/2;
     const cropCanvas = document.createElement('canvas');
     cropCanvas.width = cropW; cropCanvas.height = cropH;
     cropCanvas.getContext('2d').drawImage(canvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
 
-    if(typeof Tesseract === 'undefined'){
-      setCamStatus('⚠️ OCR no disponible (sin conexión)', '#dc2626', '#fef2f2');
-      camOcrBusy = false;
-      return;
-    }
-
-    const result = await Tesseract.recognize(cropCanvas.toDataURL('image/jpeg',0.9), 'eng', {
-      tessedit_char_whitelist: '0123456789R/ ZR'
-    });
-    const texto = result.data.text || '';
-    const medida = extraerMedidaDeTexto(texto);
-
-    if(medida){
-      camDetectado = true;
-      if(camScanInterval){ clearInterval(camScanInterval); camScanInterval=null; }
-      setCamStatus('✅ Medida detectada', '#059669', '#f0fdf4');
-      mostrarMedidaDetectadaYRellenar(medida);
+    // El texto del flanco casi siempre sale rotado (la rueda está montada de pie).
+    // Probamos 0°, 90° y 270° — en cuanto una orientación da resultado, paramos.
+    const angulos = [0, 90, 270, 180];
+    for(const angulo of angulos){
+      if(camDetectado) break;
+      const procesada = prepararImagenOCR(cropCanvas, angulo);
+      const result = await Tesseract.recognize(procesada, 'eng', {
+        tessedit_char_whitelist: '0123456789RZ/ -',
+        tessedit_pageseg_mode: '6' // bloque uniforme de texto
+      });
+      const texto = result.data.text || '';
+      const medida = extraerMedidaDeTexto(texto);
+      if(medida){
+        camDetectado = true;
+        if(camScanInterval){ clearInterval(camScanInterval); camScanInterval=null; }
+        setCamStatus('✅ Medida detectada', '#059669', '#f0fdf4');
+        mostrarMedidaDetectadaYRellenar(medida);
+        break;
+      }
     }
   }catch(err){
     console.warn('Error OCR frame:', err.message);
   }
   camOcrBusy = false;
+}
+
+// Rota la imagen y aplica escala de grises + aumento de contraste
+// El texto del flanco está grabado en relieve (mismo color que el caucho),
+// así que el contraste real es muy bajo — esto ayuda a que Tesseract lo distinga.
+function prepararImagenOCR(sourceCanvas, anguloGrados){
+  const w = sourceCanvas.width, h = sourceCanvas.height;
+  const rad = anguloGrados * Math.PI / 180;
+  const rotar90 = (anguloGrados === 90 || anguloGrados === 270);
+
+  const outCanvas = document.createElement('canvas');
+  outCanvas.width  = rotar90 ? h : w;
+  outCanvas.height = rotar90 ? w : h;
+  const ctx = outCanvas.getContext('2d');
+
+  ctx.save();
+  ctx.translate(outCanvas.width/2, outCanvas.height/2);
+  ctx.rotate(rad);
+  ctx.drawImage(sourceCanvas, -w/2, -h/2);
+  ctx.restore();
+
+  // Escala de grises + estiramiento de contraste (umbral adaptativo simple)
+  const imgData = ctx.getImageData(0, 0, outCanvas.width, outCanvas.height);
+  const d = imgData.data;
+  let min=255, max=0;
+  for(let i=0; i<d.length; i+=4){
+    const gray = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
+    d[i]=d[i+1]=d[i+2]=gray;
+    if(gray<min) min=gray;
+    if(gray>max) max=gray;
+  }
+  const range = Math.max(1, max-min);
+  for(let i=0; i<d.length; i+=4){
+    let v = (d[i]-min) * (255/range);
+    // Aumentar contraste adicional con curva simple
+    v = Math.min(255, Math.max(0, (v-128)*1.6 + 128));
+    d[i]=d[i+1]=d[i+2]=v;
+  }
+  ctx.putImageData(imgData, 0, 0);
+
+  return outCanvas.toDataURL('image/png');
 }
 
 function mostrarMedidaDetectadaYRellenar(medida){
@@ -2785,7 +2832,7 @@ function reescanear(){
   document.getElementById('camOcrResult').innerHTML = '';
   setCamStatus('🔍 Buscando medida… mantén el encuadre', '#6d28d9', '#f5f3ff');
   if(camScanInterval) clearInterval(camScanInterval);
-  camScanInterval = setInterval(escanearFrame, 1300);
+  camScanInterval = setInterval(escanearFrame, 600); // el guard camOcrBusy evita solapes
 }
 
 // ── Alternativa: foto desde galería/cámara nativa del móvil ────────
@@ -2795,46 +2842,79 @@ function procesarFotoArchivo(input){
   if(camScanInterval){ clearInterval(camScanInterval); camScanInterval=null; }
   if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null; }
 
-  setCamStatus('⏳ Analizando foto…', '#6d28d9', '#f5f3ff');
   const reader = new FileReader();
-  reader.onload = async (e) => {
-    try{
-      const result = await Tesseract.recognize(e.target.result, 'eng');
-      const medida = extraerMedidaDeTexto(result.data.text || '');
-      if(medida){
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = async () => {
+      const srcCanvas = document.createElement('canvas');
+      srcCanvas.width = img.width; srcCanvas.height = img.height;
+      srcCanvas.getContext('2d').drawImage(img, 0, 0);
+
+      const angulos = [0, 90, 270, 180];
+      let encontrada = null;
+      for(const angulo of angulos){
+        setCamStatus(`⏳ Analizando foto… (probando orientación ${angulo}°)`, '#6d28d9', '#f5f3ff');
+        try{
+          const procesada = prepararImagenOCR(srcCanvas, angulo);
+          const result = await Tesseract.recognize(procesada, 'eng', {
+            tessedit_char_whitelist: '0123456789RZ/ -',
+            tessedit_pageseg_mode: '6'
+          });
+          const medida = extraerMedidaDeTexto(result.data.text || '');
+          if(medida){ encontrada = medida; break; }
+        }catch(err){ console.warn('Error ángulo '+angulo, err.message); }
+      }
+
+      if(encontrada){
         setCamStatus('✅ Medida detectada', '#059669', '#f0fdf4');
-        mostrarMedidaDetectadaYRellenar(medida);
+        mostrarMedidaDetectadaYRellenar(encontrada);
       } else {
         setCamStatus('⚠️ No se detectó ninguna medida en la foto', '#dc2626', '#fef2f2');
         document.getElementById('camOcrResult').innerHTML = `
           <div style="background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:12px;text-align:center">
+            <div style="font-size:.7rem;color:#6b7280;margin-bottom:8px">Prueba a acercar más la foto solo a la medida (ej: 215/50R18), evitando el resto del texto del flanco.</div>
             <input type="text" id="medidaManualOCR" placeholder="Escríbela manualmente…" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:7px;font-size:.85rem;text-align:center;font-family:var(--mono);box-sizing:border-box;margin-bottom:8px">
             <button onclick="usarMedidaManualOCR()" style="width:100%;padding:9px;border-radius:7px;border:none;background:#1a1a2e;color:#fff;font-weight:700;font-size:.78rem;cursor:pointer">🔍 Buscar</button>
           </div>`;
       }
-    }catch(err){
-      setCamStatus('❌ Error al analizar la foto', '#dc2626', '#fef2f2');
-    }
+    };
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
 
 function extraerMedidaDeTexto(texto){
-  const limpio = texto.replace(/\s+/g, ' ').toUpperCase();
+  // Normalizar: mayúsculas, corregir confusiones típicas de OCR sobre relieve
+  let limpio = texto.toUpperCase();
+  limpio = limpio
+    .replace(/O/g, '0')      // O confundida con 0 (muy común en OCR de neumáticos)
+    .replace(/[|!]/g, '1')   // | o ! confundidos con 1
+    .replace(/[ZS]/g, m => m) // Z y S se mantienen (la R de radial no se toca)
+    .replace(/\s+/g, ' ');
+
+  // Patrones ordenados de más estricto a más permisivo
   const patrones = [
-    /(\d{3})\s*\/\s*(\d{2,3})\s*R\s*(\d{2})/,
-    /(\d{3})[\s\-](\d{2,3})[\s\-]?R[\s\-]?(\d{2})/,
-    /(\d{3})(\d{2})R(\d{2})/,
+    /(\d{3})\s*\/\s*(\d{2,3})\s*R\s*(\d{2})/,           // 225/40R18 (formato estándar)
+    /(\d{3})[\s\-\.]+(\d{2,3})[\s\-\.]*R[\s\-\.]*(\d{2})/, // 225 40 R 18 / 225-40-R-18
+    /(\d{3})\s*\/\s*(\d{2,3})\s+(\d{2})/,                 // 225/40 18 (R perdida por OCR)
+    /(\d{3})(\d{2})R(\d{2})/,                                 // 22540R18 (sin separadores)
+    /(\d{2,3})\s*\/\s*(\d{2,3})\s*[RZ]\s*(\d{2})/,        // tolera Z en vez de R, y ancho de 2-3 dígitos
   ];
+
+  // Buscar TODAS las coincidencias en todos los patrones, no solo la primera,
+  // y quedarnos con la que tenga rangos más coherentes con un neumático real.
+  const candidatos = [];
   for(const pat of patrones){
-    const m = limpio.match(pat);
-    if(m){
-      const ancho=parseInt(m[1]), alto=parseInt(m[2]), llanta=parseInt(m[3]);
+    const matches = limpio.matchAll(new RegExp(pat, 'g'));
+    for(const m of matches){
+      const ancho = parseInt(m[1]), alto = parseInt(m[2]), llanta = parseInt(m[3]);
       if(ancho>=125 && ancho<=355 && alto>=25 && alto<=85 && llanta>=13 && llanta<=22){
-        return `${m[1]}/${m[2]}R${m[3]}`;
+        candidatos.push(`${String(ancho).padStart(3,'0')}/${alto}R${llanta}`);
       }
     }
   }
+
+  if(candidatos.length) return candidatos[0];
   return null;
 }
 
