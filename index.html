@@ -247,7 +247,7 @@ tr.out td{background:#fff5f5}
     <div class="hs" onclick="setTab('stock')"><div class="hs-val" id="statUds" style="color:#34d399">0</div><div class="hs-lbl">Uds</div></div>
     <div class="hs" onclick="setTab('stock')"><div class="hs-val" id="statBajo" style="color:#fbbf24">0</div><div class="hs-lbl">Stock bajo</div></div>
     <div class="hs" onclick="setTab('stock')"><div class="hs-val" id="statAgot" style="color:#f87171">0</div><div class="hs-lbl">Agotado</div></div>
-    <div class="hs" onclick="abrirPanelCitas()" style="cursor:pointer"><div class="hs-val" id="statCitas" style="color:#fbbf24">0</div><div class="hs-lbl">Citas 7d</div></div>
+    <div class="hs" onclick="abrirPanelCitas()" style="cursor:pointer"><div class="hs-val" id="statCitas" style="color:#fbbf24">0</div><div class="hs-lbl">Citas</div></div>
   </div>
 </div>
 
@@ -257,7 +257,7 @@ tr.out td{background:#fff5f5}
 
     <div style="padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#1a1a2e">
       <div>
-        <div style="font-weight:800;font-size:1rem;color:#fff">📅 Citas próximas (7 días)</div>
+        <div style="font-weight:800;font-size:1rem;color:#fff">📅 Todas las citas</div>
         <div style="font-size:.7rem;color:rgba(255,255,255,.6);margin-top:2px" id="citasResumen"></div>
       </div>
       <button onclick="cerrarPanelCitas()" style="background:rgba(255,255,255,.15);border:none;border-radius:50%;width:30px;height:30px;cursor:pointer;color:#fff;font-size:1rem">✕</button>
@@ -1915,15 +1915,21 @@ let citasFiltroActivo = 'todos';
 // Devuelve solo apartados con cita válida (fecha no vacía) en rango [hoy, hoy+7]
 // y excluye citas ya vencidas para el contador del header (esas se gestionan
 // como urgentes pero no deben inflar "próximos 7 días" si ya pasaron).
+// Todas las citas con fecha futura (incluye hoy), sin límite de 7 días
 function getCitasProximas(){
   const hoy = new Date(); hoy.setHours(0,0,0,0);
-  const en7 = new Date(hoy); en7.setDate(en7.getDate()+7);
   return apartados.filter(a => {
     if(!a.fechaLimite || a.fechaLimite.trim()==='') return false;
     const f = new Date(a.fechaLimite+'T00:00');
     if(isNaN(f.getTime())) return false;
-    return f >= hoy && f <= en7;
+    return f >= hoy;
   });
+}
+
+// Total de citas pendientes de gestionar (futuras + vencidas) — esto es lo que
+// se muestra en el contador del header, ya que todas requieren acción del asesor
+function getTotalCitasPendientes(){
+  return apartados.filter(a => a.fechaLimite && a.fechaLimite.trim() !== '').length;
 }
 
 function getCitasVencidas(){
@@ -1993,8 +1999,10 @@ function renderListadoCitas(){
 
   const totalProx = citasFiltroActivo==='todos' ? getCitasProximas().length : getCitasProximas().filter(a=>a.asesor===citasFiltroActivo).length;
   const totalVenc = citasFiltroActivo==='todos' ? getCitasVencidas().length : getCitasVencidas().filter(a=>a.asesor===citasFiltroActivo).length;
+  const total = totalProx + totalVenc;
+  const sufijoFiltro = citasFiltroActivo==='todos' ? '(equipo completo)' : '(tus citas)';
   document.getElementById('citasResumen').textContent =
-    `${totalProx} próximas · ${totalVenc} vencidas sin gestionar`;
+    `${total} citas en total ${sufijoFiltro} — ${totalProx} pendientes · ${totalVenc} vencidas`;
 
   if(!citas.length){
     cont.innerHTML = '<div style="text-align:center;color:var(--muted2);padding:40px">Sin citas en este filtro</div>';
@@ -2056,8 +2064,8 @@ function updateStats(){
   document.getElementById('statUds').textContent=stockData.reduce((t,s)=>t+(s.stock||0),0);
   document.getElementById('statBajo').textContent=stockData.filter(s=>getStatus(s)==='low').length;
   document.getElementById('statAgot').textContent=stockData.filter(s=>getStatus(s)==='out').length;
-  const c7 = getCitasProximas().length;
-  document.getElementById('statCitas').textContent=c7;
+  const totalCitas = getTotalCitasPendientes();
+  document.getElementById('statCitas').textContent=totalCitas;
   // Si el panel de citas está abierto, refrescarlo en vivo
   if(document.getElementById('modalCitas')?.style.display === 'flex'){
     renderFiltroAsesoresCitas();
