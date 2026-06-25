@@ -221,6 +221,7 @@ tr.out td{background:#fff5f5}
 @media(max-width:768px){.hstats{display:none}.main{padding:8px}.panel{width:100vw}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
 <body>
 
@@ -604,6 +605,38 @@ tr.out td{background:#fff5f5}
           </div>
           <button onclick="buscarAsFilters()" style="padding:8px 16px;border-radius:7px;border:none;background:#1a1a2e;color:#fff;font-weight:700;font-size:.78rem;cursor:pointer;white-space:nowrap">🔍 Buscar</button>
           <button onclick="resetAsFilters()" style="padding:8px 14px;border-radius:7px;border:1.5px solid var(--border);background:#fff;font-size:.78rem;cursor:pointer;white-space:nowrap;color:var(--muted)">✕ Limpiar</button>
+          <button onclick="abrirCamaraMedida()" style="padding:8px 14px;border-radius:7px;border:none;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;font-weight:700;font-size:.78rem;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px">📷 Foto medida</button>
+        </div>
+      </div>
+
+      <!-- MODAL CÁMARA OCR -->
+      <div id="modalCamara" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.85);align-items:center;justify-content:center;flex-direction:column">
+        <div style="background:#fff;border-radius:14px;padding:18px;max-width:min(94vw,480px);width:100%;max-height:92vh;overflow-y:auto">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div style="font-weight:800;font-size:.95rem;color:#1a1a2e">📷 Foto del flanco del neumático</div>
+            <button onclick="cerrarCamaraMedida()" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:#6b7280">✕</button>
+          </div>
+
+          <div id="camStep1">
+            <div style="font-size:.78rem;color:#6b7280;margin-bottom:10px">Encuadra bien la medida grabada en el flanco (ej: 205/55R16). Acércate y procura buena luz.</div>
+            <video id="camVideo" autoplay playsinline style="width:100%;border-radius:10px;background:#111;max-height:50vh;object-fit:cover"></video>
+            <canvas id="camCanvas" style="display:none"></canvas>
+            <div style="display:flex;gap:8px;margin-top:12px">
+              <input type="file" id="camFileInput" accept="image/*" capture="environment" style="display:none" onchange="procesarFotoArchivo(this)">
+              <button onclick="document.getElementById('camFileInput').click()" style="flex:1;padding:11px;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-weight:700;font-size:.82rem;cursor:pointer">🖼️ Elegir/Tomar foto</button>
+              <button onclick="capturarFoto()" id="btnCapturar" style="flex:1;padding:11px;border-radius:8px;border:none;background:#7c3aed;color:#fff;font-weight:800;font-size:.82rem;cursor:pointer">📸 Capturar</button>
+            </div>
+          </div>
+
+          <div id="camStep2" style="display:none">
+            <img id="camPreview" style="width:100%;border-radius:10px;max-height:40vh;object-fit:contain;background:#f1f5f9">
+            <div id="camOcrStatus" style="margin-top:12px;text-align:center;padding:14px;background:#f5f3ff;border-radius:8px;font-size:.82rem;color:#6d28d9;font-weight:600">⏳ Analizando imagen…</div>
+            <div id="camOcrResult" style="margin-top:10px"></div>
+            <div style="display:flex;gap:8px;margin-top:12px">
+              <button onclick="reintentarFoto()" style="flex:1;padding:10px;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-weight:700;font-size:.8rem;cursor:pointer">🔄 Repetir foto</button>
+              <button onclick="cerrarCamaraMedida()" style="flex:1;padding:10px;border-radius:8px;border:none;background:#1a1a2e;color:#fff;font-weight:700;font-size:.8rem;cursor:pointer">Cerrar</button>
+            </div>
+          </div>
         </div>
       </div>
       <div id="asResultados"></div>
@@ -1056,7 +1089,14 @@ function statusBadge(s){
   const st=getStatus(s);
   const apt=apartados.filter(a=>a.medidaRef===s.id).reduce((t,a)=>t+a.cantidad,0);
   const libre=Math.max(0,s.stock-apt);
-  if(st==='out') return '<span class="badge b-out">🚨 Agotado</span>'+(s.totalVendidas>0?'<div style="font-size:.6rem;color:var(--orange);margin-top:3px">📋 Pedir '+(s.stockMin||2)+' uds</div>':'');
+  if(st==='out'){
+    // Si el stock es 0 y TODO lo apartado cubre exactamente lo pendiente (caso archivo), mostrar aviso distinto
+    if(s.stock===0 && apt>0){
+      return '<span class="badge" style="background:#ede9fe;color:#6d28d9;border:1px solid #c4b5fd">🗂️ Pendiente pedido</span>'+
+             '<div style="font-size:.6rem;color:#6d28d9;margin-top:3px">📌 '+apt+' uds reservadas en archivo</div>';
+    }
+    return '<span class="badge b-out">🚨 Agotado</span>'+(s.totalVendidas>0?'<div style="font-size:.6rem;color:var(--orange);margin-top:3px">📋 Pedir '+(s.stockMin||2)+' uds</div>':'');
+  }
   if(st==='low') return '<span class="badge b-low">⚠️ Stock bajo</span><div style="font-size:.6rem;color:var(--orange);margin-top:3px">📋 Pedir '+(s.stockMin||2)+' uds</div>';
   return '<span class="badge b-ok">✓ OK</span>';
 }
@@ -1247,7 +1287,11 @@ function renderStock(){
     if(stFilter==='low'  && st!=='low')  return false;
     if(stFilter==='out'  && st!=='out')  return false;
     if(stFilter==='camp' && !getCamp(s)) return false;
-    if(!raw) return s.stock>0; // default: only show refs with stock
+    if(!raw){
+      // Mostrar si tiene stock O si tiene apartados activos (aunque stock sea 0)
+      const tieneApt = apartados.some(a=>a.medidaRef===s.id);
+      return s.stock>0 || tieneApt;
+    }
     // Busqueda intuitiva por medida
     const mc=s.medida.replace(/[\/R]/g,'').toLowerCase();
     if(qClean.length>=5 && mc.includes(qClean)) return true;
@@ -1764,7 +1808,49 @@ function guardarMov(){
   const asesor=document.getElementById('mv_asesor').value||'';
   if(!medida){toast('Introduce la medida','error');return;}
   if(movTipo==='venta'&&!asesor){toast('Selecciona el asesor para ventas','error');return;}
+
   let s=stockData.find(x=>(referencia&&x.referencia===referencia)||(x.medida===medida&&!referencia));
+
+  // ═══ MOTIVO: ARCHIVO ═══
+  // Los neumáticos vienen reservados para un cliente concreto.
+  // NO se suman al stock disponible — solo se crea el apartado.
+  // Si la referencia no existe aún en el catálogo, se crea con stock:0
+  // para que quede registrada (medida, marca, PVP) pero sin unidades libres.
+  if(esArchivo){
+    if(!s){
+      const nid=referencia||medida.replace(/[/\s]/g,'_')+'_'+Date.now().toString(36);
+      const nr={id:nid,medida,referencia,marca,tipo,indice,ubicacion,stock:0,stockMin:stmin,pvp,coste,fechaRecepcion:fecha,totalVendidas:0,fechaCreacion:new Date().toISOString()};
+      stockData.push(nr);saveToFB(DB_S,nr.id,nr);
+      s=nr;
+    } else {
+      // Actualizar datos de referencia si vienen mejor informados, pero NO tocar stock
+      if(pvp>0) s.pvp=pvp;
+      if(coste>0) s.coste=coste;
+      if(ubicacion) s.ubicacion=ubicacion;
+      saveToFB(DB_S,s.id,s);
+    }
+
+    const ases=document.getElementById('mv_asesor').value;
+    const aptCant=cant;
+    const apNew={
+      id:uid(), medida:medida, referencia:referencia, marca:marca,
+      medidaRef: s?s.id:'',
+      archivo:arch, numOrden:'', cantidad:aptCant,
+      fechaLimite:cita, asesor:ases, nota:nota||'Entrada desde Registrar (archivo, sin stock físico)',
+      fecha:new Date().toISOString(), estado:'apartado',
+      esVO: movEsVO
+    };
+    apartados.unshift(apNew);
+    fbSaveApt(apNew);
+    setTimeout(function(){ imprimirEtiquetaApartado(apNew,s||{}); },400);
+    toast('🗂️ Apartado creado · Archivo '+arch+' · Stock NO afectado (pendiente de pedido)','success',4500);
+
+    renderStock();updateStats();renderHistorial();renderAnalytics();limpiarMov();
+    movMotivo='stock'; setMotivo('stock'); movEsVO=false; setVO(false);
+    return;
+  }
+
+  // ═══ MOTIVO: STOCK ═══ (entrada física real en almacén)
   if(s){
     if(movTipo==='compra'){s.stock+=cant;s.fechaRecepcion=fecha;if(pvp>0)s.pvp=pvp;if(coste>0)s.coste=coste;if(ubicacion)s.ubicacion=ubicacion;s.stockMin=stmin;saveToFB(DB_S,s.id,s);toast('✅ +'+cant+' uds → stock: '+s.stock,'success');}
     else{
@@ -1783,26 +1869,7 @@ function guardarMov(){
   }
   const mov={id:uid(),tipo:movTipo,medida,referencia,marca,cantidad:cant,pvp,coste,fecha,nota,archivo:arch,fechaCita:cita,asesor,stockKey:s?.id||'',fechaCreacion:new Date().toISOString()};
   movData.unshift(mov);saveToFB(DB_M,mov.id,mov);
-  if(movTipo==='compra'&&arch){const ap={id:uid(),medida,medidaRef:s?.id||'',archivo:arch,cliente:'',cantidad:cant,fechaLimite:cita,asesor:'',nota:'Auto-apartado',fecha:new Date().toISOString()};apartados.unshift(ap);localStorage.setItem(LS_A,JSON.stringify(apartados));}
-  // Auto-create apartado if motivo=archivo
-  if(movMotivo==='archivo'){
-    const arch=document.getElementById('mv_arch').value.trim();
-    const ases=document.getElementById('mv_asesor').value;
-    const cita=document.getElementById('mv_cita').value;
-    const aptCant=parseInt(document.getElementById('mv_arch_cant').value)||cant;
-    const apNew={
-      id:uid(), medida:medida, referencia:ref, marca:marca,
-      medidaRef: rec?rec.id:'',
-      archivo:arch, numOrden:'', cantidad:aptCant,
-      fechaLimite:cita, asesor:ases, nota:'Entrada desde Registrar',
-      fecha:new Date().toISOString(), estado:'apartado',
-      esVO: movEsVO
-    };
-    apartados.unshift(apNew);
-    fbSaveApt(apNew);
-    setTimeout(function(){ imprimirEtiquetaApartado(apNew,rec||{}); },400);
-    toast('🗂️ Apartado creado · Archivo '+arch,'success',4000);
-  }
+
   renderStock();updateStats();renderHistorial();renderAnalytics();limpiarMov();
   movMotivo='stock'; setMotivo('stock'); movEsVO=false; setVO(false);
 }
@@ -2572,6 +2639,159 @@ function precioBloque(pvpUd){
     </div>
   </div>`;
 }
+
+// ══════════════════════════════════════════════════════════════════
+// CÁMARA + OCR — DETECCIÓN DE MEDIDA DE NEUMÁTICO
+// ══════════════════════════════════════════════════════════════════
+let camStream = null;
+
+async function abrirCamaraMedida(){
+  const modal = document.getElementById('modalCamara');
+  modal.style.display = 'flex';
+  document.getElementById('camStep1').style.display = 'block';
+  document.getElementById('camStep2').style.display = 'none';
+
+  const video = document.getElementById('camVideo');
+  try{
+    camStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: {ideal:1920}, height: {ideal:1080} }
+    });
+    video.srcObject = camStream;
+  }catch(e){
+    // Sin acceso a getUserMedia (ej: contexto no seguro o permiso denegado)
+    // El usuario puede usar el botón "Elegir/Tomar foto" como alternativa
+    console.warn('Cámara no disponible directamente:', e.message);
+    video.style.display = 'none';
+    document.getElementById('btnCapturar').style.display = 'none';
+  }
+}
+
+function cerrarCamaraMedida(){
+  if(camStream){
+    camStream.getTracks().forEach(t => t.stop());
+    camStream = null;
+  }
+  document.getElementById('modalCamara').style.display = 'none';
+  document.getElementById('camVideo').style.display = '';
+  document.getElementById('btnCapturar').style.display = '';
+}
+
+function capturarFoto(){
+  const video  = document.getElementById('camVideo');
+  const canvas = document.getElementById('camCanvas');
+  canvas.width  = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+  procesarImagenOCR(dataUrl);
+}
+
+function procesarFotoArchivo(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => procesarImagenOCR(e.target.result);
+  reader.readAsDataURL(file);
+}
+
+function reintentarFoto(){
+  document.getElementById('camStep1').style.display = 'block';
+  document.getElementById('camStep2').style.display = 'none';
+  document.getElementById('camOcrResult').innerHTML = '';
+}
+
+async function procesarImagenOCR(dataUrl){
+  // Detener stream de cámara mientras se procesa (liberar recursos)
+  if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null; }
+
+  document.getElementById('camStep1').style.display = 'none';
+  document.getElementById('camStep2').style.display = 'block';
+  document.getElementById('camPreview').src = dataUrl;
+  document.getElementById('camOcrStatus').innerHTML = '⏳ Analizando imagen…';
+  document.getElementById('camOcrStatus').style.display = 'block';
+  document.getElementById('camOcrResult').innerHTML = '';
+
+  try{
+    if(typeof Tesseract === 'undefined'){
+      throw new Error('Librería OCR no disponible (sin conexión a internet)');
+    }
+
+    const result = await Tesseract.recognize(dataUrl, 'eng', {
+      logger: m => {
+        if(m.status === 'recognizing text'){
+          const pct = Math.round((m.progress||0)*100);
+          document.getElementById('camOcrStatus').innerHTML = `⏳ Leyendo texto… ${pct}%`;
+        }
+      }
+    });
+
+    const textoDetectado = result.data.text || '';
+    const medida = extraerMedidaDeTexto(textoDetectado);
+
+    document.getElementById('camOcrStatus').style.display = 'none';
+
+    if(medida){
+      document.getElementById('camOcrResult').innerHTML = `
+        <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:14px;text-align:center">
+          <div style="font-size:.7rem;color:#059669;font-weight:700;margin-bottom:4px">✅ MEDIDA DETECTADA</div>
+          <div style="font-size:1.3rem;font-weight:800;color:#1a1a2e;font-family:var(--mono)">${medida}</div>
+          <button onclick="usarMedidaDetectada('${medida}')" style="margin-top:10px;width:100%;padding:10px;border-radius:8px;border:none;background:#059669;color:#fff;font-weight:700;font-size:.82rem;cursor:pointer">🔍 Buscar esta medida</button>
+        </div>`;
+    } else {
+      document.getElementById('camOcrResult').innerHTML = `
+        <div style="background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:14px;text-align:center">
+          <div style="font-size:.78rem;color:#dc2626;font-weight:700;margin-bottom:6px">⚠️ No se ha podido detectar la medida automáticamente</div>
+          <div style="font-size:.7rem;color:#6b7280;margin-bottom:10px">Prueba con mejor luz, más cerca y enfocando justo el número de la medida. También puedes escribirla manualmente.</div>
+          <input type="text" id="medidaManualOCR" placeholder="Escribe la medida manualmente…" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:7px;font-size:.85rem;text-align:center;font-family:var(--mono);box-sizing:border-box;margin-bottom:8px">
+          <button onclick="usarMedidaManualOCR()" style="width:100%;padding:10px;border-radius:8px;border:none;background:#1a1a2e;color:#fff;font-weight:700;font-size:.82rem;cursor:pointer">🔍 Buscar</button>
+        </div>`;
+    }
+  }catch(err){
+    document.getElementById('camOcrStatus').style.display = 'none';
+    document.getElementById('camOcrResult').innerHTML = `
+      <div style="background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:14px;text-align:center;font-size:.78rem;color:#dc2626">
+        ❌ Error al analizar: ${err.message||'desconocido'}
+      </div>`;
+  }
+}
+
+function extraerMedidaDeTexto(texto){
+  // Limpiar texto: quitar saltos de línea, normalizar espacios
+  const limpio = texto.replace(/\s+/g, ' ').toUpperCase();
+
+  // Patrón principal: 3 dígitos / 2-3 dígitos R 2 dígitos (ej: 205/55R16, 205 55 R16)
+  const patrones = [
+    /(\d{3})\s*\/\s*(\d{2,3})\s*R\s*(\d{2})/,           // 205/55R16
+    /(\d{3})[\s\-](\d{2,3})[\s\-]?R[\s\-]?(\d{2})/,      // 205 55 R16 / 205-55-R16
+    /(\d{3})(\d{2})R(\d{2})/,                            // 20555R16 (sin separadores)
+  ];
+
+  for(const pat of patrones){
+    const m = limpio.match(pat);
+    if(m){
+      const ancho = m[1], alto = m[2], llanta = m[3];
+      // Validar rangos razonables de neumático
+      if(ancho>=125 && ancho<=355 && alto>=25 && alto<=85 && llanta>=13 && llanta<=22){
+        return `${ancho}/${alto}R${llanta}`;
+      }
+    }
+  }
+  return null;
+}
+
+function usarMedidaDetectada(medida){
+  cerrarCamaraMedida();
+  document.getElementById('asSearch').value = medida;
+  buscarAsFilters();
+  toast('🔍 Buscando: ' + medida, 'success', 2500);
+}
+
+function usarMedidaManualOCR(){
+  const val = (document.getElementById('medidaManualOCR')?.value||'').trim();
+  if(!val){ toast('Escribe una medida', 'error'); return; }
+  usarMedidaDetectada(val);
+}
+
 
 function buscarAsFilters(){
   const ancho  = (document.getElementById('asF_ancho')?.value  ||'').trim();
