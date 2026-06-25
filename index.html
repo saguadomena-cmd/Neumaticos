@@ -611,34 +611,46 @@ tr.out td{background:#fff5f5}
 
       <!-- MODAL CÁMARA OCR — ESCÁNER EN VIVO -->
       <div id="modalCamara" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.9);align-items:center;justify-content:center;flex-direction:column">
-        <div style="background:#fff;border-radius:14px;padding:18px;max-width:min(94vw,480px);width:100%;max-height:92vh;overflow-y:auto">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <div style="font-weight:800;font-size:.95rem;color:#1a1a2e">📷 Escáner de medida en vivo</div>
+        <div style="background:#fff;border-radius:14px;padding:20px;max-width:min(94vw,440px);width:100%;max-height:92vh;overflow-y:auto">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div style="font-weight:800;font-size:.95rem;color:#1a1a2e">📷 Detectar medida por foto</div>
             <button onclick="cerrarCamaraMedida()" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:#6b7280">✕</button>
           </div>
 
-          <div style="font-size:.74rem;color:#6b7280;margin-bottom:10px">Apunta al flanco del neumático y mantén el encuadre. En cuanto detecte la medida, se rellenará sola.</div>
-
-          <div style="position:relative;border-radius:10px;overflow:hidden;background:#111">
-            <video id="camVideo" autoplay playsinline muted style="width:100%;display:block;max-height:46vh;object-fit:cover"></video>
-            <canvas id="camCanvas" style="display:none"></canvas>
-            <!-- Marco guía -->
-            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">
-              <div style="width:80%;height:34%;border:3px solid rgba(124,58,237,.85);border-radius:8px;box-shadow:0 0 0 9999px rgba(0,0,0,.35)"></div>
+          <div id="camIntro">
+            <div style="background:#f5f3ff;border:1.5px solid #c4b5fd;border-radius:10px;padding:14px;margin-bottom:14px">
+              <div style="font-size:.8rem;color:#6d28d9;font-weight:600;line-height:1.5">📍 Consejos para una buena lectura:</div>
+              <ul style="margin:8px 0 0;padding-left:18px;font-size:.74rem;color:#6d28d9;line-height:1.6">
+                <li>Encuadra SOLO el número de la medida (ej: 215/50R18), sin el resto de texto</li>
+                <li>Buena luz, sin reflejos ni sombras fuertes</li>
+                <li>Lo más recto posible — evita fotografiar en ángulo o con el texto girado</li>
+                <li>Acércate todo lo posible para que el número ocupe la foto</li>
+              </ul>
             </div>
+
+            <input type="file" id="camFileInput" accept="image/*" capture="environment" style="display:none" onchange="procesarFotoArchivo(this)">
+            <button onclick="document.getElementById('camFileInput').click()" style="width:100%;padding:14px;border-radius:10px;border:none;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;font-weight:800;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+              📸 Abrir cámara y hacer foto
+            </button>
+            <button onclick="document.getElementById('camFileInputGal').click()" style="width:100%;padding:11px;border-radius:10px;border:1.5px solid var(--border);background:#fff;color:var(--muted);font-weight:700;font-size:.8rem;cursor:pointer;margin-top:8px">
+              🖼️ Elegir foto de la galería
+            </button>
+            <input type="file" id="camFileInputGal" accept="image/*" style="display:none" onchange="procesarFotoArchivo(this)">
           </div>
 
-          <input type="file" id="camFileInput" accept="image/*" capture="environment" style="display:none" onchange="procesarFotoArchivo(this)">
+          <canvas id="camCanvas" style="display:none"></canvas>
 
-          <div id="camLiveStatus" style="margin-top:10px;text-align:center;padding:10px;background:#f5f3ff;border-radius:8px;font-size:.78rem;color:#6d28d9;font-weight:600">
-            🔄 Iniciando escáner…
+          <div id="camPreviewWrap" style="display:none;margin-top:4px">
+            <img id="camPreviewImg" style="width:100%;border-radius:10px;max-height:32vh;object-fit:contain;background:#f1f5f9">
           </div>
 
-          <div id="camOcrResult" style="margin-top:8px"></div>
+          <div id="camLiveStatus" style="display:none;margin-top:12px;text-align:center;padding:12px;background:#f5f3ff;border-radius:8px;font-size:.8rem;color:#6d28d9;font-weight:600"></div>
 
-          <div style="display:flex;gap:8px;margin-top:10px">
-            <button onclick="document.getElementById('camFileInput').click()" style="flex:1;padding:9px;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-weight:700;font-size:.76rem;cursor:pointer">🖼️ Usar foto en su lugar</button>
-            <button onclick="cerrarCamaraMedida()" style="flex:1;padding:9px;border-radius:8px;border:none;background:#1a1a2e;color:#fff;font-weight:700;font-size:.76rem;cursor:pointer">Cerrar</button>
+          <div id="camOcrResult" style="margin-top:10px"></div>
+
+          <div id="camFooterBtns" style="display:none;gap:8px;margin-top:10px">
+            <button onclick="reintentarFotoModal()" style="flex:1;padding:10px;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-weight:700;font-size:.78rem;cursor:pointer">🔄 Probar otra foto</button>
+            <button onclick="cerrarCamaraMedida()" style="flex:1;padding:10px;border-radius:8px;border:none;background:#1a1a2e;color:#fff;font-weight:700;font-size:.78rem;cursor:pointer">Cerrar</button>
           </div>
         </div>
       </div>
@@ -2647,103 +2659,113 @@ function precioBloque(pvpUd){
 // CÁMARA + OCR — ESCÁNER EN VIVO DE MEDIDA DE NEUMÁTICO
 // Analiza frames del video automáticamente y rellena los desplegables
 // ══════════════════════════════════════════════════════════════════
-let camStream = null;
-let camScanInterval = null;
-let camOcrBusy = false;
-let camDetectado = false;
+// ══════════════════════════════════════════════════════════════════
+// DETECCIÓN DE MEDIDA POR FOTO — Cámara nativa del sistema (robusto)
+// No usa vídeo en vivo (frágil en iOS) — usa <input capture="environment">
+// que SIEMPRE abre la app de Cámara real del dispositivo.
+// ══════════════════════════════════════════════════════════════════
 
-async function abrirCamaraMedida(){
+function abrirCamaraMedida(){
   const modal = document.getElementById('modalCamara');
   modal.style.display = 'flex';
-  camDetectado = false;
+  // Reset UI a estado inicial
+  document.getElementById('camIntro').style.display = 'block';
+  document.getElementById('camPreviewWrap').style.display = 'none';
+  document.getElementById('camLiveStatus').style.display = 'none';
   document.getElementById('camOcrResult').innerHTML = '';
-  setCamStatus('🔄 Iniciando cámara…', '#6d28d9', '#f5f3ff');
-
-  const video = document.getElementById('camVideo');
-  try{
-    camStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'environment', width: {ideal:1280}, height: {ideal:720} }
-    });
-    video.srcObject = camStream;
-    await video.play().catch(()=>{});
-    setCamStatus('🔍 Buscando medida… mantén el encuadre', '#6d28d9', '#f5f3ff');
-    // Iniciar escaneo continuo cada 1.3s
-    if(camScanInterval) clearInterval(camScanInterval);
-    camScanInterval = setInterval(escanearFrame, 600); // el guard camOcrBusy evita solapes
-  }catch(e){
-    console.warn('Cámara no disponible:', e.message);
-    setCamStatus('⚠️ Sin acceso a la cámara. Usa "Usar foto en su lugar".', '#dc2626', '#fef2f2');
-  }
+  document.getElementById('camFooterBtns').style.display = 'none';
 }
 
 function cerrarCamaraMedida(){
-  if(camScanInterval){ clearInterval(camScanInterval); camScanInterval=null; }
-  if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null; }
   document.getElementById('modalCamara').style.display = 'none';
+}
+
+function reintentarFotoModal(){
+  document.getElementById('camIntro').style.display = 'block';
+  document.getElementById('camPreviewWrap').style.display = 'none';
+  document.getElementById('camLiveStatus').style.display = 'none';
+  document.getElementById('camOcrResult').innerHTML = '';
+  document.getElementById('camFooterBtns').style.display = 'none';
 }
 
 function setCamStatus(text, color, bg){
   const el = document.getElementById('camLiveStatus');
   if(!el) return;
+  el.style.display = 'block';
   el.innerHTML = text;
   el.style.color = color;
   el.style.background = bg;
 }
 
-async function escanearFrame(){
-  if(camDetectado || camOcrBusy) return;
-  const video = document.getElementById('camVideo');
-  if(!video || video.readyState < 2) return; // vídeo no listo aún
+// ── Procesar la foto tomada o seleccionada ──────────────────────────
+function procesarFotoArchivo(input){
+  const file = input.files[0];
+  if(!file) return;
 
-  if(typeof Tesseract === 'undefined'){
-    setCamStatus('⚠️ OCR no disponible (sin conexión)', '#dc2626', '#fef2f2');
-    return;
-  }
+  document.getElementById('camIntro').style.display = 'none';
+  document.getElementById('camPreviewWrap').style.display = 'block';
+  document.getElementById('camFooterBtns').style.display = 'flex';
 
-  camOcrBusy = true;
-  try{
-    const canvas = document.getElementById('camCanvas');
-    canvas.width  = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext('2d').drawImage(video, 0, 0);
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    document.getElementById('camPreviewImg').src = e.target.result;
 
-    // Recortar la zona central (donde está el marco guía)
-    const cw = canvas.width, ch = canvas.height;
-    const cropW = cw*0.85, cropH = ch*0.45;
-    const cropX = (cw-cropW)/2, cropY = (ch-cropH)/2;
-    const cropCanvas = document.createElement('canvas');
-    cropCanvas.width = cropW; cropCanvas.height = cropH;
-    cropCanvas.getContext('2d').drawImage(canvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-
-    // El texto del flanco casi siempre sale rotado (la rueda está montada de pie).
-    // Probamos 0°, 90° y 270° — en cuanto una orientación da resultado, paramos.
-    const angulos = [0, 90, 270, 180];
-    for(const angulo of angulos){
-      if(camDetectado) break;
-      const procesada = prepararImagenOCR(cropCanvas, angulo);
-      const result = await Tesseract.recognize(procesada, 'eng', {
-        tessedit_char_whitelist: '0123456789RZ/ -',
-        tessedit_pageseg_mode: '6' // bloque uniforme de texto
-      });
-      const texto = result.data.text || '';
-      const medida = extraerMedidaDeTexto(texto);
-      if(medida){
-        camDetectado = true;
-        if(camScanInterval){ clearInterval(camScanInterval); camScanInterval=null; }
-        setCamStatus('✅ Medida detectada', '#059669', '#f0fdf4');
-        mostrarMedidaDetectadaYRellenar(medida);
-        break;
+    const img = new Image();
+    img.onload = async () => {
+      if(typeof Tesseract === 'undefined'){
+        setCamStatus('⚠️ OCR no disponible (revisa tu conexión a internet)', '#dc2626', '#fef2f2');
+        return;
       }
-    }
-  }catch(err){
-    console.warn('Error OCR frame:', err.message);
-  }
-  camOcrBusy = false;
+
+      const srcCanvas = document.createElement('canvas');
+      // Limitar tamaño máximo para que el OCR sea más rápido (no necesitamos resolución completa)
+      const maxDim = 1400;
+      let w = img.width, h = img.height;
+      if(w > maxDim || h > maxDim){
+        const scale = maxDim / Math.max(w,h);
+        w = Math.round(w*scale); h = Math.round(h*scale);
+      }
+      srcCanvas.width = w; srcCanvas.height = h;
+      srcCanvas.getContext('2d').drawImage(img, 0, 0, w, h);
+
+      const angulos = [0, 90, 270, 180];
+      let encontrada = null;
+
+      for(let i=0; i<angulos.length; i++){
+        const angulo = angulos[i];
+        setCamStatus(`⏳ Analizando foto… (${i+1}/${angulos.length})`, '#6d28d9', '#f5f3ff');
+        try{
+          const procesada = prepararImagenOCR(srcCanvas, angulo);
+          const result = await Tesseract.recognize(procesada, 'eng', {
+            tessedit_char_whitelist: '0123456789RZ/ -',
+            tessedit_pageseg_mode: '6'
+          });
+          const medida = extraerMedidaDeTexto(result.data.text || '');
+          if(medida){ encontrada = medida; break; }
+        }catch(err){ console.warn('Error ángulo '+angulo, err.message); }
+      }
+
+      if(encontrada){
+        setCamStatus('✅ Medida detectada', '#059669', '#f0fdf4');
+        mostrarMedidaDetectadaYRellenar(encontrada);
+      } else {
+        setCamStatus('⚠️ No se ha podido leer la medida en esta foto', '#dc2626', '#fef2f2');
+        document.getElementById('camOcrResult').innerHTML = `
+          <div style="background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:14px;text-align:center">
+            <div style="font-size:.72rem;color:#6b7280;margin-bottom:10px">Prueba otra foto más cercana y recta, o escribe la medida directamente:</div>
+            <input type="text" id="medidaManualOCR" placeholder="Ej: 215/50R18" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:7px;font-size:.9rem;text-align:center;font-family:var(--mono);box-sizing:border-box;margin-bottom:8px">
+            <button onclick="usarMedidaManualOCR()" style="width:100%;padding:10px;border-radius:7px;border:none;background:#1a1a2e;color:#fff;font-weight:700;font-size:.8rem;cursor:pointer">🔍 Buscar esta medida</button>
+          </div>`;
+      }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
 }
 
-// Rota la imagen y aplica escala de grises + aumento de contraste
+// ── Preprocesado: rotar + escala de grises + contraste ──────────────
 // El texto del flanco está grabado en relieve (mismo color que el caucho),
-// así que el contraste real es muy bajo — esto ayuda a que Tesseract lo distinga.
+// con muy bajo contraste — esto ayuda a Tesseract a distinguirlo.
 function prepararImagenOCR(sourceCanvas, anguloGrados){
   const w = sourceCanvas.width, h = sourceCanvas.height;
   const rad = anguloGrados * Math.PI / 180;
@@ -2760,7 +2782,6 @@ function prepararImagenOCR(sourceCanvas, anguloGrados){
   ctx.drawImage(sourceCanvas, -w/2, -h/2);
   ctx.restore();
 
-  // Escala de grises + estiramiento de contraste (umbral adaptativo simple)
   const imgData = ctx.getImageData(0, 0, outCanvas.width, outCanvas.height);
   const d = imgData.data;
   let min=255, max=0;
@@ -2773,7 +2794,6 @@ function prepararImagenOCR(sourceCanvas, anguloGrados){
   const range = Math.max(1, max-min);
   for(let i=0; i<d.length; i+=4){
     let v = (d[i]-min) * (255/range);
-    // Aumentar contraste adicional con curva simple
     v = Math.min(255, Math.max(0, (v-128)*1.6 + 128));
     d[i]=d[i+1]=d[i+2]=v;
   }
@@ -2782,8 +2802,8 @@ function prepararImagenOCR(sourceCanvas, anguloGrados){
   return outCanvas.toDataURL('image/png');
 }
 
+// ── Resultado: mostrar y rellenar desplegables ──────────────────────
 function mostrarMedidaDetectadaYRellenar(medida){
-  // medida viene como "205/55R16"
   const m = medida.match(/^(\d{3})\/(\d{2,3})R(\d{2})$/);
   if(!m){
     setCamStatus('⚠️ Medida detectada pero formato inesperado: '+medida, '#dc2626', '#fef2f2');
@@ -2792,16 +2812,11 @@ function mostrarMedidaDetectadaYRellenar(medida){
   const [_, ancho, alto, llanta] = m;
 
   document.getElementById('camOcrResult').innerHTML = `
-    <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:14px;text-align:center">
-      <div style="font-size:.68rem;color:#059669;font-weight:700;margin-bottom:4px">✅ MEDIDA DETECTADA Y RELLENADA</div>
-      <div style="font-size:1.4rem;font-weight:800;color:#1a1a2e;font-family:var(--mono)">${medida}</div>
-      <div style="display:flex;gap:6px;margin-top:10px">
-        <button onclick="reescanear()" style="flex:1;padding:9px;border-radius:7px;border:1.5px solid var(--border);background:#fff;font-weight:700;font-size:.74rem;cursor:pointer">🔄 No es correcto, reescanear</button>
-        <button onclick="cerrarCamaraMedida()" style="flex:1;padding:9px;border-radius:7px;border:none;background:#059669;color:#fff;font-weight:800;font-size:.78rem;cursor:pointer">✓ Listo</button>
-      </div>
+    <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:16px;text-align:center">
+      <div style="font-size:.68rem;color:#059669;font-weight:700;margin-bottom:4px">✅ MEDIDA DETECTADA Y APLICADA</div>
+      <div style="font-size:1.5rem;font-weight:800;color:#1a1a2e;font-family:var(--mono)">${medida}</div>
     </div>`;
 
-  // Rellenar los desplegables de filtros del presupuestador
   const selAncho  = document.getElementById('asF_ancho');
   const selAlto   = document.getElementById('asF_alto');
   const selLlanta = document.getElementById('asF_llanta');
@@ -2810,14 +2825,15 @@ function mostrarMedidaDetectadaYRellenar(medida){
   if(selAlto)   setSelectValueIfExists(selAlto,   alto);
   if(selLlanta) setSelectValueIfExists(selLlanta, llanta);
 
-  // Disparar la búsqueda con los filtros ya rellenados
   if(typeof buscarAsFilters === 'function') buscarAsFilters();
 
   toast('🔍 Medida detectada y aplicada: ' + medida, 'success', 3000);
+
+  // Cerrar el modal automáticamente tras un instante para que vea el resultado en el buscador
+  setTimeout(cerrarCamaraMedida, 1400);
 }
 
 function setSelectValueIfExists(selectEl, value){
-  // Comprueba si el value existe como opción; si no, lo añade dinámicamente
   const exists = Array.from(selectEl.options).some(o => o.value === value);
   if(!exists){
     const opt = document.createElement('option');
@@ -2827,82 +2843,18 @@ function setSelectValueIfExists(selectEl, value){
   selectEl.value = value;
 }
 
-function reescanear(){
-  camDetectado = false;
-  document.getElementById('camOcrResult').innerHTML = '';
-  setCamStatus('🔍 Buscando medida… mantén el encuadre', '#6d28d9', '#f5f3ff');
-  if(camScanInterval) clearInterval(camScanInterval);
-  camScanInterval = setInterval(escanearFrame, 600); // el guard camOcrBusy evita solapes
-}
-
-// ── Alternativa: foto desde galería/cámara nativa del móvil ────────
-function procesarFotoArchivo(input){
-  const file = input.files[0];
-  if(!file) return;
-  if(camScanInterval){ clearInterval(camScanInterval); camScanInterval=null; }
-  if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null; }
-
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const img = new Image();
-    img.onload = async () => {
-      const srcCanvas = document.createElement('canvas');
-      srcCanvas.width = img.width; srcCanvas.height = img.height;
-      srcCanvas.getContext('2d').drawImage(img, 0, 0);
-
-      const angulos = [0, 90, 270, 180];
-      let encontrada = null;
-      for(const angulo of angulos){
-        setCamStatus(`⏳ Analizando foto… (probando orientación ${angulo}°)`, '#6d28d9', '#f5f3ff');
-        try{
-          const procesada = prepararImagenOCR(srcCanvas, angulo);
-          const result = await Tesseract.recognize(procesada, 'eng', {
-            tessedit_char_whitelist: '0123456789RZ/ -',
-            tessedit_pageseg_mode: '6'
-          });
-          const medida = extraerMedidaDeTexto(result.data.text || '');
-          if(medida){ encontrada = medida; break; }
-        }catch(err){ console.warn('Error ángulo '+angulo, err.message); }
-      }
-
-      if(encontrada){
-        setCamStatus('✅ Medida detectada', '#059669', '#f0fdf4');
-        mostrarMedidaDetectadaYRellenar(encontrada);
-      } else {
-        setCamStatus('⚠️ No se detectó ninguna medida en la foto', '#dc2626', '#fef2f2');
-        document.getElementById('camOcrResult').innerHTML = `
-          <div style="background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:12px;text-align:center">
-            <div style="font-size:.7rem;color:#6b7280;margin-bottom:8px">Prueba a acercar más la foto solo a la medida (ej: 215/50R18), evitando el resto del texto del flanco.</div>
-            <input type="text" id="medidaManualOCR" placeholder="Escríbela manualmente…" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:7px;font-size:.85rem;text-align:center;font-family:var(--mono);box-sizing:border-box;margin-bottom:8px">
-            <button onclick="usarMedidaManualOCR()" style="width:100%;padding:9px;border-radius:7px;border:none;background:#1a1a2e;color:#fff;font-weight:700;font-size:.78rem;cursor:pointer">🔍 Buscar</button>
-          </div>`;
-      }
-    };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
-}
-
+// ── Extracción de medida con tolerancia a errores típicos de OCR ────
 function extraerMedidaDeTexto(texto){
-  // Normalizar: mayúsculas, corregir confusiones típicas de OCR sobre relieve
-  let limpio = texto.toUpperCase();
-  limpio = limpio
-    .replace(/O/g, '0')      // O confundida con 0 (muy común en OCR de neumáticos)
-    .replace(/[|!]/g, '1')   // | o ! confundidos con 1
-    .replace(/[ZS]/g, m => m) // Z y S se mantienen (la R de radial no se toca)
-    .replace(/\s+/g, ' ');
+  let limpio = texto.toUpperCase().replace(/O/g, '0').replace(/[|!]/g, '1').replace(/\s+/g, ' ');
 
-  // Patrones ordenados de más estricto a más permisivo
   const patrones = [
-    /(\d{3})\s*\/\s*(\d{2,3})\s*R\s*(\d{2})/,           // 225/40R18 (formato estándar)
-    /(\d{3})[\s\-\.]+(\d{2,3})[\s\-\.]*R[\s\-\.]*(\d{2})/, // 225 40 R 18 / 225-40-R-18
-    /(\d{3})\s*\/\s*(\d{2,3})\s+(\d{2})/,                 // 225/40 18 (R perdida por OCR)
-    /(\d{3})(\d{2})R(\d{2})/,                                 // 22540R18 (sin separadores)
-    /(\d{2,3})\s*\/\s*(\d{2,3})\s*[RZ]\s*(\d{2})/,        // tolera Z en vez de R, y ancho de 2-3 dígitos
+    /(\d{3})\s*\/\s*(\d{2,3})\s*R\s*(\d{2})/,
+    /(\d{3})[\s\-\.]+(\d{2,3})[\s\-\.]*R[\s\-\.]*(\d{2})/,
+    /(\d{3})\s*\/\s*(\d{2,3})\s+(\d{2})/,
+    /(\d{3})(\d{2})R(\d{2})/,
+    /(\d{2,3})\s*\/\s*(\d{2,3})\s*[RZ]\s*(\d{2})/,
   ];
 
-  // Buscar TODAS las coincidencias en todos los patrones, no solo la primera,
-  // y quedarnos con la que tenga rangos más coherentes con un neumático real.
   const candidatos = [];
   for(const pat of patrones){
     const matches = limpio.matchAll(new RegExp(pat, 'g'));
@@ -2913,7 +2865,6 @@ function extraerMedidaDeTexto(texto){
       }
     }
   }
-
   if(candidatos.length) return candidatos[0];
   return null;
 }
@@ -2924,6 +2875,7 @@ function usarMedidaManualOCR(){
   const medida = extraerMedidaDeTexto(val) || val.toUpperCase();
   mostrarMedidaDetectadaYRellenar(medida);
 }
+
 
 
 
