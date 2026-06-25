@@ -344,7 +344,7 @@ tr.out td{background:#fff5f5}
           <input type="text" id="mv_medida" class="mono" placeholder="205/55R16 · 2055516" oninput="this.value=this.value.toUpperCase();movBuscarRef()" list="mvMedSug">
           <datalist id="mvMedSug"></datalist>
         </div>
-        <div class="field"><label>🔖 Referencia ZTS</label><input type="text" id="mv_ref" class="mono" placeholder="ZTS…" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="field"><label>🔖 Referencia ZTS</label><input type="text" id="mv_ref" class="mono" placeholder="ZTS…" oninput="this.value=this.value.toUpperCase();movBuscarPorRef()" list="mvRefSug"><datalist id="mvRefSug"></datalist></div>
         <div class="field"><label>🏷️ Marca</label><input type="text" id="mv_marca" placeholder="Continental…" list="mvMarcaSug"><datalist id="mvMarcaSug"></datalist></div>
         <div class="field"><label>🔠 Tipo</label><select id="mv_tipo"><option>Verano</option><option>Invierno</option><option>All Season</option></select></div>
         <div class="field"><label>📊 Índice</label><input type="text" id="mv_indice" class="mono" placeholder="91V" oninput="this.value=this.value.toUpperCase()"></div>
@@ -1637,6 +1637,68 @@ function movBuscarRef(){
     }
   }
 }
+
+function movBuscarPorRef(){
+  const raw = document.getElementById('mv_ref').value.trim().toUpperCase();
+
+  // Sugerencias en datalist mientras se escribe (a partir de 4 caracteres)
+  if(raw.length >= 4 && raw.length < 14){
+    const dl = document.getElementById('mvRefSug');
+    if(dl){
+      const hits = TARIFA2026.filter(t => t[0].startsWith(raw)).slice(0, 10);
+      dl.innerHTML = hits.map(t => `<option value="${t[0]}" label="${t[1]} · ${t[2]}">`).join('');
+    }
+  }
+
+  if(raw.length < 5) return;
+
+  // 1. Buscar primero en stock actual (tiene prioridad: datos reales actualizados)
+  const s = stockData.find(x => x.referencia === raw);
+  if(s){
+    document.getElementById('mv_medida').value = s.medida || '';
+    document.getElementById('mv_marca').value  = s.marca  || '';
+    document.getElementById('mv_tipo').value   = s.tipo   || 'Verano';
+    document.getElementById('mv_indice').value = s.indice || '';
+    if(s.ubicacion) document.getElementById('mv_ubi').value = s.ubicacion;
+    const pvpV = ePVP(s), dnpV = eDNP(s);
+    if(pvpV) document.getElementById('mv_pvp').value   = pvpV;
+    if(dnpV) document.getElementById('mv_coste').value = dnpV;
+    toast('✅ Referencia reconocida desde stock: '+s.medida, 'success', 2500);
+    return;
+  }
+
+  // 2. Buscar en TARIFA2026 (maestro completo de referencias)
+  const t = T2026_MAP.get(raw);
+  if(t){
+    const [ref, medida, marca, dibujo, tipoCod, pvp, dnp] = t;
+    document.getElementById('mv_medida').value = medida || '';
+    document.getElementById('mv_marca').value  = marca  || '';
+    const tipoFull = {V:'Verano', A:'All Season', I:'Invierno'}[tipoCod] || 'Verano';
+    document.getElementById('mv_tipo').value   = tipoFull;
+    // Extraer índice de la medida (ej: "205/55 R16 91V" -> "91V")
+    const idxMatch = medida.match(/R\d{2}\s*(\d{2,3}[A-Z]+)/);
+    if(idxMatch) document.getElementById('mv_indice').value = idxMatch[1];
+    if(pvp > 0) document.getElementById('mv_pvp').value   = pvp;
+    if(dnp > 0) document.getElementById('mv_coste').value = dnp;
+    toast('📋 Referencia encontrada en tarifa: '+medida+' · '+marca, 'success', 2500);
+    return;
+  }
+
+  // 3. Buscar en campaña activa
+  const c = (typeof campanaData!=='undefined'?campanaData:[]).find(x => x.referencia === raw);
+  if(c){
+    document.getElementById('mv_medida').value = c.medida_full || c.medida || '';
+    document.getElementById('mv_marca').value  = c.marca || '';
+    document.getElementById('mv_tipo').value   = 'Verano';
+    if(c.pvp > 0) document.getElementById('mv_pvp').value = c.pvp;
+    if(c.neto_campana > 0) document.getElementById('mv_coste').value = c.neto_campana;
+    toast('🏷️ Referencia encontrada en campaña: '+(c.medida_full||c.medida), 'success', 2500);
+    return;
+  }
+
+  // No encontrada — limpia el aviso si lo hubiera, deja al usuario rellenar manualmente
+}
+
 function limpiarMov(){
   ['mv_medida','mv_ref','mv_marca','mv_indice','mv_ubi','mv_nota','mv_arch'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   ['mv_pvp','mv_coste','mv_fecha','mv_cita'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
