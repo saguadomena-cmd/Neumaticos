@@ -2978,17 +2978,20 @@ function procesarFotoArchivo(input){
     img.onload = async () => {
       setCamStatus('⏳ Analizando con IA de visión…', '#6d28d9', '#f5f3ff');
 
-      // Comprimir/redimensionar antes de enviar (más rápido y barato)
+      // Comprimir/redimensionar antes de enviar — resolución más alta para texto pequeño en relieve
       const canvas = document.createElement('canvas');
-      const maxDim = 1024;
+      const maxDim = 1568; // límite recomendado por Anthropic para máxima calidad de análisis
       let w = img.width, h = img.height;
       if(w > maxDim || h > maxDim){
         const scale = maxDim / Math.max(w,h);
         w = Math.round(w*scale); h = Math.round(h*scale);
       }
       canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
       const base64 = dataUrl.split(',')[1];
 
       try{
@@ -2998,6 +3001,8 @@ function procesarFotoArchivo(input){
           body: JSON.stringify({ image: base64, mediaType: 'image/jpeg' })
         });
         const data = await resp.json();
+        console.log('🔍 Respuesta del Worker:', data);
+        if(data.raw) console.log('📝 Razonamiento de Claude:', data.raw);
 
         if(data.medida){
           setCamStatus('✅ Medida detectada', '#059669', '#f0fdf4');
@@ -3040,14 +3045,23 @@ function mostrarMedidaDetectadaYRellenar(medida){
   document.getElementById('camOcrResult').innerHTML = `
     <div style="background:#fffbeb;border:2px solid #f59e0b;border-radius:10px;padding:18px;text-align:center">
       <div style="font-size:.68rem;color:#92400e;font-weight:700;margin-bottom:6px">🔎 VERIFICA QUE COINCIDE CON LA FOTO</div>
-      <div style="font-size:1.6rem;font-weight:800;color:#1a1a2e;font-family:var(--mono);margin-bottom:14px">${medida}</div>
+      <input id="medidaEditable" type="text" value="${medida}" style="width:100%;font-size:1.4rem;font-weight:800;color:#1a1a2e;font-family:var(--mono);text-align:center;border:1.5px solid #f59e0b;border-radius:8px;padding:8px;margin-bottom:6px;background:#fff">
+      <div style="font-size:.65rem;color:#92400e;margin-bottom:12px">¿No es exacta? Corrígela aquí mismo antes de confirmar</div>
       <div style="display:flex;gap:8px">
         <button onclick="rechazarMedidaDetectada()" style="flex:1;padding:11px;border-radius:8px;border:1.5px solid #dc2626;background:#fff;color:#dc2626;font-weight:700;font-size:.82rem;cursor:pointer">❌ No coincide</button>
-        <button onclick="confirmarMedidaDetectada('${medida}')" style="flex:1;padding:11px;border-radius:8px;border:none;background:#059669;color:#fff;font-weight:800;font-size:.82rem;cursor:pointer">✅ Sí, es correcta</button>
+        <button onclick="confirmarMedidaDesdeInput()" style="flex:1;padding:11px;border-radius:8px;border:none;background:#059669;color:#fff;font-weight:800;font-size:.82rem;cursor:pointer">✅ Confirmar</button>
       </div>
     </div>`;
 
   setCamStatus('👀 Confirma antes de aplicar', '#92400e', '#fffbeb');
+}
+
+function confirmarMedidaDesdeInput(){
+  let val = (document.getElementById('medidaEditable')?.value || '').trim().toUpperCase().replace(/\s+/g, '');
+  // Normalizar formato: aceptar variantes como "225/40 R18" o "225/40r18" y convertir a "225/40R18"
+  const m = val.match(/^(\d{3})\/(\d{2,3})R?(\d{2})$/);
+  if(m) val = `${m[1]}/${m[2]}R${m[3]}`;
+  confirmarMedidaDetectada(val);
 }
 
 function confirmarMedidaDetectada(medida){
