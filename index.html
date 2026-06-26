@@ -1584,10 +1584,14 @@ function eliminarRef(id){ if(!confirm('¿Eliminar esta referencia?')) return; st
 // CAMPAÑA
 // ══════════════════════════════════════════════════════════════════
 function renderCampana(){
-  const q=(document.getElementById('campSearch').value||'').toLowerCase();
+  const qRaw=(document.getElementById('campSearch').value||'').trim();
+  const q=qRaw.toLowerCase();
+  const qNorm=qRaw.toUpperCase().replace(/[\s\/\-R]/g,'');
   const rows=campanaData.filter(c=>{
-    if(!q) return true;
-    return [c.medida_full,c.marca,c.dibujo,c.referencia].join(' ').toLowerCase().includes(q);
+    if(!qRaw) return true;
+    const literal=[c.medida_full,c.marca,c.dibujo,c.referencia].join(' ').toLowerCase().includes(q);
+    const normalizado = qNorm.length>=4 && c.medida_full.toUpperCase().replace(/[\s\/\-R]/g,'').includes(qNorm);
+    return literal || normalizado;
   });
   const el=document.getElementById('campBody');
   if(!rows.length){el.innerHTML='<div style="color:var(--muted2);text-align:center;padding:30px">Sin resultados</div>';return;}
@@ -1696,8 +1700,12 @@ function setMovTipo(t){
 function movBuscarRef(){
   const raw=document.getElementById('mv_medida').value.trim();
   const pm=parseMedida(raw)||raw.toUpperCase();
-  // 1. Try stock first
-  const s=stockData.find(x=>x.medida===pm||x.medida===raw.toUpperCase());
+  const pmNorm = pm.replace(/[\s\/\-R]/g,'');
+  // 1. Try stock first — comparación normalizada (sin espacios/barras/guiones/R)
+  const s=stockData.find(x=>{
+    const xNorm = (x.medida||'').toUpperCase().replace(/[\s\/\-R]/g,'');
+    return xNorm===pmNorm || x.medida===pm || x.medida===raw.toUpperCase();
+  });
   if(s){
     if(!document.getElementById('mv_ref').value)   document.getElementById('mv_ref').value=s.referencia||'';
     if(!document.getElementById('mv_marca').value) document.getElementById('mv_marca').value=s.marca||'';
@@ -1708,9 +1716,9 @@ function movBuscarRef(){
     document.getElementById('mv_indice').value=s.indice||'';
     return;
   }
-  // 2. Fallback: search TARIFA2026 by medida (dim field = t[1])
-  if(pm.length>=6){
-    const hits=TARIFA2026.filter(t=>t[1]===pm).slice(0,8);
+  // 2. Fallback: search TARIFA2026 by medida normalizada
+  if(pmNorm.length>=6){
+    const hits=TARIFA2026.filter(t=>(t[1]||'').toUpperCase().replace(/[\s\/\-R]/g,'')===pmNorm).slice(0,8);
     const dl=document.getElementById('mvMedSug');
     // populate datalist with tarifa options showing ref+marca
     if(dl&&hits.length){
@@ -3109,6 +3117,22 @@ function setSelectValueIfExists(selectEl, value){
 
 
 
+// Orden de prioridad de marcas para el listado de presupuesto
+const ORDEN_MARCAS = ['continental','pirelli','bridgestone'];
+function rankMarca(marca){
+  const m = (marca||'').toLowerCase();
+  const idx = ORDEN_MARCAS.findIndex(x => m.includes(x));
+  return idx === -1 ? 99 : idx;
+}
+// Prioridad de prefijo de referencia: ZTS (verano, alto movimiento) primero
+function rankPrefijoRef(ref){
+  const r = (ref||'').toUpperCase();
+  if(r.startsWith('ZTS')) return 0;
+  if(r.startsWith('ZTR')) return 1;
+  if(r.startsWith('ZTW')) return 1;
+  return 2;
+}
+
 function buscarAsFilters(){
   const ancho  = (document.getElementById('asF_ancho')?.value  ||'').trim();
   const alto   = (document.getElementById('asF_alto')?.value   ||'').trim();
@@ -3126,15 +3150,22 @@ function buscarAsFilters(){
   function matchMedida(med){
     if(!med) return false;
     const mu = med.toUpperCase();
-    const mc = mu.replace(/[\s\/R]/g,'');
+    const mc = mu.replace(/[\s\/\-R]/g,''); // medida sin espacios, barras, guiones ni R
     if(ancho  && !mc.startsWith(ancho))                              return false;
     if(alto   && !mc.startsWith(ancho+alto))                         return false;
     if(llanta && !mu.replace(/\s/g,'').includes('R'+llanta))         return false;
     if(vel    && !mu.match(new RegExp('[RZ]\\d{2}\\s*\\d{2,3}'+vel))) return false;
-    if(raw    && !med.toLowerCase().includes(raw))                   return false;
+    if(raw){
+      // Normalizamos también el texto de búsqueda libre: quitamos espacios, barras y guiones
+      const rawNorm = raw.toUpperCase().replace(/[\s\/\-]/g,'');
+      // Coincide si: el texto normalizado de la medida contiene el texto normalizado de búsqueda,
+      // O si el texto original de la medida contiene literalmente lo escrito (referencias, marca, etc.)
+      const matchNormalizado = mc.includes(rawNorm.replace(/R/g,'')) || mu.replace(/\s/g,'').includes(rawNorm);
+      const matchLiteral = med.toLowerCase().includes(raw.toLowerCase());
+      if(!matchNormalizado && !matchLiteral) return false;
+    }
     return true;
   }
-  // spec checked separately against full item text (medida+marca+dibujo+ref)
   function matchSpec(medida, marcaS, dibujo, ref){
     if(!spec) return true;
     const full=(medida+' '+(marcaS||'')+' '+(dibujo||'')+' '+(ref||'')).toLowerCase();
@@ -3143,13 +3174,26 @@ function buscarAsFilters(){
   function matchMarca(m){ return !marca||(m||'').toLowerCase().includes(marca); }
   function matchTipo(t){  return !tipo ||(t||'').charAt(0).toUpperCase()===tipo; }
 
+  // Comparador de orden: marca prioritaria → prefijo ZTS → resto
+  function ordenPrioridad(marcaA, refA, marcaB, refB){
+    const rm = rankMarca(marcaA) - rankMarca(marcaB);
+    if(rm !== 0) return rm;
+    const rp = rankPrefijoRef(refA) - rankPrefijoRef(refB);
+    if(rp !== 0) return rp;
+    return 0;
+  }
+
   stockData.forEach(enrichPVP);
   const stockRes=stockData.filter(s=>matchMedida(s.medida)&&matchMarca(s.marca)&&matchTipo(s.tipo)&&matchSpec(s.medida,s.marca,s.dibujo||'',s.referencia));
+  stockRes.sort((a,b)=>ordenPrioridad(a.marca,a.referencia,b.marca,b.referencia));
+
   const stockRefs=new Set(stockRes.map(s=>s.referencia));
   const campRes=campanaData.filter(c=>{
     if(stockRefs.has(c.referencia)) return false;
     return matchMedida(c.medida_full)&&matchMarca(c.marca)&&matchSpec(c.medida_full,c.marca,c.dibujo,c.referencia);
   });
+  campRes.sort((a,b)=>ordenPrioridad(a.marca,a.referencia,b.marca,b.referencia));
+
   const campRefs=new Set(campRes.map(c=>c.referencia));
   const tarifaRes=[];
   for(let i=0;i<TARIFA2026.length&&tarifaRes.length<20;i++){
@@ -3158,75 +3202,103 @@ function buscarAsFilters(){
     if(!matchMedida(t[1])||!matchMarca(t[2])||!matchTipo(t[4])||!matchSpec(t[1],t[2],t[3],t[0])) continue;
     tarifaRes.push(t);
   }
+  tarifaRes.sort((a,b)=>ordenPrioridad(a[2],a[0],b[2],b[0]));
 
   let out='';
   if(stockRes.length){
-    out+=`<div style="font-size:.7rem;font-weight:700;color:var(--green);margin:6px 0 6px">✅ EN STOCK (${stockRes.length})</div>`;
+    out+=`<div style="font-size:.74rem;font-weight:800;color:var(--green);margin:6px 0 8px;display:flex;align-items:center;gap:6px"><span style="font-size:.9rem">✅</span> EN STOCK — DISPONIBLE AHORA (${stockRes.length})</div>`;
     stockRes.forEach(s=>{
       const apt=apartados.filter(a=>a.medidaRef===s.id).reduce((t,a)=>t+a.cantidad,0);
       const camp=getCampByRef(s.referencia);
       const pvpV=ePVP(s),dnpV=eDNP(s);
       const vtas=VENTAS_2026[s.referencia];
-      out+=`<div class="stock-res-item" data-id="${s.id}" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border:1.5px solid #86efac;border-radius:9px;margin-bottom:6px;cursor:pointer" onclick="selAs('${s.id}')">
-        <div style="flex:1">
-          <div style="font-weight:700;color:var(--primary2);font-family:var(--mono)">${esc(s.medida)} <span style="font-size:.68rem;font-weight:400;color:var(--muted)">${esc(s.indice||'')}</span></div>
-          <div style="font-family:var(--mono);font-size:.65rem;color:var(--muted)">${esc(s.referencia)}</div>
-          <div style="font-size:.72rem;color:var(--muted);margin-top:2px">${esc(s.marca)} · <span style="font-weight:700;color:var(--green)">${s.stock-apt} uds libres</span>${apt>0?` <span style="color:#7c3aed">(${apt} apt.)</span>`:''}</div>
-          <div style="display:flex;gap:5px;margin-top:4px;flex-wrap:wrap">
-            <span style="background:#dcfce7;color:#166534;border-radius:10px;padding:1px 7px;font-size:.62rem;font-weight:700">✅ STOCK</span>
-            ${camp?`<span style="background:#fef3c7;color:#92400e;border-radius:10px;padding:1px 7px;font-size:.62rem;font-weight:700">🏷️ CAMPAÑA · ${camp.neto_campana.toFixed(2)}€</span>`:''}
-            ${vtas?`<span style="background:#fef3c7;color:#92400e;border-radius:10px;padding:1px 7px;font-size:.62rem;font-weight:700">📊 ${vtas}/año</span>`:''}
+      const libres=s.stock-apt;
+      out+=`<div class="stock-res-item" data-id="${s.id}" style="background:#fff;border:2px solid #86efac;border-radius:12px;margin-bottom:10px;cursor:pointer;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)" onclick="selAs('${s.id}')">
+
+        <!-- FILA SUPERIOR: stock destacado + medida/marca grande + PVP -->
+        <div style="display:flex;align-items:stretch;gap:0">
+          <div style="background:${libres>0?'#dcfce7':'#fee2e2'};display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 14px;min-width:64px">
+            <div style="font-size:1.7rem;font-weight:900;color:${libres>0?'#15803d':'#b91c1c'};line-height:1">${libres}</div>
+            <div style="font-size:.58rem;font-weight:700;color:${libres>0?'#15803d':'#b91c1c'};text-transform:uppercase;letter-spacing:.04em">uds</div>
+          </div>
+          <div style="flex:1;padding:10px 12px;min-width:0">
+            <div style="font-weight:800;font-size:1.05rem;color:var(--primary2);font-family:var(--mono);line-height:1.15">${esc(s.medida)} <span style="font-size:.7rem;font-weight:500;color:var(--muted)">${esc(s.indice||'')}</span></div>
+            <div style="font-weight:700;font-size:.82rem;color:#1a1a2e;margin-top:1px">${esc(s.marca)}${s.dibujo?' · '+esc(s.dibujo):''}</div>
+            <div style="font-family:var(--mono);font-size:.62rem;color:var(--muted);margin-top:2px">${esc(s.referencia)}</div>
+          </div>
+          <div style="text-align:right;padding:10px 12px;min-width:78px;border-left:1px solid #e5e7eb">
+            <div style="font-weight:800;color:var(--primary2);font-size:1.05rem">${pvpV?pvpV.toFixed(2)+'€':'—'}</div>
+            <div style="font-size:.65rem;color:var(--muted)">DNP ${dnpV?dnpV.toFixed(2)+'€':'—'}</div>
           </div>
         </div>
-        <div style="text-align:right;min-width:80px"><div style="font-weight:800;color:var(--primary2);font-size:1.05rem">${pvpV?pvpV.toFixed(2)+'€':'—'}</div><div style="font-size:.7rem;color:var(--muted)">DNP: ${dnpV?dnpV.toFixed(2)+'€':'—'}</div></div>
-      </div>
+
+        <!-- FILA INFERIOR: válvula + NFU + badges, visible de un vistazo -->
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 12px 9px;border-top:1px dashed #d1d5db">
+          <span style="background:#eef2ff;color:#3730a3;border-radius:8px;padding:2px 8px;font-size:.65rem;font-weight:700">🔩 Válvula ${VALVULA_PVP.toFixed(2)}€</span>
+          <span style="background:#ecfdf5;color:#065f46;border-radius:8px;padding:2px 8px;font-size:.65rem;font-weight:700">♻️ NFU ${NFU_PVP.toFixed(2)}€</span>
+          ${apt>0?`<span style="background:#f5f3ff;color:#6d28d9;border-radius:8px;padding:2px 8px;font-size:.65rem;font-weight:700">📌 ${apt} apt.</span>`:''}
+          ${camp?`<span style="background:#fef3c7;color:#92400e;border-radius:8px;padding:2px 8px;font-size:.65rem;font-weight:700">🏷️ Campaña ${camp.neto_campana.toFixed(2)}€</span>`:''}
+          ${vtas?`<span style="background:#f1f5f9;color:#475569;border-radius:8px;padding:2px 8px;font-size:.65rem;font-weight:700">📊 ${vtas}/año</span>`:''}
+        </div>
       ${precioBloque(pvpV)}</div>`;
     });
   }
   if(campRes.length){
-    out+=`<div style="font-size:.7rem;font-weight:700;color:#92400e;margin:10px 0 6px">🏷️ EN CAMPAÑA · SIN STOCK (${campRes.length})</div>`;
+    out+=`<div style="font-size:.72rem;font-weight:700;color:#92400e;margin:14px 0 8px;display:flex;align-items:center;gap:6px"><span>🏷️</span> EN CAMPAÑA · SIN STOCK (${campRes.length})</div>`;
     campRes.forEach(c=>{
       const enc=JSON.stringify(c).replace(/"/g,'&quot;');
-      out+=`<div class="camp-res-item" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fffbeb;border:1.5px solid #f59e0b;border-radius:9px;margin-bottom:6px;cursor:pointer" onclick="selAsCamp(${enc})">
-        <div style="flex:1">
-          <div style="font-weight:700;color:var(--primary2);font-family:var(--mono)">${esc(c.medida_full)}</div>
-          <div style="font-size:.72rem;color:var(--muted)">${esc(c.marca)} · ${esc(c.dibujo)}</div>
-          <div style="font-size:.64rem;margin-top:3px;display:flex;gap:6px">
-            <span style="background:#fef3c7;color:#92400e;border-radius:10px;padding:1px 7px;font-weight:700">🏷️ CAMPAÑA</span>
-            <span style="font-family:var(--mono);font-size:.65rem;color:var(--muted)">${esc(c.referencia)}</span>
+      out+=`<div class="camp-res-item" style="background:#fffbeb;border:1.5px solid #f59e0b;border-radius:11px;margin-bottom:8px;cursor:pointer;overflow:hidden" onclick="selAsCamp(${enc})">
+        <div style="display:flex;align-items:stretch;gap:0">
+          <div style="background:#fef3c7;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 14px;min-width:64px">
+            <div style="font-size:1.3rem;font-weight:900;color:#b45309;line-height:1">0</div>
+            <div style="font-size:.58rem;font-weight:700;color:#b45309;text-transform:uppercase">uds</div>
+          </div>
+          <div style="flex:1;padding:10px 12px;min-width:0">
+            <div style="font-weight:800;font-size:1rem;color:var(--primary2);font-family:var(--mono)">${esc(c.medida_full)}</div>
+            <div style="font-weight:700;font-size:.8rem;color:#1a1a2e;margin-top:1px">${esc(c.marca)} · ${esc(c.dibujo)}</div>
+            <div style="font-family:var(--mono);font-size:.6rem;color:var(--muted);margin-top:2px">${esc(c.referencia)}</div>
+          </div>
+          <div style="text-align:right;padding:10px 12px;min-width:78px;border-left:1px solid #f3d98a">
+            <div style="font-weight:800;color:var(--primary2);font-size:1rem">${c.pvp.toFixed(2)}€</div>
+            <div style="font-size:.65rem;color:#059669;font-weight:700">Neto ${c.neto_campana.toFixed(2)}€</div>
           </div>
         </div>
-        <div style="text-align:right;min-width:80px">
-          <div style="font-weight:800;color:var(--primary2);font-size:1.05rem">${c.pvp.toFixed(2)}€</div>
-          <div style="font-size:.7rem;color:#059669;font-weight:700">Neto: ${c.neto_campana.toFixed(2)}€</div>
-          <div style="font-size:.62rem;color:#92400e;font-weight:600">-${(((c.pvp-c.neto_campana)/c.pvp)*100).toFixed(0)}%</div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 12px 9px;border-top:1px dashed #f3d98a">
+          <span style="background:#eef2ff;color:#3730a3;border-radius:8px;padding:2px 8px;font-size:.65rem;font-weight:700">🔩 Válvula ${VALVULA_PVP.toFixed(2)}€</span>
+          <span style="background:#ecfdf5;color:#065f46;border-radius:8px;padding:2px 8px;font-size:.65rem;font-weight:700">♻️ NFU ${NFU_PVP.toFixed(2)}€</span>
+          <span style="background:#fde68a;color:#92400e;border-radius:8px;padding:2px 8px;font-size:.65rem;font-weight:700">-${(((c.pvp-c.neto_campana)/c.pvp)*100).toFixed(0)}%</span>
         </div>
-      </div>
       ${precioBloque(c.neto_campana)}</div>`;
     });
   }
   if(tarifaRes.length){
-    out+=`<div style="font-size:.7rem;font-weight:700;color:var(--muted);margin:10px 0 6px">📋 TARIFA 2026 · SIN STOCK (${tarifaRes.length<20?tarifaRes.length:'20+'})</div>`;
+    out+=`<div style="font-size:.72rem;font-weight:700;color:var(--muted);margin:14px 0 8px;display:flex;align-items:center;gap:6px"><span>📋</span> TARIFA 2026 · SIN STOCK (${tarifaRes.length<20?tarifaRes.length:'20+'})</div>`;
     tarifaRes.forEach(t=>{
       const enc=JSON.stringify(t).replace(/"/g,'&quot;');
       const tipoFull={V:'Verano',A:'All Season',I:'Invierno'}[t[4]]||'Verano';
       const vtas=VENTAS_2026[t[0]];
-      out+=`<div class="tarifa-res-item" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border:1.5px solid var(--border);border-radius:9px;margin-bottom:6px;cursor:pointer" onclick="selAsTarifa(${enc})">
-        <div style="flex:1">
-          <div style="font-weight:700;font-family:var(--mono)">${esc(t[1])}</div>
-          <div style="font-family:var(--mono);font-size:.65rem;color:var(--muted)">${esc(t[0])}</div>
-          <div style="font-size:.7rem;color:var(--muted)">${esc(t[2])} · ${esc(t[3])}</div>
-          ${vtas?`<span style="background:#fef3c7;color:#92400e;border-radius:10px;padding:1px 7px;font-size:.6rem;font-weight:700;display:inline-block;margin-top:2px">📊 ${vtas}/año</span>`:''}
-          <div style="display:flex;gap:5px;margin-top:3px">
-            <span style="background:var(--s2);border-radius:10px;padding:1px 7px;font-size:.62rem">${TIPO_ICON[t[4]]||''} ${tipoFull}</span>
-            <span style="background:#fee2e2;color:#991b1b;border-radius:10px;padding:1px 7px;font-size:.62rem;font-weight:700">Stock 0</span>
+      out+=`<div class="tarifa-res-item" style="background:#fff;border:1.5px solid var(--border);border-radius:11px;margin-bottom:8px;cursor:pointer;overflow:hidden" onclick="selAsTarifa(${enc})">
+        <div style="display:flex;align-items:stretch;gap:0">
+          <div style="background:#fee2e2;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 14px;min-width:64px">
+            <div style="font-size:1.3rem;font-weight:900;color:#b91c1c;line-height:1">0</div>
+            <div style="font-size:.58rem;font-weight:700;color:#b91c1c;text-transform:uppercase">uds</div>
+          </div>
+          <div style="flex:1;padding:10px 12px;min-width:0">
+            <div style="font-weight:800;font-size:1rem;font-family:var(--mono)">${esc(t[1])}</div>
+            <div style="font-weight:700;font-size:.8rem;color:#1a1a2e;margin-top:1px">${esc(t[2])} · ${esc(t[3])}</div>
+            <div style="font-family:var(--mono);font-size:.6rem;color:var(--muted);margin-top:2px">${esc(t[0])}</div>
+          </div>
+          <div style="text-align:right;padding:10px 12px;min-width:78px;border-left:1px solid #e5e7eb">
+            <div style="font-weight:800;color:var(--primary2);font-size:1rem">${t[5].toFixed(2)}€</div>
+            <div style="font-size:.65rem;color:var(--muted)">DNP ${t[6].toFixed(2)}€</div>
           </div>
         </div>
-        <div style="text-align:right;min-width:80px">
-          <div style="font-weight:800;color:var(--primary2);font-size:1.05rem">${t[5].toFixed(2)}€</div>
-          <div style="font-size:.7rem;color:var(--muted)">DNP: ${t[6].toFixed(2)}€</div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 12px 9px;border-top:1px dashed #e5e7eb">
+          <span style="background:#eef2ff;color:#3730a3;border-radius:8px;padding:2px 8px;font-size:.65rem;font-weight:700">🔩 Válvula ${VALVULA_PVP.toFixed(2)}€</span>
+          <span style="background:#ecfdf5;color:#065f46;border-radius:8px;padding:2px 8px;font-size:.65rem;font-weight:700">♻️ NFU ${NFU_PVP.toFixed(2)}€</span>
+          <span style="background:var(--s2);border-radius:8px;padding:2px 8px;font-size:.65rem">${TIPO_ICON[t[4]]||''} ${tipoFull}</span>
+          ${vtas?`<span style="background:#f1f5f9;color:#475569;border-radius:8px;padding:2px 8px;font-size:.65rem;font-weight:700">📊 ${vtas}/año</span>`:''}
         </div>
-      </div>
       ${precioBloque(t[5])}</div>`;
     });
   }
