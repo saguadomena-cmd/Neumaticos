@@ -283,7 +283,7 @@ tr.out td{background:#fff5f5}
   <div class="tab"        id="tab-notif"      onclick="setTab('notif')">🔔 Notificaciones <span id="notifBadge" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:0 6px;font-size:.6rem;font-weight:700;margin-left:3px">0</span></div>
   <div class="tab"        id="tab-historial"  onclick="setTab('historial')">📋 Historial</div>
   <div class="tab"        id="tab-asesores"   onclick="setTab('asesores')">🚗 Presupuesto</div>
-  <div class="tab"        id="tab-presupuestos" onclick="setTab('presupuestos')">📋 Presupuestos <span id="presBadgeEspera" style="display:none;background:#f59e0b;color:#fff;border-radius:10px;padding:0 6px;font-size:.6rem;font-weight:700;margin-left:2px">0</span></div>
+  <div class="tab"        id="tab-presupuestos" onclick="setTab('presupuestos')">📋 Mis Presupuestos <span id="presBadgeEspera" style="display:none;background:#f59e0b;color:#fff;border-radius:10px;padding:0 6px;font-size:.6rem;font-weight:700;margin-left:2px">0</span></div>
   <div class="tab"        id="tab-apartados"  onclick="setTab('apartados')">📌 Apartados</div>
 </div>
 
@@ -809,8 +809,18 @@ tr.out td{background:#fff5f5}
 
 <!-- ═══ PRESUPUESTOS ═══ -->
 <div id="panelPresupuestos" style="display:none;padding:16px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+    <div style="font-weight:800;font-size:1rem;color:var(--primary2)">📋 Mis Presupuestos</div>
+    <div id="presAsesorActivoChip" style="display:flex;align-items:center;gap:6px;background:#f5f3ff;border:1.5px solid #c4b5fd;border-radius:20px;padding:4px 6px 4px 12px;font-size:.74rem;font-weight:700;color:#6d28d9;cursor:pointer" onclick="abrirSelectorAsesor()">
+      <span id="presAsesorActivoTxt">👤 Sin identificar</span>
+      <span style="background:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:.65rem">✏️</span>
+    </div>
+  </div>
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-    <div style="font-weight:800;font-size:1rem;color:var(--primary2)">📋 Presupuestos registrados</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <button onclick="setPresVista('mios')"   id="pv-mios"   style="padding:5px 12px;border-radius:20px;border:2px solid #1a1a2e;background:#1a1a2e;color:#fff;font-size:.72rem;font-weight:700;cursor:pointer">👤 Mis presupuestos</button>
+      <button onclick="setPresVista('todos')"  id="pv-todos"  style="padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);background:#fff;color:var(--muted);font-size:.72rem;font-weight:700;cursor:pointer">👥 Equipo completo</button>
+    </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       <button onclick="setPresFilter('todos')"   id="pf-todos"   style="padding:5px 12px;border-radius:20px;border:2px solid #1a1a2e;background:#1a1a2e;color:#fff;font-size:.72rem;font-weight:700;cursor:pointer">Todos</button>
       <button onclick="setPresFilter('espera')"  id="pf-espera"  style="padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);background:#fff;color:var(--muted);font-size:.72rem;font-weight:700;cursor:pointer">⏳ En espera</button>
@@ -820,6 +830,20 @@ tr.out td{background:#fff5f5}
   </div>
   <div id="presListado" style="display:flex;flex-direction:column;gap:10px">
     <div style="text-align:center;color:var(--muted2);padding:40px">Sin presupuestos registrados</div>
+  </div>
+</div>
+
+<!-- ═══ MODAL SELECCIÓN DE ASESOR (SESIÓN) ═══ -->
+<div id="modalSelectorAsesor" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.6);align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:14px;padding:26px;max-width:min(92vw,380px);width:100%;text-align:center">
+    <div style="font-size:1.6rem;margin-bottom:6px">👋</div>
+    <div style="font-weight:800;font-size:1rem;color:#1a1a2e;margin-bottom:4px">¿Quién eres?</div>
+    <div style="font-size:.76rem;color:var(--muted);margin-bottom:18px">Esto identifica tus presupuestos para que solo tú los veas en tu listado</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button onclick="seleccionarAsesorSesion('TONI')" style="padding:13px;border-radius:10px;border:2px solid var(--border);background:#fff;font-weight:700;font-size:.9rem;cursor:pointer;display:flex;align-items:center;gap:10px;justify-content:center">🧑 Toni Moya</button>
+      <button onclick="seleccionarAsesorSesion('PEREA')" style="padding:13px;border-radius:10px;border:2px solid var(--border);background:#fff;font-weight:700;font-size:.9rem;cursor:pointer;display:flex;align-items:center;gap:10px;justify-content:center">👴 Perea</button>
+      <button onclick="seleccionarAsesorSesion('ROBERTO')" style="padding:13px;border-radius:10px;border:2px solid var(--border);background:#fff;font-weight:700;font-size:.9rem;cursor:pointer;display:flex;align-items:center;gap:10px;justify-content:center">🦲 Roberto Carlos</button>
+    </div>
   </div>
 </div>
 
@@ -3449,7 +3473,7 @@ function selAsTarifa(t){
   document.getElementById('asPresupuesto').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
-function selAs(id){ const s=stockData.find(x=>x.id===id); if(!s)return; enrichPVP(s); asRef=s; setAsCant(4); document.getElementById('asPresupuesto').style.display='block'; document.getElementById('asPresupuesto').scrollIntoView({behavior:'smooth',block:'nearest'}); }
+function selAs(id){ const s=stockData.find(x=>x.id===id); if(!s)return; enrichPVP(s); asRef=s; setAsCant(4); document.getElementById('asPresupuesto').style.display='block'; document.getElementById('asPresupuesto').scrollIntoView({behavior:'smooth',block:'nearest'}); const selA=document.getElementById('as_asesor'); if(selA && !selA.value && getAsesorSesion()) selA.value=getAsesorSesion(); }
 function selAsCamp(c){ asRef={medida:c.medida_full,marca:c.marca,pvp:c.pvp,coste:c.neto_campana,referencia:c.referencia,dibujo:c.dibujo||'',stock:0,inCampaña:true,netoCampaña:c.neto_campana,id:'camp_'+c.referencia}; setAsCant(4); document.getElementById('asPresupuesto').style.display='block'; document.getElementById('asPresupuesto').scrollIntoView({behavior:'smooth',block:'nearest'}); }
 function setAsCant(n){ asCant=n; calcAs(); setAsCantBtn(n); }
 // Constantes presupuesto
@@ -3635,7 +3659,52 @@ function selOrdenAsesor(a){
 const DB_PRES = 'motorsan_presupuestos_v1';
 let presData = [];
 let presFilter = 'todos';
+let presVista = 'mios'; // 'mios' | 'todos' — qué presupuestos se muestran por defecto
 const AL_PRES = {TONI:'🧑 Toni Moya',PEREA:'👴 Perea',ROBERTO:'🦲 Roberto Carlos'};
+const LS_ASESOR_SESION = 'motorsan_asesor_sesion';
+
+// ── Sesión de asesor activo ──────────────────────────────────────
+function getAsesorSesion(){
+  return localStorage.getItem(LS_ASESOR_SESION) || '';
+}
+
+function abrirSelectorAsesor(){
+  document.getElementById('modalSelectorAsesor').style.display = 'flex';
+}
+
+function cerrarSelectorAsesor(){
+  document.getElementById('modalSelectorAsesor').style.display = 'none';
+}
+
+function seleccionarAsesorSesion(key){
+  localStorage.setItem(LS_ASESOR_SESION, key);
+  cerrarSelectorAsesor();
+  actualizarChipAsesorActivo();
+  renderPresupuestos();
+  toast('👤 Identificado como ' + (AL_PRES[key]||key), 'success');
+}
+
+function actualizarChipAsesorActivo(){
+  const chip = document.getElementById('presAsesorActivoTxt');
+  if(!chip) return;
+  const key = getAsesorSesion();
+  chip.textContent = key ? (AL_PRES[key]||key) : '👤 Sin identificar';
+}
+
+function setPresVista(v){
+  presVista = v;
+  if(v === 'mios' && !getAsesorSesion()){
+    abrirSelectorAsesor();
+    return;
+  }
+  document.getElementById('pv-mios').style.background  = v==='mios'  ? '#1a1a2e' : '#fff';
+  document.getElementById('pv-mios').style.color       = v==='mios'  ? '#fff'    : 'var(--muted)';
+  document.getElementById('pv-mios').style.borderColor = v==='mios'  ? '#1a1a2e' : 'var(--border)';
+  document.getElementById('pv-todos').style.background  = v==='todos' ? '#1a1a2e' : '#fff';
+  document.getElementById('pv-todos').style.color       = v==='todos' ? '#fff'    : 'var(--muted)';
+  document.getElementById('pv-todos').style.borderColor = v==='todos' ? '#1a1a2e' : 'var(--border)';
+  renderPresupuestos();
+}
 
 function initPresupuestos(){
   if(!useFirebase||!fbDb) return;
@@ -3660,7 +3729,7 @@ function guardarPresupuesto(){
   const matricula= (document.getElementById('as_matricula')?.value||'').trim();
   const bastidor = (document.getElementById('as_bastidor')?.value||'').trim();
   const nota     = (document.getElementById('as_nota_pres')?.value||'').trim();
-  const asesor   = document.getElementById('as_asesor')?.value||'TONI';
+  const asesor   = document.getElementById('as_asesor')?.value || getAsesorSesion() || 'TONI';
   const cant     = asCant;
   const pvpFinal3=(()=>{ const m=parseFloat(asRef.pvp)||0; const t=asRef._tpvp||0; const mp=(T2026_MAP&&asRef.referencia)?((T2026_MAP.get(asRef.referencia)||[])[5]||0):0; const camp=asRef.netoCampaña||0; const dnp=parseFloat(asRef.coste)||asRef._tdnp||0; return m||t||mp||camp||(dnp>0?dnp/0.85:0); })();
   const dtoN     = parseFloat(document.getElementById('as_dto_neum')?.value)||0;
@@ -3773,10 +3842,20 @@ function setPresFilter(f){
 // ── Render lista ──────────────────────────────────────────────────
 function renderPresupuestos(){
   const cont=document.getElementById('presListado'); if(!cont) return;
+  actualizarChipAsesorActivo();
+
   let rows=presData;
+
+  // Filtro de vista: mis presupuestos vs equipo completo
+  if(presVista==='mios'){
+    const miAsesor = getAsesorSesion();
+    if(miAsesor) rows = rows.filter(p=>p.asesor===miAsesor);
+  }
+
   if(presFilter!=='todos') rows=rows.filter(p=>p.estado===presFilter);
   if(!rows.length){
-    cont.innerHTML='<div style="text-align:center;color:var(--muted2);padding:40px;font-size:.82rem">Sin presupuestos en este estado</div>';
+    const msgVista = presVista==='mios' ? 'No tienes presupuestos en este estado' : 'Sin presupuestos en este estado';
+    cont.innerHTML='<div style="text-align:center;color:var(--muted2);padding:40px;font-size:.82rem">'+msgVista+'</div>';
     return;
   }
   const ECOL={espera:'#f59e0b',aceptado:'#059669',rechazado:'#ef4444'};
