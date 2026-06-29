@@ -3038,7 +3038,7 @@ function procesarFotoArchivo(input){
 
         if(data.medida){
           setCamStatus('✅ Medida detectada', '#059669', '#f0fdf4');
-          mostrarMedidaDetectadaYRellenar(data.medida);
+          mostrarMedidaDetectadaYRellenar(data.medida, data.indice);
         } else {
           setCamStatus('⚠️ No se ha podido leer la medida en esta foto', '#dc2626', '#fef2f2');
           mostrarFormularioManual();
@@ -3064,7 +3064,7 @@ function mostrarFormularioManual(){
 }
 
 // ── Resultado: mostrar y rellenar desplegables ──────────────────────
-function mostrarMedidaDetectadaYRellenar(medida){
+function mostrarMedidaDetectadaYRellenar(medida, indice){
   const m = medida.match(/^(\d{3})\/(\d{2,3})R(\d{2})$/);
   if(!m){
     setCamStatus('⚠️ Medida detectada pero formato inesperado: '+medida, '#dc2626', '#fef2f2');
@@ -3072,14 +3072,20 @@ function mostrarMedidaDetectadaYRellenar(medida){
     return;
   }
 
+  const indiceVal = indice || '';
+
   // PASO DE CONFIRMACIÓN — no se aplica nada todavía.
   // El asesor debe verificar visualmente contra la foto antes de continuar.
   document.getElementById('camOcrResult').innerHTML = `
     <div style="background:#fffbeb;border:2px solid #f59e0b;border-radius:10px;padding:18px;text-align:center">
       <div style="font-size:.68rem;color:#92400e;font-weight:700;margin-bottom:6px">🔎 VERIFICA QUE COINCIDE CON LA FOTO</div>
-      <input id="medidaEditable" type="text" value="${medida}" style="width:100%;font-size:1.4rem;font-weight:800;color:#1a1a2e;font-family:var(--mono);text-align:center;border:1.5px solid #f59e0b;border-radius:8px;padding:8px;margin-bottom:6px;background:#fff">
-      <div style="font-size:.65rem;color:#92400e;margin-bottom:12px">¿No es exacta? Corrígela aquí mismo antes de confirmar</div>
-      <div style="display:flex;gap:8px">
+      <div style="display:flex;gap:6px;align-items:center;justify-content:center;margin-bottom:6px">
+        <input id="medidaEditable" type="text" value="${medida}" style="flex:2;font-size:1.3rem;font-weight:800;color:#1a1a2e;font-family:var(--mono);text-align:center;border:1.5px solid #f59e0b;border-radius:8px;padding:8px;background:#fff">
+        <input id="indiceEditable" type="text" value="${indiceVal}" placeholder="92Y" style="flex:1;font-size:1.3rem;font-weight:800;color:#1a1a2e;font-family:var(--mono);text-align:center;border:1.5px solid #f59e0b;border-radius:8px;padding:8px;background:#fff;max-width:90px">
+      </div>
+      <div style="font-size:.65rem;color:#92400e;margin-bottom:4px">Medida + índice de carga/velocidad — corrígelos aquí si hace falta</div>
+      ${!indiceVal ? '<div style="font-size:.65rem;color:#dc2626;margin-bottom:8px">⚠️ No se detectó el índice — añádelo a mano si lo necesitas</div>' : ''}
+      <div style="display:flex;gap:8px;margin-top:8px">
         <button onclick="rechazarMedidaDetectada()" style="flex:1;padding:11px;border-radius:8px;border:1.5px solid #dc2626;background:#fff;color:#dc2626;font-weight:700;font-size:.82rem;cursor:pointer">❌ No coincide</button>
         <button onclick="confirmarMedidaDesdeInput()" style="flex:1;padding:11px;border-radius:8px;border:none;background:#059669;color:#fff;font-weight:800;font-size:.82rem;cursor:pointer">✅ Confirmar</button>
       </div>
@@ -3093,31 +3099,42 @@ function confirmarMedidaDesdeInput(){
   // Normalizar formato: aceptar variantes como "225/40 R18" o "225/40r18" y convertir a "225/40R18"
   const m = val.match(/^(\d{3})\/(\d{2,3})R?(\d{2})$/);
   if(m) val = `${m[1]}/${m[2]}R${m[3]}`;
-  confirmarMedidaDetectada(val);
+  const indiceVal = (document.getElementById('indiceEditable')?.value || '').trim().toUpperCase().replace(/\s+/g, '');
+  confirmarMedidaDetectada(val, indiceVal);
 }
 
-function confirmarMedidaDetectada(medida){
+function confirmarMedidaDetectada(medida, indice){
   const m = medida.match(/^(\d{3})\/(\d{2,3})R(\d{2})$/);
   if(!m) return;
   const [_, ancho, alto, llanta] = m;
+  const indiceVal = (indice || '').trim();
+  // Separar índice de velocidad (última letra, o "ZR") del índice de carga (dígitos previos)
+  const indiceMatch = indiceVal.match(/^(\d{2,3}(?:\/\d{2,3})?)\s*(ZR|[A-Z])$/i);
+  const cargaVal = indiceMatch ? indiceMatch[1] : '';
+  const velVal   = indiceMatch ? indiceMatch[2].toUpperCase() : '';
 
   document.getElementById('camOcrResult').innerHTML = `
     <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:16px;text-align:center">
       <div style="font-size:.68rem;color:#059669;font-weight:700;margin-bottom:4px">✅ MEDIDA APLICADA</div>
-      <div style="font-size:1.5rem;font-weight:800;color:#1a1a2e;font-family:var(--mono)">${medida}</div>
+      <div style="font-size:1.5rem;font-weight:800;color:#1a1a2e;font-family:var(--mono)">${medida}${indiceVal?' <span style="font-size:1.1rem">'+indiceVal+'</span>':''}</div>
     </div>`;
 
   const selAncho  = document.getElementById('asF_ancho');
   const selAlto   = document.getElementById('asF_alto');
   const selLlanta = document.getElementById('asF_llanta');
+  const selVel    = document.getElementById('asF_vel');
+  const inputSpec = document.getElementById('asF_spec');
 
   if(selAncho)  setSelectValueIfExists(selAncho,  ancho);
   if(selAlto)   setSelectValueIfExists(selAlto,   alto);
   if(selLlanta) setSelectValueIfExists(selLlanta, llanta);
+  if(selVel && velVal) setSelectValueIfExists(selVel, velVal);
+  // El índice de carga (ej "92") va al buscador de texto libre/spec para filtrar contra el texto completo del item
+  if(inputSpec && cargaVal) inputSpec.value = cargaVal;
 
   if(typeof buscarAsFilters === 'function') buscarAsFilters();
 
-  toast('🔍 Medida aplicada: ' + medida, 'success', 3000);
+  toast('🔍 Medida aplicada: ' + medida + (indiceVal?' '+indiceVal:''), 'success', 3000);
   setTimeout(cerrarCamaraMedida, 1200);
 }
 
